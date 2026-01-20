@@ -1,320 +1,182 @@
-<div align="center">
+# Smart Shopping Cart - Frontend
 
-# 🛒 Smart Shopping Cart
+Next.js 기반 스마트 쇼핑 카트 프론트엔드 애플리케이션
 
-### 실시간 스마트 장바구니 시스템
+## 🚀 빠른 시작
 
-<br/>
-
-[![Next.js](https://img.shields.io/badge/Next.js-16.1.2-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Three.js](https://img.shields.io/badge/Three.js-3D-000000?style=for-the-badge&logo=three.js&logoColor=white)](https://threejs.org/)
-
-<br/>
-
-<img src="https://img.shields.io/badge/Mobile_First-Responsive-FF6B6B?style=flat-square" alt="Mobile First"/>
-<img src="https://img.shields.io/badge/Real--time-Search-4ECDC4?style=flat-square" alt="Real-time Search"/>
-<img src="https://img.shields.io/badge/3D-Store_Map-845EC2?style=flat-square" alt="3D Store Map"/>
-
-</div>
-
-<br/>
-
----
-
-<br/>
-
-## � Preview
-
-<div align="center">
-  <table>
-    <tr>
-      <td align="center">
-        <img src="./docs/screenshots/cart-page.png" width="280" alt="Cart Page"/>
-        <br/>
-        <b>🛒 Cart Page</b>
-        <br/>
-        <sub>3D 매장 지도 + 장바구니</sub>
-      </td>
-      <td align="center">
-        <img src="./docs/screenshots/search-page.png" width="280" alt="Search Page"/>
-        <br/>
-        <b>🔍 Search Page</b>
-        <br/>
-        <sub>실시간 검색 + 추천 상품</sub>
-      </td>
-    </tr>
-  </table>
-</div>
-
-<br/>
-
----
-
-<br/>
-
-## �🚀 Quick Start
+### 로컬 개발 환경
 
 ```bash
 # 의존성 설치
 npm install
 
-# 개발 서버 실행
+# 개발 서버 실행 (http://localhost:3000)
 npm run dev
-
-# 브라우저에서 확인
-open http://localhost:3000
 ```
 
-<br/>
-
----
-
-<br/>
-
-## 🛠️ Tech Stack
-
-<table>
-  <tr>
-    <th align="center">Category</th>
-    <th align="center">Technology</th>
-    <th align="center">Description</th>
-  </tr>
-  <tr>
-    <td rowspan="3" align="center"><b>🎯 Core</b></td>
-    <td><img src="https://img.shields.io/badge/Next.js-000?logo=next.js" alt="Next.js"/> Next.js 16</td>
-    <td>React 프레임워크 (App Router)</td>
-  </tr>
-  <tr>
-    <td><img src="https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=black" alt="React"/> React 19</td>
-    <td>UI 라이브러리</td>
-  </tr>
-  <tr>
-    <td><img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript"/> TypeScript 5</td>
-    <td>타입 안전성</td>
-  </tr>
-  <tr>
-    <td align="center"><b>🎨 Styling</b></td>
-    <td><img src="https://img.shields.io/badge/Tailwind-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind"/> Tailwind CSS 4</td>
-    <td>유틸리티 기반 CSS</td>
-  </tr>
-  <tr>
-    <td rowspan="2" align="center"><b>🌐 3D</b></td>
-    <td><img src="https://img.shields.io/badge/Three.js-000?logo=three.js" alt="Three.js"/> Three.js</td>
-    <td>3D 렌더링 엔진</td>
-  </tr>
-  <tr>
-    <td>React Three Fiber</td>
-    <td>React용 Three.js 바인딩</td>
-  </tr>
-</table>
-
-<br/>
-
----
-
-<br/>
-
-## 📁 Project Structure
-
-```
-📦 smart_shopping_cart_front
-├── 📂 app
-│   ├── 📂 cart          # 🛒 장바구니 페이지 (메인)
-│   ├── 📂 search        # 🔍 검색 & 추천 페이지
-│   └── 📂 ui-kit        # 🎨 컴포넌트 쇼케이스
-│
-├── 📂 components
-│   ├── 📂 common        # 공통 컴포넌트
-│   ├── 📂 icons         # SVG 아이콘
-│   ├── 📂 layout        # 레이아웃 (Footer 등)
-│   ├── 📂 map           # 3D 매장 지도
-│   └── 📂 ui            # UI 컴포넌트
-│       ├── 📂 buttons
-│       ├── 📂 product
-│       └── 📂 review
-│
-└── 📂 public            # 정적 파일
-```
-
-<br/>
-
----
-
-<br/>
-
-## 🎨 Components
-
-<details>
-<summary><b>📱 Pages</b></summary>
-<br/>
-
-| 페이지 | 경로 | 설명 |
-|:------:|:----:|:-----|
-| 🛒 **Cart** | `/cart` | 장바구니 + 3D 매장 지도 |
-| 🔍 **Search** | `/search` | 실시간 검색 + 추천 상품 |
-| 🎨 **UI Kit** | `/ui-kit` | 컴포넌트 쇼케이스 |
-
-</details>
-
-<details>
-<summary><b>🏷️ Product Cards</b></summary>
-<br/>
-
-| 컴포넌트 | 용도 |
-|:--------:|:-----|
-| `ProductCard` | 가로형 상품 카드 (장바구니용) |
-| `ProductGridCard` | 그리드형 상품 카드 (탐색용) |
-| `ExpandableProductCard` | 클릭 시 상세 정보 확장 |
-| `ExpandableProductGridCard` | 그리드 + 확장 기능 |
-
-</details>
-
-<details>
-<summary><b>🗺️ 3D Store Map</b></summary>
-<br/>
-
-```tsx
-<StoreMap 
-  locations={productLocations}       // 상품 위치
-  layout={{ gridSize, shelfSpacing }} // 매장 레이아웃
-  userPosition={{ x, y, z }}         // 사용자 위치
-/>
-```
-
-| 기능 | 조작 |
-|:----:|:-----|
-| 🖱️ **회전** | 드래그 |
-| 🔍 **줌** | 스크롤 |
-| 📍 **상품** | 빨간 마커 |
-| 🔵 **사용자** | 파란 마커 |
-
-</details>
-
-<br/>
-
----
-
-<br/>
-
-## ⚡ Key Features
-
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <h3>🔍</h3>
-      <b>실시간 검색</b>
-      <br/><br/>
-      타이핑과 동시에<br/>즉시 결과 표시
-    </td>
-    <td align="center" width="33%">
-      <h3>🗺️</h3>
-      <b>3D 매장 지도</b>
-      <br/><br/>
-      Three.js 기반<br/>인터랙티브 지도
-    </td>
-    <td align="center" width="33%">
-      <h3>📱</h3>
-      <b>모바일 최적화</b>
-      <br/><br/>
-      Mobile First<br/>반응형 디자인
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <h3>🖼️</h3>
-      <b>이미지 캐러셀</b>
-      <br/><br/>
-      상품별 다중<br/>이미지 지원
-    </td>
-    <td align="center">
-      <h3>📍</h3>
-      <b>위치 표시</b>
-      <br/><br/>
-      상품 위치 정보<br/>(A-1, B-3 등)
-    </td>
-    <td align="center">
-      <h3>⭐</h3>
-      <b>별점 & 리뷰</b>
-      <br/><br/>
-      상품 평점 및<br/>리뷰 표시
-    </td>
-  </tr>
-</table>
-
-<br/>
-
----
-
-<br/>
-
-## 🔧 Development
+### Docker로 실행
 
 ```bash
-# 개발 서버
-npm run dev
+# 이미지 빌드 및 컨테이너 실행
+docker-compose up -d
 
-# 프로덕션 빌드
-npm run build && npm start
+# 로그 확인
+docker-compose logs -f
 
-# 린트 검사
-npm run lint
+# 중지
+docker-compose down
 ```
 
-<br/>
+## 🐳 Docker 배포 가이드
 
-### 📱 모바일 테스트
+### 사전 준비
+
+1. **환경 변수 설정**
+   ```bash
+   # .env.example을 복사하여 .env 파일 생성
+   cp .env.example .env
+   
+   # 필요한 환경 변수 수정
+   # - NEXT_PUBLIC_API_URL: 백엔드 API 주소
+   ```
+
+2. **Docker 설치 확인**
+   ```bash
+   docker --version
+   docker-compose --version
+   ```
+
+### EC2 배포 절차
+
+1. **프로젝트 코드 업로드**
+   ```bash
+   # Git clone 또는 파일 전송
+   git clone <repository-url>
+   cd S14P11A401/smart_shopping_cart_front
+   ```
+
+2. **환경 변수 설정**
+   ```bash
+   # .env 파일 생성 및 수정
+   nano .env
+   ```
+
+3. **Docker 컨테이너 실행**
+   ```bash
+   # 백그라운드에서 실행
+   docker-compose up -d
+   
+   # 상태 확인
+   docker-compose ps
+   ```
+
+4. **헬스 체크**
+   ```bash
+   curl http://localhost:8002
+   ```
+
+### 유용한 Docker 명령어
 
 ```bash
-# ngrok 설치
-npm install -g ngrok
+# 컨테이너 재시작
+docker-compose restart
 
-# 터널 생성
-ngrok http 3000
+# 이미지 재빌드 후 실행
+docker-compose up -d --build
 
-# 출력된 URL로 모바일 접속
-# https://xxxx.ngrok-free.app
+# 로그 실시간 확인
+docker-compose logs -f frontend
+
+# 컨테이너 내부 접속
+docker-compose exec frontend sh
+
+# 컨테이너 및 이미지 삭제
+docker-compose down --rmi all
 ```
 
-<br/>
+## 📦 기술 스택
 
----
+- **Framework**: Next.js 16.1.2
+- **UI**: React 19.2.3, Tailwind CSS 4
+- **3D Graphics**: Three.js, @react-three/fiber, @react-three/drei
+- **Language**: TypeScript 5
 
-<br/>
+## 🏗️ 프로젝트 구조
 
-## 🌐 API Endpoints (예정)
+```
+smart_shopping_cart_front/
+├── app/                # Next.js App Router 페이지
+├── components/         # 재사용 가능한 컴포넌트
+├── public/            # 정적 파일
+├── Dockerfile         # Docker 이미지 빌드 설정
+├── docker-compose.yml # Docker Compose 설정
+└── .env.example       # 환경 변수 템플릿
+```
 
-| Method | Endpoint | Description |
-|:------:|:---------|:------------|
-| `GET` | `/api/cart` | 장바구니 조회 |
-| `GET` | `/api/search` | 상품 검색 |
-| `GET` | `/api/map` | 매장 지도 데이터 |
-| `WS` | `/api/location` | 실시간 위치 |
+## 🔧 환경 변수
 
-<br/>
+| 변수명 | 설명 | 기본값 |
+|--------|------|--------|
+| `NEXT_PUBLIC_API_URL` | 백엔드 API 주소 | `http://localhost:8000` |
+| `PORT` | 애플리케이션 포트 (외부) | `8080` |
 
----
+## 🐛 트러블슈팅
 
-<br/>
+### Docker 빌드 실패
+```bash
+# 캐시 없이 재빌드
+docker-compose build --no-cache
 
-<div align="center">
+# 이전 이미지 삭제 후 재빌드
+docker system prune -a
+docker-compose up -d --build
+```
 
-## 📄 License
+### 포트 충돌
+```bash
+# 8080 포트를 사용 중인 프로세스 확인 (Linux/Mac)
+lsof -i :8080
 
-MIT License
+# 다른 포트 사용 (docker-compose.yml 수정)
+ports:
+  - "8100:3000"  # 호스트:컨테이너 (8000-9000 범위 내)
+```
 
-<br/>
+### 컨테이너가 시작되지 않음
+```bash
+# 로그 확인
+docker-compose logs frontend
 
----
+# 컨테이너 상태 확인
+docker-compose ps
+docker inspect <container-id>
+```
 
-<br/>
+### EC2 보안 그룹 설정
+EC2에서 외부 접속을 허용하려면 보안 그룹에서 포트 8080을 열어야 합니다:
+- **Type**: Custom TCP
+- **Port**: 8080
+- **Source**: 0.0.0.0/0 (또는 특정 IP)
 
-Made with ❤️ by **Smart Shopping Cart Team**
+> **참고**: 이 프로젝트는 EC2 포트 제한(8000-9000)에 맞춰 8080 포트를 사용합니다.
 
-<br/>
+## 📝 개발 가이드
 
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com)
+### 새로운 패키지 추가 후
+```bash
+# Docker 이미지 재빌드 필요
+docker-compose up -d --build
+```
 
-</div>
+### 코드 변경 시
+```bash
+# 컨테이너를 재시작하면 자동 반영 (production mode에서는 재빌드 필요)
+docker-compose restart
+
+# 또는 재빌드
+docker-compose up -d --build
+```
+
+## 📄 라이선스
+
+이 프로젝트는 팀 프로젝트입니다.
