@@ -1,0 +1,311 @@
+[0.017s] Invoking command in '/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection': CMAKE_PREFIX_PATH=/opt/ros/humble CONDA_PROMPT_MODIFIER=(rc_car) /usr/bin/cmake /home/ssafy/Desktop/S14P11A401/rc_tracking/src/rc_detection -DCMAKE_INSTALL_PREFIX=/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection
+[0.045s] -- Found ament_cmake: 1.3.12 (/opt/ros/humble/share/ament_cmake/cmake)
+[0.359s] -- Found rosidl_default_generators: 1.2.0 (/opt/ros/humble/share/rosidl_default_generators/cmake)
+[0.360s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.366s] -- Found rosidl_adapter: 3.1.8 (/opt/ros/humble/share/rosidl_adapter/cmake)
+[0.428s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.480s] -- Found std_msgs: 4.9.0 (/opt/ros/humble/share/std_msgs/cmake)
+[0.528s] -- Found sensor_msgs: 4.9.0 (/opt/ros/humble/share/sensor_msgs/cmake)
+[1.586s] -- Found ament_cmake_ros: 0.10.0 (/opt/ros/humble/share/ament_cmake_ros/cmake)
+[2.117s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[2.872s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[2.912s] -- Found PythonInterp: /home/ssafy/miniforge3/envs/rc_car/bin/python3 (found suitable version "3.10.19", minimum required is "3.6") 
+[2.914s] -- Found python_cmake_module: 0.10.0 (/opt/ros/humble/share/python_cmake_module/cmake)
+[2.960s] -- Found PythonLibs: /home/ssafy/miniforge3/envs/rc_car/lib/libpython3.10.so (found suitable version "3.10.19", minimum required is "3.5") 
+[2.963s] -- Using PYTHON_EXECUTABLE: /home/ssafy/miniforge3/envs/rc_car/bin/python3
+[2.963s] -- Using PYTHON_INCLUDE_DIRS: /home/ssafy/miniforge3/envs/rc_car/include/python3.10
+[2.963s] -- Using PYTHON_LIBRARIES: /home/ssafy/miniforge3/envs/rc_car/lib/libpython3.10.so
+[3.002s] -- Found PythonExtra: .so  
+[3.445s] -- Using numpy include directory: /home/ssafy/miniforge3/envs/rc_car/lib/python3.10/site-packages/numpy/core/include
+[3.494s] -- Configuring done
+[3.588s] CMake Warning at /opt/ros/humble/share/rosidl_generator_py/cmake/rosidl_generator_py_generate_interfaces.cmake:166 (add_library):
+[3.588s]   Cannot generate a safe runtime search path for target
+[3.588s]   rc_detection__rosidl_generator_py because files in some directories may
+[3.589s]   conflict with libraries in implicit directories:
+[3.589s] 
+[3.589s]     runtime library [libpython3.10.so.1.0] in /usr/lib/aarch64-linux-gnu may be hidden by files in:
+[3.589s]       /home/ssafy/miniforge3/envs/rc_car/lib
+[3.589s] 
+[3.589s]   Some of these libraries may not be found correctly.
+[3.589s] Call Stack (most recent call first):
+[3.590s]   /opt/ros/humble/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:48 (include)
+[3.590s]   /opt/ros/humble/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake:286 (ament_execute_extensions)
+[3.590s]   CMakeLists.txt:17 (rosidl_generate_interfaces)
+[3.590s] 
+[3.590s] 
+[3.593s] CMake Warning at /opt/ros/humble/share/rosidl_generator_py/cmake/rosidl_generator_py_generate_interfaces.cmake:226 (add_library):
+[3.594s]   Cannot generate a safe runtime search path for target
+[3.594s]   rc_detection__rosidl_typesupport_fastrtps_c__pyext because files in some
+[3.594s]   directories may conflict with libraries in implicit directories:
+[3.594s] 
+[3.594s]     runtime library [libpython3.10.so.1.0] in /usr/lib/aarch64-linux-gnu may be hidden by files in:
+[3.594s]       /home/ssafy/miniforge3/envs/rc_car/lib
+[3.597s] 
+[3.597s]   Some of these libraries may not be found correctly.
+[3.597s] Call Stack (most recent call first):
+[3.597s]   /opt/ros/humble/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:48 (include)
+[3.598s]   /opt/ros/humble/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake:286 (ament_execute_extensions)
+[3.598s]   CMakeLists.txt:17 (rosidl_generate_interfaces)
+[3.598s] 
+[3.598s] 
+[3.600s] CMake Warning at /opt/ros/humble/share/rosidl_generator_py/cmake/rosidl_generator_py_generate_interfaces.cmake:226 (add_library):
+[3.600s]   Cannot generate a safe runtime search path for target
+[3.600s]   rc_detection__rosidl_typesupport_introspection_c__pyext because files in
+[3.600s]   some directories may conflict with libraries in implicit directories:
+[3.600s] 
+[3.600s]     runtime library [libpython3.10.so.1.0] in /usr/lib/aarch64-linux-gnu may be hidden by files in:
+[3.600s]       /home/ssafy/miniforge3/envs/rc_car/lib
+[3.600s] 
+[3.601s]   Some of these libraries may not be found correctly.
+[3.601s] Call Stack (most recent call first):
+[3.601s]   /opt/ros/humble/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:48 (include)
+[3.601s]   /opt/ros/humble/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake:286 (ament_execute_extensions)
+[3.601s]   CMakeLists.txt:17 (rosidl_generate_interfaces)
+[3.601s] 
+[3.601s] 
+[3.605s] CMake Warning at /opt/ros/humble/share/rosidl_generator_py/cmake/rosidl_generator_py_generate_interfaces.cmake:226 (add_library):
+[3.605s]   Cannot generate a safe runtime search path for target
+[3.605s]   rc_detection__rosidl_typesupport_c__pyext because files in some directories
+[3.606s]   may conflict with libraries in implicit directories:
+[3.606s] 
+[3.606s]     runtime library [libpython3.10.so.1.0] in /usr/lib/aarch64-linux-gnu may be hidden by files in:
+[3.606s]       /home/ssafy/miniforge3/envs/rc_car/lib
+[3.606s] 
+[3.606s]   Some of these libraries may not be found correctly.
+[3.606s] Call Stack (most recent call first):
+[3.606s]   /opt/ros/humble/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:48 (include)
+[3.607s]   /opt/ros/humble/share/rosidl_cmake/cmake/rosidl_generate_interfaces.cmake:286 (ament_execute_extensions)
+[3.607s]   CMakeLists.txt:17 (rosidl_generate_interfaces)
+[3.607s] 
+[3.607s] 
+[3.616s] -- Generating done
+[3.642s] -- Build files have been written to: /home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection
+[3.661s] Invoked command in '/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble CONDA_PROMPT_MODIFIER=(rc_car) /usr/bin/cmake /home/ssafy/Desktop/S14P11A401/rc_tracking/src/rc_detection -DCMAKE_INSTALL_PREFIX=/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection
+[3.662s] Invoking command in '/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection': CMAKE_PREFIX_PATH=/opt/ros/humble CONDA_PROMPT_MODIFIER=(rc_car) /usr/bin/cmake --build /home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection -- -j6 -l6
+[3.740s] [  2%] Generating C code for ROS interfaces
+[3.767s] [  5%] Generating C++ code for ROS interfaces
+[3.781s] [  5%] Built target ament_cmake_python_copy_rc_detection
+[4.560s] running egg_info
+[4.642s] creating rc_detection.egg-info
+[4.643s] writing rc_detection.egg-info/PKG-INFO
+[4.644s] writing dependency_links to rc_detection.egg-info/dependency_links.txt
+[4.645s] writing top-level names to rc_detection.egg-info/top_level.txt
+[4.645s] writing manifest file 'rc_detection.egg-info/SOURCES.txt'
+[4.754s] reading manifest file 'rc_detection.egg-info/SOURCES.txt'
+[4.756s] writing manifest file 'rc_detection.egg-info/SOURCES.txt'
+[4.803s] [  7%] Building C object CMakeFiles/rc_detection__rosidl_generator_c.dir/rosidl_generator_c/rc_detection/msg/detail/detection__functions.c.o
+[4.808s] [ 10%] Building C object CMakeFiles/rc_detection__rosidl_generator_c.dir/rosidl_generator_c/rc_detection/msg/detail/detection_array__functions.c.o
+[4.844s] [ 10%] Built target ament_cmake_python_build_rc_detection_egg
+[4.962s] [ 10%] Built target rc_detection__cpp
+[4.996s] [ 12%] Linking C shared library librc_detection__rosidl_generator_c.so
+[4.996s] [ 17%] Generating C++ type support for eProsima Fast-RTPS
+[4.996s] [ 17%] Generating C++ introspection for ROS interfaces
+[5.006s] [ 20%] Generating C++ type support dispatch for ROS interfaces
+[5.087s] [ 20%] Built target rc_detection__rosidl_generator_c
+[5.118s] [ 23%] Generating C type support for eProsima Fast-RTPS
+[5.121s] [ 25%] Generating C introspection for ROS interfaces
+[5.132s] [ 28%] Generating C type support dispatch for ROS interfaces
+[6.046s] [ 30%] Building CXX object CMakeFiles/rc_detection__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/rc_detection/msg/detail/detection__type_support.cpp.o
+[6.395s] [ 33%] Building CXX object CMakeFiles/rc_detection__rosidl_typesupport_c.dir/rosidl_typesupport_c/rc_detection/msg/detection__type_support.cpp.o
+[6.405s] [ 35%] Building CXX object CMakeFiles/rc_detection__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/rc_detection/msg/detail/detection__type_support_c.cpp.o
+[6.486s] [ 38%] Building CXX object CMakeFiles/rc_detection__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/rc_detection/msg/detection__type_support.cpp.o
+[6.528s] [ 41%] Building CXX object CMakeFiles/rc_detection__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/rc_detection/msg/detail/dds_fastrtps/detection__type_support.cpp.o
+[6.564s] [ 43%] Building CXX object CMakeFiles/rc_detection__rosidl_typesupport_c.dir/rosidl_typesupport_c/rc_detection/msg/detection_array__type_support.cpp.o
+[6.751s] [ 46%] Linking CXX shared library librc_detection__rosidl_typesupport_c.so
+[6.861s] [ 48%] Building C object CMakeFiles/rc_detection__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/rc_detection/msg/detail/detection__type_support.c.o
+[7.005s] [ 48%] Built target rc_detection__rosidl_typesupport_c
+[7.021s] [ 51%] Building C object CMakeFiles/rc_detection__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/rc_detection/msg/detail/detection_array__type_support.c.o
+[7.097s] [ 53%] Building CXX object CMakeFiles/rc_detection__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/rc_detection/msg/detail/detection_array__type_support.cpp.o
+[7.227s] [ 56%] Linking C shared library librc_detection__rosidl_typesupport_introspection_c.so
+[7.289s] [ 58%] Building CXX object CMakeFiles/rc_detection__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/rc_detection/msg/detection_array__type_support.cpp.o
+[7.312s] [ 61%] Building CXX object CMakeFiles/rc_detection__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/rc_detection/msg/detail/detection_array__type_support_c.cpp.o
+[7.415s] [ 61%] Built target rc_detection__rosidl_typesupport_introspection_c
+[7.468s] [ 64%] Building CXX object CMakeFiles/rc_detection__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/rc_detection/msg/detail/dds_fastrtps/detection_array__type_support.cpp.o
+[8.288s] [ 66%] Linking CXX shared library librc_detection__rosidl_typesupport_cpp.so
+[8.414s] [ 69%] Linking CXX shared library librc_detection__rosidl_typesupport_fastrtps_c.so
+[8.432s] [ 71%] Linking CXX shared library librc_detection__rosidl_typesupport_introspection_cpp.so
+[8.441s] [ 71%] Built target rc_detection__rosidl_typesupport_cpp
+[8.590s] [ 71%] Built target rc_detection__rosidl_typesupport_fastrtps_c
+[8.599s] [ 71%] Built target rc_detection__rosidl_typesupport_introspection_cpp
+[8.791s] [ 74%] Linking CXX shared library librc_detection__rosidl_typesupport_fastrtps_cpp.so
+[8.960s] [ 74%] Built target rc_detection__rosidl_typesupport_fastrtps_cpp
+[9.002s] [ 74%] Built target rc_detection
+[9.095s] [ 76%] Generating Python code for ROS interfaces
+[10.432s] [ 76%] Built target rc_detection__py
+[10.525s] [ 79%] Building C object CMakeFiles/rc_detection__rosidl_generator_py.dir/rosidl_generator_py/rc_detection/msg/_detection_s.c.o
+[10.526s] [ 82%] Building C object CMakeFiles/rc_detection__rosidl_generator_py.dir/rosidl_generator_py/rc_detection/msg/_detection_array_s.c.o
+[10.928s] [ 84%] Linking C shared library rosidl_generator_py/rc_detection/librc_detection__rosidl_generator_py.so
+[11.070s] [ 84%] Built target rc_detection__rosidl_generator_py
+[11.150s] [ 87%] Building C object CMakeFiles/rc_detection__rosidl_typesupport_fastrtps_c__pyext.dir/rosidl_generator_py/rc_detection/_rc_detection_s.ep.rosidl_typesupport_fastrtps_c.c.o
+[11.151s] [ 89%] Building C object CMakeFiles/rc_detection__rosidl_typesupport_c__pyext.dir/rosidl_generator_py/rc_detection/_rc_detection_s.ep.rosidl_typesupport_c.c.o
+[11.161s] [ 92%] Building C object CMakeFiles/rc_detection__rosidl_typesupport_introspection_c__pyext.dir/rosidl_generator_py/rc_detection/_rc_detection_s.ep.rosidl_typesupport_introspection_c.c.o
+[11.434s] [ 94%] Linking C shared library rosidl_generator_py/rc_detection/rc_detection_s__rosidl_typesupport_fastrtps_c.cpython-310-aarch64-linux-gnu.so
+[11.467s] [ 97%] Linking C shared library rosidl_generator_py/rc_detection/rc_detection_s__rosidl_typesupport_c.cpython-310-aarch64-linux-gnu.so
+[11.469s] [100%] Linking C shared library rosidl_generator_py/rc_detection/rc_detection_s__rosidl_typesupport_introspection_c.cpython-310-aarch64-linux-gnu.so
+[11.561s] [100%] Built target rc_detection__rosidl_typesupport_fastrtps_c__pyext
+[11.595s] [100%] Built target rc_detection__rosidl_typesupport_introspection_c__pyext
+[11.601s] [100%] Built target rc_detection__rosidl_typesupport_c__pyext
+[11.629s] Invoked command in '/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble CONDA_PROMPT_MODIFIER=(rc_car) /usr/bin/cmake --build /home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection -- -j6 -l6
+[11.652s] Invoking command in '/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection': CMAKE_PREFIX_PATH=/opt/ros/humble CONDA_PROMPT_MODIFIER=(rc_car) /usr/bin/cmake --install /home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection
+[11.671s] -- Install configuration: ""
+[11.672s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/ament_index/resource_index/rosidl_interfaces/rc_detection
+[11.674s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection
+[11.676s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg
+[11.677s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detection_array.h
+[11.680s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/rosidl_generator_c__visibility_control.h
+[11.681s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detection.h
+[11.682s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail
+[11.683s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection__type_support.h
+[11.683s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection_array__functions.h
+[11.684s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection_array__type_support.h
+[11.684s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection__functions.c
+[11.684s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection_array__functions.c
+[11.685s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection__functions.h
+[11.685s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection__struct.h
+[11.685s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection_array__struct.h
+[11.685s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/environment/library_path.sh
+[11.686s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/environment/library_path.dsv
+[11.686s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_generator_c.so
+[11.687s] -- Set runtime path of "/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_generator_c.so" to ""
+[11.687s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection
+[11.687s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg
+[11.687s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/rosidl_typesupport_fastrtps_c__visibility_control.h
+[11.688s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail
+[11.688s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection_array__rosidl_typesupport_fastrtps_c.h
+[11.688s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection__rosidl_typesupport_fastrtps_c.h
+[11.688s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_typesupport_fastrtps_c.so
+[11.689s] -- Set runtime path of "/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_typesupport_fastrtps_c.so" to ""
+[11.689s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection
+[11.689s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg
+[11.689s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/rosidl_typesupport_introspection_c__visibility_control.h
+[11.690s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail
+[11.690s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection__type_support.c
+[11.690s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection__rosidl_typesupport_introspection_c.h
+[11.690s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection_array__type_support.c
+[11.690s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection_array__rosidl_typesupport_introspection_c.h
+[11.691s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_typesupport_introspection_c.so
+[11.691s] -- Set runtime path of "/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_typesupport_introspection_c.so" to ""
+[11.691s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_typesupport_c.so
+[11.692s] -- Set runtime path of "/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_typesupport_c.so" to ""
+[11.693s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection
+[11.693s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg
+[11.693s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/rosidl_generator_cpp__visibility_control.hpp
+[11.694s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail
+[11.694s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection__traits.hpp
+[11.695s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection__builder.hpp
+[11.695s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection__struct.hpp
+[11.696s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection_array__type_support.hpp
+[11.696s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection_array__builder.hpp
+[11.696s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection__type_support.hpp
+[11.696s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection_array__struct.hpp
+[11.696s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection_array__traits.hpp
+[11.696s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detection.hpp
+[11.697s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detection_array.hpp
+[11.697s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection
+[11.698s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg
+[11.698s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail
+[11.698s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection_array__rosidl_typesupport_fastrtps_cpp.hpp
+[11.698s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection__rosidl_typesupport_fastrtps_cpp.hpp
+[11.698s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/dds_fastrtps
+[11.699s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h
+[11.699s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_typesupport_fastrtps_cpp.so
+[11.699s] -- Set runtime path of "/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_typesupport_fastrtps_cpp.so" to ""
+[11.699s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection
+[11.699s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg
+[11.700s] -- Up-to-date: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail
+[11.700s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection__type_support.cpp
+[11.700s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection_array__type_support.cpp
+[11.700s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection_array__rosidl_typesupport_introspection_cpp.hpp
+[11.701s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/include/rc_detection/rc_detection/msg/detail/detection__rosidl_typesupport_introspection_cpp.hpp
+[11.701s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_typesupport_introspection_cpp.so
+[11.701s] -- Set runtime path of "/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_typesupport_introspection_cpp.so" to ""
+[11.701s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_typesupport_cpp.so
+[11.702s] -- Set runtime path of "/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_typesupport_cpp.so" to ""
+[11.702s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/environment/pythonpath.sh
+[11.702s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/environment/pythonpath.dsv
+[11.702s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection-0.0.1-py3.10.egg-info
+[11.703s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection-0.0.1-py3.10.egg-info/SOURCES.txt
+[11.703s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection-0.0.1-py3.10.egg-info/PKG-INFO
+[11.703s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection-0.0.1-py3.10.egg-info/dependency_links.txt
+[11.703s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection-0.0.1-py3.10.egg-info/top_level.txt
+[11.703s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection
+[11.704s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/rc_detection_s__rosidl_typesupport_fastrtps_c.cpython-310-aarch64-linux-gnu.so
+[11.704s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/_rc_detection_s.ep.rosidl_typesupport_c.c
+[11.704s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/msg
+[11.704s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/msg/_detection_array_s.c
+[11.704s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/msg/_detection_s.c
+[11.705s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/msg/_detection.py
+[11.705s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/msg/__init__.py
+[11.705s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/msg/_detection_array.py
+[11.705s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/rc_detection_s__rosidl_typesupport_introspection_c.cpython-310-aarch64-linux-gnu.so
+[11.705s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/_rc_detection_s.ep.rosidl_typesupport_introspection_c.c
+[11.705s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/librc_detection__rosidl_generator_py.so
+[11.706s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/rc_detection_s__rosidl_typesupport_c.cpython-310-aarch64-linux-gnu.so
+[11.706s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/_rc_detection_s.ep.rosidl_typesupport_fastrtps_c.c
+[11.706s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/__init__.py
+[11.797s] Listing '/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection'...
+[11.797s] Compiling '/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/__init__.py'...
+[11.797s] Listing '/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/msg'...
+[11.797s] Compiling '/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/msg/__init__.py'...
+[11.797s] Compiling '/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/msg/_detection.py'...
+[11.797s] Compiling '/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/msg/_detection_array.py'...
+[11.820s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/rc_detection_s__rosidl_typesupport_fastrtps_c.cpython-310-aarch64-linux-gnu.so
+[11.820s] -- Set runtime path of "/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/rc_detection_s__rosidl_typesupport_fastrtps_c.cpython-310-aarch64-linux-gnu.so" to ""
+[11.820s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/rc_detection_s__rosidl_typesupport_introspection_c.cpython-310-aarch64-linux-gnu.so
+[11.821s] -- Set runtime path of "/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/rc_detection_s__rosidl_typesupport_introspection_c.cpython-310-aarch64-linux-gnu.so" to ""
+[11.821s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/rc_detection_s__rosidl_typesupport_c.cpython-310-aarch64-linux-gnu.so
+[11.822s] -- Set runtime path of "/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/python3.10/site-packages/rc_detection/rc_detection_s__rosidl_typesupport_c.cpython-310-aarch64-linux-gnu.so" to ""
+[11.822s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_generator_py.so
+[11.823s] -- Set runtime path of "/home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/lib/librc_detection__rosidl_generator_py.so" to ""
+[11.823s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/msg/Detection.idl
+[11.823s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/msg/DetectionArray.idl
+[11.823s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/msg/Detection.msg
+[11.824s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/msg/DetectionArray.msg
+[11.824s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection//launch
+[11.824s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection//launch/tracking_webcam.launch.py
+[11.825s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection//launch/tracking_ydlidar.launch.py
+[11.825s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection//launch/full_system.launch.py
+[11.825s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection//launch/tracking_system.launch.py
+[11.825s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection//launch/slam_mapping.launch.py
+[11.826s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection//config
+[11.826s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection//config/slam_config.rviz
+[11.826s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/ament_index/resource_index/package_run_dependencies/rc_detection
+[11.826s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/ament_index/resource_index/parent_prefix_path/rc_detection
+[11.827s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/environment/ament_prefix_path.sh
+[11.827s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/environment/ament_prefix_path.dsv
+[11.827s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/environment/path.sh
+[11.827s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/environment/path.dsv
+[11.828s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/local_setup.bash
+[11.828s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/local_setup.sh
+[11.828s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/local_setup.zsh
+[11.828s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/local_setup.dsv
+[11.829s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/package.dsv
+[11.830s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/ament_index/resource_index/packages/rc_detection
+[11.830s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/export_rc_detection__rosidl_generator_cExport.cmake
+[11.830s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/export_rc_detection__rosidl_generator_cExport-noconfig.cmake
+[11.831s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/export_rc_detection__rosidl_typesupport_fastrtps_cExport.cmake
+[11.831s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/export_rc_detection__rosidl_typesupport_fastrtps_cExport-noconfig.cmake
+[11.831s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/rc_detection__rosidl_typesupport_introspection_cExport.cmake
+[11.831s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/rc_detection__rosidl_typesupport_introspection_cExport-noconfig.cmake
+[11.831s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/rc_detection__rosidl_typesupport_cExport.cmake
+[11.832s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/rc_detection__rosidl_typesupport_cExport-noconfig.cmake
+[11.832s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/export_rc_detection__rosidl_generator_cppExport.cmake
+[11.832s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/export_rc_detection__rosidl_typesupport_fastrtps_cppExport.cmake
+[11.832s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/export_rc_detection__rosidl_typesupport_fastrtps_cppExport-noconfig.cmake
+[11.833s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/rc_detection__rosidl_typesupport_introspection_cppExport.cmake
+[11.833s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/rc_detection__rosidl_typesupport_introspection_cppExport-noconfig.cmake
+[11.833s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/rc_detection__rosidl_typesupport_cppExport.cmake
+[11.834s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/rc_detection__rosidl_typesupport_cppExport-noconfig.cmake
+[11.834s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/export_rc_detection__rosidl_generator_pyExport.cmake
+[11.834s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/export_rc_detection__rosidl_generator_pyExport-noconfig.cmake
+[11.835s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/rosidl_cmake-extras.cmake
+[11.835s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/ament_cmake_export_dependencies-extras.cmake
+[11.835s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/ament_cmake_export_include_directories-extras.cmake
+[11.835s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/ament_cmake_export_libraries-extras.cmake
+[11.836s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/ament_cmake_export_targets-extras.cmake
+[11.836s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake
+[11.836s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake
+[11.836s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/rc_detectionConfig.cmake
+[11.837s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/cmake/rc_detectionConfig-version.cmake
+[11.837s] -- Installing: /home/ssafy/Desktop/S14P11A401/rc_tracking/install/rc_detection/share/rc_detection/package.xml
+[11.842s] Invoked command in '/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble CONDA_PROMPT_MODIFIER=(rc_car) /usr/bin/cmake --install /home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection

@@ -14,33 +14,43 @@ echo "[1/5] 기존 프로세스 정리 중..."
 pkill -9 -f "webcam_publisher|yolo_deepsort|distance_lidar|tracking_controller" 2>/dev/null
 sleep 2
 
-# 작업 디렉토리 이동 및 ROS2 환경 설정
-cd /home/seonil/rc_tracking
+# Conda 환경 및 ROS2 환경 설정
+source ~/miniforge3/etc/profile.d/conda.sh
+conda activate rc_car
+source /opt/ros/humble/setup.bash
+
+# 작업 디렉토리 이동 및 워크스페이스 설정
+cd /home/ssafy/Desktop/S14P11A401/rc_tracking
 source install/setup.bash
+
+# GUI 없이 실행 (headless 모드)
+export QT_QPA_PLATFORM=offscreen
+export DISPLAY=:0
 
 # 웹캠 노드 시작
 echo "[2/5] 웹캠 노드 시작 중..."
-python3 /home/seonil/rc_tracking/src/rc_detection/rc_detection/webcam_publisher.py > /tmp/webcam.log 2>&1 &
+python3 /home/ssafy/Desktop/S14P11A401/rc_tracking/src/rc_detection/rc_detection/webcam_publisher.py > /tmp/webcam.log 2>&1 &
 WEBCAM_PID=$!
 sleep 3
 
 # YOLO + DeepSORT 노드 시작
 echo "[3/5] YOLO + DeepSORT 노드 시작 중..."
-python3 /home/seonil/rc_tracking/src/rc_detection/rc_detection/yolo_deepsort_node.py \
-    --model_path=/home/seonil/rc_tracking/yolo26s.pt \
-    --show_preview=true > /tmp/yolo.log 2>&1 &
+python3 /home/ssafy/Desktop/S14P11A401/rc_tracking/src/rc_detection/rc_detection/yolo_deepsort_node.py \
+    --ros-args \
+    -p model_path:=/home/ssafy/Desktop/S14P11A401/rc_tracking/yolo26m.engine \
+    -p show_preview:=false > /tmp/yolo.log 2>&1 &
 YOLO_PID=$!
 sleep 5
 
 # Distance LiDAR 노드 시작
 echo "[4/5] Distance LiDAR 노드 시작 중..."
-python3 /home/seonil/rc_tracking/src/rc_detection/rc_detection/distance_lidar_node.py > /tmp/distance.log 2>&1 &
+python3 /home/ssafy/Desktop/S14P11A401/rc_tracking/src/rc_detection/rc_detection/distance_lidar_node.py > /tmp/distance.log 2>&1 &
 DISTANCE_PID=$!
 sleep 2
 
 # Tracking Controller 노드 시작
 echo "[5/5] Tracking Controller 노드 시작 중..."
-python3 /home/seonil/S14P11A401/rc_tracking/src/rc_detection/rc_detection/tracking_controller_node.py > /tmp/controller.log 2>&1 &
+python3 /home/ssafy/Desktop/S14P11A401/rc_tracking/src/rc_detection/rc_detection/tracking_controller_node.py > /tmp/controller.log 2>&1 &
 CONTROLLER_PID=$!
 
 echo ""

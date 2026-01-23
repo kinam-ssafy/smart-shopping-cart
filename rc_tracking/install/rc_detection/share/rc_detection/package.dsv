@@ -1,0 +1,14 @@
+source;share/rc_detection/hook/cmake_prefix_path.ps1
+source;share/rc_detection/hook/cmake_prefix_path.dsv
+source;share/rc_detection/hook/cmake_prefix_path.sh
+source;share/rc_detection/hook/ld_library_path_lib.ps1
+source;share/rc_detection/hook/ld_library_path_lib.dsv
+source;share/rc_detection/hook/ld_library_path_lib.sh
+source;share/rc_detection/hook/pythonpath.ps1
+source;share/rc_detection/hook/pythonpath.dsv
+source;share/rc_detection/hook/pythonpath.sh
+source;share/rc_detection/local_setup.bash
+source;share/rc_detection/local_setup.dsv
+source;share/rc_detection/local_setup.ps1
+source;share/rc_detection/local_setup.sh
+source;share/rc_detection/local_setup.zsh

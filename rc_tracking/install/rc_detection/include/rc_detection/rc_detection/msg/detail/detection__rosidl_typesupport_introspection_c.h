@@ -1,0 +1,26 @@
+// generated from rosidl_typesupport_introspection_c/resource/idl__rosidl_typesupport_introspection_c.h.em
+// with input from rc_detection:msg/Detection.idl
+// generated code does not contain a copyright notice
+
+#ifndef RC_DETECTION__MSG__DETAIL__DETECTION__ROSIDL_TYPESUPPORT_INTROSPECTION_C_H_
+#define RC_DETECTION__MSG__DETAIL__DETECTION__ROSIDL_TYPESUPPORT_INTROSPECTION_C_H_
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+#include "rosidl_runtime_c/message_type_support_struct.h"
+#include "rosidl_typesupport_interface/macros.h"
+#include "rc_detection/msg/rosidl_typesupport_introspection_c__visibility_control.h"
+
+ROSIDL_TYPESUPPORT_INTROSPECTION_C_PUBLIC_rc_detection
+const rosidl_message_type_support_t *
+ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(rosidl_typesupport_introspection_c, rc_detection, msg, Detection)();
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // RC_DETECTION__MSG__DETAIL__DETECTION__ROSIDL_TYPESUPPORT_INTROSPECTION_C_H_

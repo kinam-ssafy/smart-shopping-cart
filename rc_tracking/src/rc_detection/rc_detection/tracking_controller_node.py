@@ -44,15 +44,15 @@ class TrackingControllerNode(Node):
 
         # 속도 PID
         self.declare_parameter('target_distance', 0.8)  # 목표 거리 (m)
-        self.declare_parameter('kp_speed', 50.0)        # 속도 P게인
+        self.declare_parameter('kp_speed', 60.0)        # 속도 P게인
         self.declare_parameter('ki_speed', 0.5)         # 속도 I게인
         self.declare_parameter('kd_speed', 10.0)        # 속도 D게인
-        self.declare_parameter('max_speed', 60)         # 최대 속도
-        self.declare_parameter('min_speed', 25)         # 최소 구동 속도
+        self.declare_parameter('max_speed', 100)         # 최대 속도
+        self.declare_parameter('min_speed', 90)         # 최소 구동 속도
 
         # 안전 설정
-        self.declare_parameter('stop_deadzone', 0.1)      # 목표 거리 ± 데드존
-        self.declare_parameter('emergency_stop_dist', 0.35)  # 긴급 정지 거리
+        self.declare_parameter('stop_deadzone', 0.15)      # 목표 거리 ± 데드존
+        self.declare_parameter('emergency_stop_dist', 0.4)  # 긴급 정지 거리
         self.declare_parameter('watchdog_timeout', 1.5)   # 통신 타임아웃
 
         # 파라미터 로드
@@ -93,7 +93,7 @@ class TrackingControllerNode(Node):
         # 락온 상태
         self.locked_target_id = None
         self.lock_counter = 0
-        self.lock_threshold = 30  # 30프레임 유지 시 락온
+        self.lock_threshold = 45  # 30프레임 유지 시 락온
 
         # ==========================================
         # 시리얼 초기화

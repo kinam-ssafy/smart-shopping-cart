@@ -1,0 +1,233 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-c995d4923d671eb34d7b.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17
+					]
+				},
+				{
+					"build" : "rc_detection__py",
+					"jsonFile" : "directory-rc_detection__py-79fa3ad7d3175636297b.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/rc_detection__py",
+					"targetIndexes" : 
+					[
+						4
+					]
+				}
+			],
+			"name" : "",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1
+					],
+					"name" : "rc_detection",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ament_cmake_python_build_rc_detection_egg::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ament_cmake_python_build_rc_detection_egg-31b2187c8b8c31cbee98.json",
+					"name" : "ament_cmake_python_build_rc_detection_egg",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ament_cmake_python_copy_rc_detection::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ament_cmake_python_copy_rc_detection-ae209df44ca7faa18d62.json",
+					"name" : "ament_cmake_python_copy_rc_detection",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rc_detection::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rc_detection-81fc5a45a809b0db93c8.json",
+					"name" : "rc_detection",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rc_detection__cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rc_detection__cpp-d001930436dfe669f5c7.json",
+					"name" : "rc_detection__cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "rc_detection__py::@de66176f9523b6b5f2b4",
+					"jsonFile" : "target-rc_detection__py-f74a1bf255e2408523a8.json",
+					"name" : "rc_detection__py",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rc_detection__rosidl_generator_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rc_detection__rosidl_generator_c-5162d502177207eafa28.json",
+					"name" : "rc_detection__rosidl_generator_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rc_detection__rosidl_generator_py::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rc_detection__rosidl_generator_py-bc1f51fc663edc4a0dc2.json",
+					"name" : "rc_detection__rosidl_generator_py",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rc_detection__rosidl_typesupport_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rc_detection__rosidl_typesupport_c-fc3b836ca5bd4f8e9810.json",
+					"name" : "rc_detection__rosidl_typesupport_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rc_detection__rosidl_typesupport_c__pyext::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rc_detection__rosidl_typesupport_c__pyext-3f901444b8b50cf8dd0e.json",
+					"name" : "rc_detection__rosidl_typesupport_c__pyext",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rc_detection__rosidl_typesupport_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rc_detection__rosidl_typesupport_cpp-36c3cecbfe4ba805891e.json",
+					"name" : "rc_detection__rosidl_typesupport_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rc_detection__rosidl_typesupport_fastrtps_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rc_detection__rosidl_typesupport_fastrtps_c-687cd9465e7b2e0c97fa.json",
+					"name" : "rc_detection__rosidl_typesupport_fastrtps_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rc_detection__rosidl_typesupport_fastrtps_c__pyext::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rc_detection__rosidl_typesupport_fastrtps_c__pyext-043237c10390af0173d1.json",
+					"name" : "rc_detection__rosidl_typesupport_fastrtps_c__pyext",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rc_detection__rosidl_typesupport_fastrtps_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rc_detection__rosidl_typesupport_fastrtps_cpp-2882cb267bedb2f49430.json",
+					"name" : "rc_detection__rosidl_typesupport_fastrtps_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rc_detection__rosidl_typesupport_introspection_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rc_detection__rosidl_typesupport_introspection_c-7100efea97feae399cc8.json",
+					"name" : "rc_detection__rosidl_typesupport_introspection_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rc_detection__rosidl_typesupport_introspection_c__pyext::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rc_detection__rosidl_typesupport_introspection_c__pyext-7296d96d899274d77ee0.json",
+					"name" : "rc_detection__rosidl_typesupport_introspection_c__pyext",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rc_detection__rosidl_typesupport_introspection_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rc_detection__rosidl_typesupport_introspection_cpp-11b4fd9ac2b261e5d8ca.json",
+					"name" : "rc_detection__rosidl_typesupport_introspection_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rc_detection_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rc_detection_uninstall-cd928f0c3f554b5cf4c1.json",
+					"name" : "rc_detection_uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-e4b1c91203dbf5ec2ed5.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection",
+		"source" : "/home/ssafy/Desktop/S14P11A401/rc_tracking/src/rc_detection"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}
