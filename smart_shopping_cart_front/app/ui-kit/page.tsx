@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { SearchButton, BackButton, MenuButton } from '@/components/ui/buttons/Button';
 import SearchInput from '@/components/ui/SearchInput';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -10,7 +10,7 @@ import ProductGridCard from '@/components/ui/product/ProductGridCard';
 import Review from '@/components/ui/review/Review';
 import Rating from '@/components/ui/review/Rating';
 import ExpandableProductCard from '@/components/ui/product/ExpandableProductCard';
-import ExpandableProductGridCard from '@/components/ui/product/ExpandableProductGridCard';
+import ExpandableProductGridCard, { ExpandedDetail } from '@/components/ui/product/ExpandableProductGridCard';
 import LocationIcon from '@/components/icons/LocationIcon';
 import CartFooter from '@/components/layout/CartFooter';
 import StoreMap from '@/components/map/StoreMap';
@@ -242,66 +242,100 @@ export default function UIKitPage() {
                     Click on a card to expand details (selected card shows blue ring)
                 </p>
                 <div className="grid grid-cols-2 gap-3">
-                    <ExpandableProductGridCard
-                        id="1"
-                        name="Fresh Organic Apples"
-                        price={4.99}
-                        image={[
-                            "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=300&h=300&fit=crop",
-                            "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=300&h=300&fit=crop"
-                        ]}
-                        quantity={3}
-                        rating={4.5}
-                        location="A-1"
-                        index={0}
-                        isExpanded={expandedCardId === '1'}
-                        onToggle={() => setExpandedCardId(expandedCardId === '1' ? null : '1')}
-                        detail={{
-                            images: [
-                                "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400&h=300&fit=crop",
-                                "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=300&fit=crop",
-                                "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=400&h=300&fit=crop"
-                            ],
-                            description: "Fresh, crisp, and delicious organic apples from local farms. Perfect for snacking, baking, or making fresh juice.",
-                            averageRating: 4.5,
-                            reviews: [
-                                {
-                                    rating: 5.0,
-                                    content: "Amazing quality! Very fresh and tasty.",
-                                    images: ["https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=300&fit=crop"]
-                                },
-                                {
-                                    rating: 4.5,
-                                    content: "Great apples, my family loves them!",
+                    {(() => {
+                        const products = [
+                            {
+                                id: '1',
+                                name: 'Fresh Organic Apples',
+                                price: 4.99,
+                                image: [
+                                    "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=300&h=300&fit=crop",
+                                    "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=300&h=300&fit=crop"
+                                ],
+                                quantity: 3,
+                                rating: 4.5,
+                                location: 'A-1',
+                                detail: {
+                                    images: [
+                                        "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400&h=300&fit=crop",
+                                        "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=300&fit=crop",
+                                        "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=400&h=300&fit=crop"
+                                    ],
+                                    description: "Fresh, crisp, and delicious organic apples from local farms. Perfect for snacking, baking, or making fresh juice.",
+                                    averageRating: 4.5,
+                                    reviews: [
+                                        {
+                                            rating: 5.0,
+                                            content: "Amazing quality! Very fresh and tasty.",
+                                            images: ["https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=300&fit=crop"]
+                                        },
+                                        {
+                                            rating: 4.5,
+                                            content: "Great apples, my family loves them!",
+                                        }
+                                    ]
                                 }
-                            ]
-                        }}
-                    />
-                    <ExpandableProductGridCard
-                        id="2"
-                        name="Premium Chocolate Bar"
-                        price={12.50}
-                        image="https://images.unsplash.com/photo-1606312619070-d48b4ceb6b3d?w=300&h=300&fit=crop"
-                        quantity={1}
-                        rating={4.8}
-                        location="B-3"
-                        index={1}
-                        isExpanded={expandedCardId === '2'}
-                        onToggle={() => setExpandedCardId(expandedCardId === '2' ? null : '2')}
-                        detail={{
-                            images: [
-                                "https://images.unsplash.com/photo-1606312619070-d48b4ceb6b3d?w=400&h=300&fit=crop"
-                            ],
-                            description: "Premium dark chocolate with nuts and caramel. Made with the finest ingredients.",
-                            averageRating: 4.8,
-                            reviews: [
-                                {
-                                    rating: 5.0,
-                                    content: "Best chocolate ever!",
+                            },
+                            {
+                                id: '2',
+                                name: 'Premium Chocolate Bar',
+                                price: 12.50,
+                                image: "https://images.unsplash.com/photo-1606312619070-d48b4ceb6b3d?w=300&h=300&fit=crop",
+                                quantity: 1,
+                                rating: 4.8,
+                                location: 'B-3',
+                                detail: {
+                                    images: [
+                                        "https://images.unsplash.com/photo-1606312619070-d48b4ceb6b3d?w=400&h=300&fit=crop"
+                                    ],
+                                    description: "Premium dark chocolate with nuts and caramel. Made with the finest ingredients.",
+                                    averageRating: 4.8,
+                                    reviews: [
+                                        {
+                                            rating: 5.0,
+                                            content: "Best chocolate ever!",
+                                        }
+                                    ]
                                 }
-                            ]
-                        }}
-                    />
+                            }
+                        ];
+
+                        return Array.from({ length: Math.ceil(products.length / 2) }).map((_, rowIndex) => {
+                            const startIdx = rowIndex * 2;
+                            const rowProducts = products.slice(startIdx, startIdx + 2);
+                            const expandedProductInRow = rowProducts.find(p => expandedCardId === p.id);
+
+                            return (
+                                <React.Fragment key={`row-${rowIndex}`}>
+                                    {/* 행의 카드들 */}
+                                    {rowProducts.map((product) => (
+                                        <ExpandableProductGridCard
+                                            key={product.id}
+                                            id={product.id}
+                                            name={product.name}
+                                            price={product.price}
+                                            image={product.image}
+                                            quantity={product.quantity}
+                                            rating={product.rating}
+                                            location={product.location}
+                                            isExpanded={expandedCardId === product.id}
+                                            onToggle={() => setExpandedCardId(expandedCardId === product.id ? null : product.id)}
+                                        />
+                                    ))}
+
+                                    {/* 빈 자리 채우기 (마지막 행이 1개만 있을 때) */}
+                                    {rowProducts.length === 1 && <div />}
+
+                                    {/* 확장 영역 - 이 행에 확장된 카드가 있으면 렌더링 */}
+                                    {expandedProductInRow && (
+                                        <ExpandedDetail
+                                            detail={expandedProductInRow.detail}
+                                        />
+                                    )}
+                                </React.Fragment>
+                            );
+                        });
+                    })()}
                 </div>
             </section>
 
