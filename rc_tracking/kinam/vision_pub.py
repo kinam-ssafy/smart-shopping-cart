@@ -7,6 +7,8 @@ import torch
 from ultralytics import YOLO
 from deep_sort_realtime.deepsort_tracker import DeepSort
 
+# hi
+
 # ====================================================================
 # 🎛️ [USER CONFIG] 여기서 모든 수치를 조정하세요!
 # ====================================================================
