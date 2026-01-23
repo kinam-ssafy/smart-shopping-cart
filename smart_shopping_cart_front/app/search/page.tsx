@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { BackButton } from '@/components/ui/buttons/Button';
 import SearchInput from '@/components/ui/SearchInput';
 import SectionHeader from '@/components/ui/SectionHeader';
-import ExpandableProductGridCard from '@/components/ui/product/ExpandableProductGridCard';
+import ExpandableProductGridCard, { ExpandedDetail, ProductDetailType } from '@/components/ui/product/ExpandableProductGridCard';
 
 // 목데이터: 추천 상품들
 const MOCK_RECOMMENDED_PRODUCTS = [
@@ -132,8 +132,21 @@ export default function SearchPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSection, setSelectedSection] = useState('Recommended');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const expandedDetailRef = useRef<HTMLDivElement>(null);
 
     const sections = ['Recommended', 'Popular'];
+
+    // 확장 시 스크롤
+    useEffect(() => {
+        if (expandedCardId && expandedDetailRef.current) {
+            setTimeout(() => {
+                expandedDetailRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                });
+            }, 100);
+        }
+    }, [expandedCardId]);
 
     const handleSearch = (query: string) => {
         setSearchQuery(query);
@@ -216,22 +229,43 @@ export default function SearchPage() {
 
                 {/* Product Grid (2열) */}
                 <div className="grid grid-cols-2 gap-3 mt-4">
-                    {filteredProducts.map((product, index) => (
-                        <ExpandableProductGridCard
-                            key={product.id}
-                            id={product.id}
-                            name={product.name}
-                            price={product.price}
-                            image={product.image}
-                            quantity={product.quantity}
-                            rating={product.rating}
-                            location={product.location}
-                            detail={product.detail}
-                            index={index}
-                            isExpanded={expandedCardId === product.id}
-                            onToggle={() => setExpandedCardId(expandedCardId === product.id ? null : product.id)}
-                        />
-                    ))}
+                    {/* 행 단위로 렌더링 */}
+                    {Array.from({ length: Math.ceil(filteredProducts.length / 2) }).map((_, rowIndex) => {
+                        const startIdx = rowIndex * 2;
+                        const rowProducts = filteredProducts.slice(startIdx, startIdx + 2);
+                        const expandedProductInRow = rowProducts.find(p => expandedCardId === p.id);
+
+                        return (
+                            <React.Fragment key={`row-${rowIndex}`}>
+                                {/* 행의 카드들 */}
+                                {rowProducts.map((product) => (
+                                    <ExpandableProductGridCard
+                                        key={product.id}
+                                        id={product.id}
+                                        name={product.name}
+                                        price={product.price}
+                                        image={product.image}
+                                        quantity={product.quantity}
+                                        rating={product.rating}
+                                        location={product.location}
+                                        isExpanded={expandedCardId === product.id}
+                                        onToggle={() => setExpandedCardId(expandedCardId === product.id ? null : product.id)}
+                                    />
+                                ))}
+
+                                {/* 빈 자리 채우기 (마지막 행이 1개만 있을 때) */}
+                                {rowProducts.length === 1 && <div />}
+
+                                {/* 확장 영역 - 이 행에 확장된 카드가 있으면 렌더링 */}
+                                {expandedProductInRow && (
+                                    <ExpandedDetail
+                                        detail={expandedProductInRow.detail}
+                                        detailRef={expandedDetailRef}
+                                    />
+                                )}
+                            </React.Fragment>
+                        );
+                    })}
                 </div>
 
                 {/* 검색 결과 없음 */}
