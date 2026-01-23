@@ -32,7 +32,6 @@ yarn-error.log*
 
 # env files (exclude actual secrets, but keep .env.example)
 .env
-.env*.local
 
 # vercel
 .vercel
