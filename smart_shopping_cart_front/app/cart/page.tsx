@@ -93,20 +93,27 @@ export default function CartPage() {
                 </div>
 
                 {/* 장바구니 상품 리스트 */}
-                <div className="space-y-3 mb-6">
-                    {MOCK_CART_ITEMS.map((item) => (
-                        <ExpandableProductCard
-                            key={item.id}
-                            id={item.id}
-                            name={item.name}
-                            price={item.price}
-                            image={item.image}
-                            quantity={item.quantity}
-                            rating={item.rating}
-                            location={item.location}
-                            detail={item.detail}
-                        />
-                    ))}
+                <div className="mb-6">
+                    {/* 장바구니 타이틀 */}
+                    <h2 className="text-xl font-bold text-gray-800 mb-4 pl-1">
+                        Shopping Basket
+                    </h2>
+
+                    <div className="space-y-3">
+                        {MOCK_CART_ITEMS.map((item) => (
+                            <ExpandableProductCard
+                                key={item.id}
+                                id={item.id}
+                                name={item.name}
+                                price={item.price}
+                                image={item.image}
+                                quantity={item.quantity}
+                                rating={item.rating}
+                                location={item.location}
+                                detail={item.detail}
+                            />
+                        ))}
+                    </div>
                 </div>
             </div>
 
