@@ -59,7 +59,7 @@ pipeline {
                 echo '💚 헬스 체크...'
                 sh '''
                     sleep 10
-                    curl -f http://localhost:${HOST_PORT} || exit 1
+                    curl -f http://172.17.0.1:${HOST_PORT} || exit 1
                 '''
             }
         }
