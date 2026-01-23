@@ -7,12 +7,16 @@ package_name = 'rc_detection'
 setup(
     name=package_name,
     version='0.0.1',
-    packages=[package_name],
+    packages=[package_name, 'kinam'],
+    package_dir={
+        'kinam': '../../kinam',
+    },
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
+        (os.path.join('share', package_name, 'launch'), glob('../../kinam/*.launch.py')),
         (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
         (os.path.join('share', package_name, 'config'), glob('config/*.rviz')),
     ],
@@ -31,6 +35,8 @@ setup(
             'map_saver = rc_detection.map_saver:main',
             'distance_test_node = rc_detection.distance_test_node:main',
             'distance_lidar_node = rc_detection.distance_lidar_node:main',
+            'kinam_vision = kinam.ros2_vision_node:main',
+            'kinam_control = kinam.ros2_control_node:main',
         ],
     },
 )
