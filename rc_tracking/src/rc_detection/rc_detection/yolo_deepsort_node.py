@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 YOLO + DeepSORT + Web Server 통합 노드
-- 스마트 쇼핑 카트 전용 로직 적용
-- 초기 락온 시점의 색상 정보를 '절대 기준'으로 사용하여 재식별 수행
+- 로그 스팸 제거: ID가 실제로 변경될 때만 로그 출력
+- 락온 개선: 중앙 우선 락온 / 주인 우선 추적
 """
 
 import rclpy
@@ -19,7 +19,6 @@ from deep_sort_realtime.deepsort_tracker import DeepSort
 import time
 import socket
 
-# 커스텀 메시지 import
 try:
     from rc_detection.msg import Detection, DetectionArray
     print("✅ Detection 메시지 import 성공")
@@ -35,7 +34,6 @@ output_frame = None
 lock = threading.Lock()
 
 def get_ip_address():
-    """현재 기기의 IP 주소를 가져옵니다"""
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
@@ -90,14 +88,13 @@ class YOLODeepSORTNode(Node):
 
         # 파라미터 설정
         self.declare_parameter('model_path', 'yolo26m.engine')
-        self.declare_parameter('confidence_threshold', 0.5)
+        self.declare_parameter('confidence_threshold', 0.6)
         self.declare_parameter('target_class', 'person')
         
-        # 트래킹 관련 파라미터
-        self.declare_parameter('lock_frame_count', 45)       # 락온에 필요한 프레임 수
-        self.declare_parameter('similarity_threshold', 0.6)  # 재식별 유사도 기준 (0.5~0.7 추천)
-        self.declare_parameter('track_max_age', 15)          # 놓쳤을 때 기억하는 시간
-        self.declare_parameter('track_n_init', 2)
+        self.declare_parameter('lock_frame_count', 45)
+        self.declare_parameter('similarity_threshold', 0.6)
+        self.declare_parameter('track_max_age', 15)
+        self.declare_parameter('track_n_init', 3)
 
         model_path = self.get_parameter('model_path').value
         self.conf_threshold = self.get_parameter('confidence_threshold').value
@@ -108,11 +105,9 @@ class YOLODeepSORTNode(Node):
         track_max_age = self.get_parameter('track_max_age').value
         track_n_init = self.get_parameter('track_n_init').value
 
-        # YOLO 모델 로딩
         self.get_logger().info(f'YOLO 모델 로딩: {model_path}')
         self.yolo = YOLO(model_path)
 
-        # DeepSORT 초기화
         self.tracker = DeepSort(
             max_age=track_max_age,
             n_init=track_n_init,
@@ -124,10 +119,9 @@ class YOLODeepSORTNode(Node):
             embedder_gpu=True
         )
 
-        # 락온 상태 변수
-        self.target_hist = None         # [중요] 초기 락온된 색상 정보 (절대 불변)
-        self.original_target_id = None  # 최초 ID (표시용)
-        self.current_track_id = None    # 현재 추적 중인 DeepSORT ID (가변)
+        self.target_hist = None
+        self.original_target_id = None
+        self.current_track_id = None
         self.is_locked = False
         self.lock_counter = 0
 
@@ -136,16 +130,13 @@ class YOLODeepSORTNode(Node):
         self.closest_object_id = None
         self.distance_timestamp = None
 
-        # Subscribers
         self.create_subscription(Image, '/camera/image_raw', self.image_callback, 10)
         self.create_subscription(Float32, '/distance', self.distance_callback, 10)
         self.create_subscription(Int32, '/closest_object_id', self.closest_id_callback, 10)
 
-        # Publishers
         if DetectionArray:
             self.detection_pub = self.create_publisher(DetectionArray, '/detections', 10)
         
-        # 웹 서버 스레드 시작
         self.web_thread = threading.Thread(target=start_flask_server, daemon=True)
         self.web_thread.start()
 
@@ -157,10 +148,8 @@ class YOLODeepSORTNode(Node):
         self.closest_object_id = msg.data
 
     def get_color_histogram(self, img_crop):
-        """객체의 색상 히스토그램 추출 (HSV)"""
         if img_crop is None or img_crop.size == 0: return None
         hsv = cv2.cvtColor(img_crop, cv2.COLOR_BGR2HSV)
-        # H(색상)와 S(채도)만 사용하여 조명 변화 영향 최소화
         hist = cv2.calcHist([hsv], [0, 1], None, [30, 32], [0, 180, 0, 256])
         cv2.normalize(hist, hist, 0, 1, cv2.NORM_MINMAX)
         return hist
@@ -172,7 +161,6 @@ class YOLODeepSORTNode(Node):
             height, width = cv_image.shape[:2]
             center_x, center_y = width // 2, height // 2
 
-            # 1. YOLO 추론
             results = self.yolo(cv_image, conf=self.conf_threshold, verbose=False)
             detections_for_tracker = []
             
@@ -182,89 +170,110 @@ class YOLODeepSORTNode(Node):
                     conf = float(box.conf[0])
                     cls = int(box.cls[0])
                     class_name = self.yolo.names[cls]
-                    
-                    if self.target_class and class_name != self.target_class:
-                        continue
-                        
+                    if self.target_class and class_name != self.target_class: continue
                     detections_for_tracker.append(([x1, y1, x2-x1, y2-y1], conf, class_name))
 
-            # 2. DeepSORT 추적 업데이트
             tracks = self.tracker.update_tracks(detections_for_tracker, frame=cv_image)
 
-            # 3. 락온 및 추적 로직
-            best_match_track = None
-            found_person_in_center = False
-
+            # -----------------------------------------------------------
+            # 1. 트랙킹 데이터 전처리 (후보군 수집)
+            # -----------------------------------------------------------
+            track_current_obj = None
+            candidate_tracks = []
+            
             for track in tracks:
                 if not track.is_confirmed(): continue
                 ltrb = track.to_ltrb()
                 x1, y1, x2, y2 = map(int, ltrb)
-                
-                # 좌표 클램핑
                 x1, y1 = max(0, x1), max(0, y1)
                 x2, y2 = min(width, x2), min(height, y2)
-                
                 if x2 <= x1 or y2 <= y1: continue
 
-                # 현재 객체의 색상 추출
-                person_crop = cv_image[y1:y2, x1:x2]
-                current_hist = self.get_color_histogram(person_crop)
-                if current_hist is None: continue
-
-                # [모드 1] 락온 전: 화면 중앙 탐색
-                if not self.is_locked:
-                    if (x1 < center_x < x2) and (y1 < center_y < y2):
-                        found_person_in_center = True
-                        # 카운터가 차면 락온 확정
-                        if self.lock_counter >= self.lock_frame_count:
-                            self.target_hist = current_hist  # ⭐ 현재 색상을 '기준'으로 저장
-                            self.original_target_id = track.track_id
-                            self.current_track_id = track.track_id
-                            self.is_locked = True
-                            self.get_logger().info(f'✅ 락온 완료! ID:{self.original_target_id}')
+                obj_cx, obj_cy = (x1 + x2) / 2, (y1 + y2) / 2
+                dist_to_center = np.sqrt((obj_cx - center_x)**2 + (obj_cy - center_y)**2)
                 
-                # [모드 2] 락온 후: 추적 및 재식별
-                else:
-                    is_match = False
-                    
-                    # 2-1. DeepSORT ID가 같으면 -> 내 주인 맞음
-                    if track.track_id == self.current_track_id:
-                        is_match = True
-                        # ⚠️ 중요: target_hist를 업데이트하지 않음! (초기 색상 유지)
-                    
-                    # 2-2. ID가 다르면 -> 색상 비교로 재식별 시도 (Re-ID)
-                    else:
-                        # 저장해둔 '초기 색상'과 '현재 객체 색상' 비교
-                        sim = cv2.compareHist(self.target_hist, current_hist, cv2.HISTCMP_CORREL)
-                        
-                        # 유사도가 높으면 주인으로 다시 인정
-                        if sim > self.similarity_threshold:
-                            is_match = True
-                            self.current_track_id = track.track_id # 새 ID로 갱신
-                            self.get_logger().info(f'🔄 재식별 성공! ID:{track.track_id} (유사도: {sim:.2f})')
-                    
-                    if is_match:
-                        best_match_track = track
+                person_crop = cv_image[y1:y2, x1:x2]
+                hist = self.get_color_histogram(person_crop)
+                
+                if hist is not None:
+                    candidate_tracks.append({
+                        'track': track,
+                        'hist': hist,
+                        'dist_to_center': dist_to_center,
+                        'box': (x1, y1, x2, y2)
+                    })
+                
+                # 주인님 확인 (ID 기준)
+                if self.is_locked and track.track_id == self.current_track_id:
+                    track_current_obj = track
 
-            # 4. 락온 카운터 관리
+            # -----------------------------------------------------------
+            # 2. 로직 분기: 락온 전 vs 락온 후
+            # -----------------------------------------------------------
+            best_match_track = None
+
+            # [A] 락온 전: 중앙에 가장 가까운 놈 선택
             if not self.is_locked:
-                if found_person_in_center: self.lock_counter += 1
-                else: self.lock_counter = max(0, self.lock_counter - 2)
+                closest_track_info = None
+                min_dist = float('inf')
 
-            # 5. 시각화 및 웹 송출
+                for item in candidate_tracks:
+                    x1, y1, x2, y2 = item['box']
+                    if (x1 < center_x < x2) and (y1 < center_y < y2):
+                        if item['dist_to_center'] < min_dist:
+                            min_dist = item['dist_to_center']
+                            closest_track_info = item
+                
+                if closest_track_info:
+                    self.lock_counter += 1
+                    if self.lock_counter >= self.lock_frame_count:
+                        self.target_hist = closest_track_info['hist']
+                        self.original_target_id = closest_track_info['track'].track_id
+                        self.current_track_id = closest_track_info['track'].track_id
+                        self.is_locked = True
+                        self.get_logger().info(f'✅ 락온 완료! ID:{self.original_target_id}')
+                else:
+                    self.lock_counter = max(0, self.lock_counter - 1)
+
+            # [B] 락온 후: 주인님 우선 법칙
+            else:
+                # Case 1: 주인이 있으면 무조건 추적 (로그 출력 안 함)
+                if track_current_obj:
+                    best_match_track = track_current_obj
+                
+                # Case 2: 주인이 없으면 가장 닮은 놈 찾기 (Re-ID)
+                else:
+                    max_sim = 0.0
+                    best_candidate = None
+                    
+                    for item in candidate_tracks:
+                        sim = cv2.compareHist(self.target_hist, item['hist'], cv2.HISTCMP_CORREL)
+                        if sim > max_sim:
+                            max_sim = sim
+                            best_candidate = item['track']
+                    
+                    if best_candidate and max_sim > self.similarity_threshold:
+                        # [핵심] ID가 실제로 바뀔 때만 로그 출력 (도배 방지)
+                        if self.current_track_id != best_candidate.track_id:
+                             self.get_logger().info(f'🔄 타겟 변경: ID {self.current_track_id} -> {best_candidate.track_id} (유사도: {max_sim:.2f})')
+                        
+                        self.current_track_id = best_candidate.track_id
+                        best_match_track = best_candidate
+
+            # -----------------------------------------------------------
+            # 3. 시각화 및 발행
+            # -----------------------------------------------------------
             self.visualize(cv_image, tracks, best_match_track, center_x, center_y)
             
             with lock:
                 output_frame = cv_image.copy()
 
-            # 6. 결과 발행 (컨트롤러용)
             self.publish_detections(tracks, msg.header)
 
         except Exception as e:
-            self.get_logger().error(f'YOLO 처리 에러: {e}')
+            self.get_logger().error(f'YOLO 에러: {e}')
 
     def visualize(self, img, tracks, best_track, cx, cy):
-        # 거리 데이터 유효성 체크 (0.5초 이내 데이터만 인정)
         dist_valid = False
         if self.latest_distance and self.distance_timestamp:
             if (self.get_clock().now() - self.distance_timestamp).nanoseconds / 1e9 < 0.5:
@@ -275,14 +284,12 @@ class YOLODeepSORTNode(Node):
             ltrb = track.to_ltrb()
             x1, y1, x2, y2 = map(int, ltrb)
             
-            # 주인(추적 대상)은 초록색, 나머지는 노란색
             is_target = (self.is_locked and track.track_id == self.current_track_id)
             color = (0, 255, 0) if is_target else (0, 255, 255)
             thick = 3 if is_target else 2
             
             cv2.rectangle(img, (x1, y1), (x2, y2), color, thick)
             
-            # 라벨 표시
             label = f'ID:{track.track_id}'
             if is_target:
                 label = f'TARGET (Orig:{self.original_target_id})'
@@ -291,14 +298,12 @@ class YOLODeepSORTNode(Node):
                 
             cv2.putText(img, label, (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
-        # 락온 전 중앙 점 및 카운터 표시
         if not self.is_locked:
             cv2.circle(img, (cx, cy), 5, (0, 0, 255), -1)
             cv2.putText(img, f'LOCKING: {self.lock_counter}/{self.lock_frame_count}', (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
-        # 놓쳤을 때 경고
         elif best_track is None:
-            cv2.putText(img, 'TARGET LOST... SCANNING', (50, 240), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+            cv2.putText(img, 'TARGET LOST', (50, 240), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 3)
 
     def publish_detections(self, tracks, header):
         if not DetectionArray: return
@@ -307,12 +312,10 @@ class YOLODeepSORTNode(Node):
         for track in tracks:
             if not track.is_confirmed(): continue
             det = Detection()
-            # 현재 추적 중인 대상이면 원본 ID로 위장해서 보냄 (컨트롤러 혼동 방지)
             if self.is_locked and track.track_id == self.current_track_id:
                 det.track_id = int(self.original_target_id)
             else:
                 det.track_id = int(track.track_id)
-                
             det.class_name = 'person'
             ltrb = track.to_ltrb()
             det.x_min, det.y_min, det.x_max, det.y_max = map(int, ltrb)
