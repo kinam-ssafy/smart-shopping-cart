@@ -52,7 +52,7 @@ class TrackingControllerNode(Node):
 
         # 안전 설정
         self.declare_parameter('stop_deadzone', 0.15)      # 목표 거리 ± 데드존
-        self.declare_parameter('emergency_stop_dist', 0.5)  # 긴급 정지 거리
+        self.declare_parameter('emergency_stop_dist', 0.7)  # 긴급 정지 거리
         self.declare_parameter('watchdog_timeout', 1.5)   # 통신 타임아웃
 
         # 파라미터 로드
