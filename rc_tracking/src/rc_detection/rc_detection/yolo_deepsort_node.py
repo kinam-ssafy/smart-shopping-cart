@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 """
-YOLO + DeepSORT + Web Server 통합 노드
-- YOLO 추론 및 DeepSORT 추적 수행
-- 별도의 뷰어 노드 없이 직접 Flask로 영상 송출 (포트 5000)
-- ROS2 통신 부하를 줄여서 화면 끊김 해결
+YOLO + DeepSORT + Web Server 통합 노드 (IP 출력 기능 추가)
 """
 
 import rclpy
@@ -18,6 +15,7 @@ from flask import Flask, Response
 from ultralytics import YOLO
 from deep_sort_realtime.deepsort_tracker import DeepSort
 import time
+import socket  # IP 확인용
 
 # 커스텀 메시지 import
 try:
@@ -28,25 +26,36 @@ except ImportError:
     DetectionArray = None
 
 # ==========================================
-# 🌐 Flask 웹 서버 설정 (YOLO 노드 내장)
+# 🌐 Flask 웹 서버 설정
 # ==========================================
 app = Flask(__name__)
 output_frame = None
 lock = threading.Lock()
+
+def get_ip_address():
+    """현재 기기의 IP 주소를 가져옵니다"""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
 
 def generate_frames():
     global output_frame
     while True:
         with lock:
             if output_frame is None:
+                time.sleep(0.01)
                 continue
-            # 이미지를 바로 JPEG로 압축해서 전송 (ZMQ 방식과 동일한 효율)
             ret, buffer = cv2.imencode('.jpg', output_frame)
             frame_bytes = buffer.tobytes()
 
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-        time.sleep(0.03) # CPU 과부하 방지
+        time.sleep(0.03)
 
 @app.route('/')
 def index():
@@ -57,11 +66,18 @@ def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 def start_flask_server():
-    # 로그 끄기 (터미널 깨끗하게)
     import logging
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
-    # 서버 실행 (0.0.0.0으로 열어서 외부 접속 허용)
+    
+    # [수정] IP 주소 확인 및 출력
+    ip_addr = get_ip_address()
+    print("\n" + "="*60)
+    print(f"🚀 웹 뷰어 실행 됨! (YOLO 내장)")
+    print(f"💻 노트북에서 아래 주소로 접속하세요:")
+    print(f"👉 http://{ip_addr}:5000")
+    print("="*60 + "\n")
+    
     app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
 
 
@@ -77,7 +93,6 @@ class YOLODeepSORTNode(Node):
         self.declare_parameter('confidence_threshold', 0.6)
         self.declare_parameter('target_class', 'person')
         
-        # 락온 파라미터
         self.declare_parameter('lock_frame_count', 45)
         self.declare_parameter('similarity_threshold', 0.6)
         self.declare_parameter('track_max_age', 15)
@@ -108,7 +123,6 @@ class YOLODeepSORTNode(Node):
             embedder_gpu=True
         )
 
-        # 상태 변수
         self.target_hist = None
         self.original_target_id = None
         self.current_track_id = None
@@ -132,7 +146,6 @@ class YOLODeepSORTNode(Node):
         # 웹 서버 스레드 시작
         self.web_thread = threading.Thread(target=start_flask_server, daemon=True)
         self.web_thread.start()
-        self.get_logger().info('🚀 웹 서버가 내장되었습니다! http://<IP>:5000 접속하세요.')
 
     def distance_callback(self, msg):
         self.latest_distance = msg.data
@@ -155,7 +168,6 @@ class YOLODeepSORTNode(Node):
             height, width = cv_image.shape[:2]
             center_x, center_y = width // 2, height // 2
 
-            # 1. YOLO 추론
             results = self.yolo(cv_image, conf=self.conf_threshold, verbose=False)
             detections_for_tracker = []
             
@@ -171,10 +183,8 @@ class YOLODeepSORTNode(Node):
                         
                     detections_for_tracker.append(([x1, y1, x2-x1, y2-y1], conf, class_name))
 
-            # 2. DeepSORT 업데이트
             tracks = self.tracker.update_tracks(detections_for_tracker, frame=cv_image)
 
-            # 3. 락온 로직
             best_match_track = None
             found_person_in_center = False
 
@@ -183,19 +193,16 @@ class YOLODeepSORTNode(Node):
                 ltrb = track.to_ltrb()
                 x1, y1, x2, y2 = map(int, ltrb)
                 
-                # 범위 체크
                 x1, y1 = max(0, x1), max(0, y1)
                 x2, y2 = min(width, x2), min(height, y2)
                 
                 if x2 <= x1 or y2 <= y1: continue
 
-                # 히스토그램 추출
                 person_crop = cv_image[y1:y2, x1:x2]
                 current_hist = self.get_color_histogram(person_crop)
                 if current_hist is None: continue
 
                 if not self.is_locked:
-                    # 락온 대기
                     if (x1 < center_x < x2) and (y1 < center_y < y2):
                         found_person_in_center = True
                         if self.lock_counter >= self.lock_frame_count:
@@ -205,7 +212,6 @@ class YOLODeepSORTNode(Node):
                             self.is_locked = True
                             self.get_logger().info(f'✅ 락온! ID:{self.original_target_id}')
                 else:
-                    # 락온 추적 (ID 매칭 or 재식별)
                     is_match = False
                     if track.track_id == self.current_track_id:
                         is_match = True
@@ -220,26 +226,21 @@ class YOLODeepSORTNode(Node):
                     if is_match:
                         best_match_track = track
 
-            # 카운터 관리
             if not self.is_locked:
                 if found_person_in_center: self.lock_counter += 1
                 else: self.lock_counter = max(0, self.lock_counter - 2)
 
-            # 4. 시각화 및 웹 송출용 이미지 업데이트
             self.visualize(cv_image, tracks, best_match_track, center_x, center_y)
             
-            # [핵심] Flask가 가져갈 수 있게 전역 변수에 저장
             with lock:
                 output_frame = cv_image.copy()
 
-            # 5. Detection 결과 발행 (제어 노드용)
             self.publish_detections(tracks, msg.header)
 
         except Exception as e:
             self.get_logger().error(f'YOLO 에러: {e}')
 
     def visualize(self, img, tracks, best_track, cx, cy):
-        # 거리 유효성 체크
         dist_valid = False
         if self.latest_distance and self.distance_timestamp:
             if (self.get_clock().now() - self.distance_timestamp).nanoseconds / 1e9 < 0.5:

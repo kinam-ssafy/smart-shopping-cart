@@ -31,7 +31,7 @@ class DistanceLidarNode(Node):
         self.camera_fov = 60.0
         
         # [설정] 라이다-카메라 오프셋
-        self.declare_parameter('lidar_camera_offset', 0.0)
+        self.declare_parameter('lidar_camera_offset', 179.13)
         self.lidar_offset_deg = self.get_parameter('lidar_camera_offset').value
         
         # ==========================================
