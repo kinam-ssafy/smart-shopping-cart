@@ -72,6 +72,12 @@ class DistanceLidarNode(Node):
         
         self.get_logger().info('Distance LiDAR Node Started (Python SDK)')
         self.get_logger().info('=' * 60)
+
+        self.declare_parameter('lidar_camera_offset', 0.0)
+        self.lidar_offset_deg = self.get_parameter('lidar_camera_offset').value
+
+        self.get_logger().info(f'🛠️ LiDAR 오차 보정값: {self.lidar_offset_deg}도')
+
     
     def init_lidar(self):
         """YDLiDAR Python SDK 초기화"""
@@ -119,10 +125,13 @@ class DistanceLidarNode(Node):
             return False
     
     def lidar_scan_loop(self):
-        """LiDAR 스캔 루프 (별도 스레드)"""
+        """LiDAR 스캔 루프 (별도 스레드) + 캘리브레이션 디버그 추가"""
         scan = ydlidar.LaserScan()
         error_count = 0
         max_errors = 10
+        
+        # [추가] 출력 조절용 카운터 (너무 빠른 출력 방지)
+        print_counter = 0
         
         while self.running and ydlidar.os_isOk():
             try:
@@ -133,6 +142,28 @@ class DistanceLidarNode(Node):
                         # ranges와 angles 추출
                         ranges = [p.range for p in scan.points]
                         angles = [p.angle for p in scan.points]
+                        
+                        # ==========================================
+                        # [추가] 캘리브레이션용 디버그 코드 시작
+                        # ==========================================
+                        # 0.1m 이상인 유효한 데이터만 필터링 (너무 가까운 노이즈 제외)
+                        valid_data = [(r, a) for r, a in zip(ranges, angles) if r > 0.1]
+                        
+                        if valid_data:
+                            print_counter += 1
+                            # 약 20프레임마다 한 번씩 출력 (로그 홍수 방지, 약 3초 간격)
+                            if print_counter % 20 == 0:
+                                # 거리가 가장 가까운 점 찾기 (거리 기준 최소값)
+                                min_dist, min_angle = min(valid_data, key=lambda x: x[0])
+                                min_angle_deg = math.degrees(min_angle)
+                                
+                                print(f"\n📏 [캘리브레이션 확인]")
+                                print(f"   - 가장 가까운 물체 거리 : {min_dist:.3f}m")
+                                print(f"   - 라이다가 인식한 각도 : {min_angle_deg:+.2f}도")
+                                print(f"   👉 물체를 카메라 정중앙에 두고, 위 '각도' 값을 오차 보정값으로 쓰세요.\n")
+                        # ==========================================
+                        # [추가] 캘리브레이션용 디버그 코드 끝
+                        # ==========================================
                         
                         self.latest_scan = {
                             'ranges': ranges,
@@ -172,7 +203,12 @@ class DistanceLidarNode(Node):
         # 픽셀을 각도로 변환
         angle_per_pixel = self.camera_fov / self.image_width
         angle_offset = pixel_offset * angle_per_pixel
-        target_angle = math.radians(angle_offset)
+        # target_angle = math.radians(angle_offset)
+
+        # [수정] 2. 오차값 적용
+        # 카메라 각도 + 오차값 = 실제 라이다 각도
+        final_angle_deg = angle_offset + self.lidar_offset_deg
+        target_angle = math.radians(final_angle_deg)
         
         # 가장 가까운 LiDAR 포인트 찾기
         ranges = scan_data['ranges']
