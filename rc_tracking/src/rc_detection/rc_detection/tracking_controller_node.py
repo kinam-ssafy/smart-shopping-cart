@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-RC Car Tracking Controller Node (Photo Test Optimized)
-- 사용자가 설정한 '타겟 실제 키'를 기반으로 비전 거리 추정
-- 라이다 데이터가 있으면 비율을 자동 보정(Calibration)
-- 후진 없음 (No Reverse)
+RC Car Tracking Controller Node (One-Shot Calibration)
+- 기준값(Calibration) 로직 개선:
+  최초 락온 시점의 안정적인 데이터만 '딱 한 번' 학습하고,
+  주행 중 튀는 값(이상치)으로 오염되지 않도록 업데이트를 막습니다.
 """
 
 import rclpy
@@ -25,7 +25,7 @@ except ImportError:
 # ==========================================
 # 실제 사람: 1.7
 # A4용지 프린트: 0.2 ~ 0.3 (자로 재보세요!)
-TARGET_REAL_HEIGHT = 0.3  # <--- 여기를 수정하세요!
+TARGET_REAL_HEIGHT = 0.15
 
 
 class TrackingControllerNode(Node):
@@ -47,7 +47,7 @@ class TrackingControllerNode(Node):
         self.declare_parameter('max_steer', 30)
 
         # 속도 PID
-        self.declare_parameter('target_distance', 0.8)  # 목표 거리 (m)
+        self.declare_parameter('target_distance', 0.8)
         self.declare_parameter('kp_speed', 40.0)
         self.declare_parameter('ki_speed', 0.5)
         self.declare_parameter('kd_speed', 10.0)
@@ -56,10 +56,8 @@ class TrackingControllerNode(Node):
 
         # 안전 설정
         self.declare_parameter('stop_deadzone', 0.25)
-        self.declare_parameter('emergency_stop_dist', 0.6) # 사진 테스트라 조금 줄임
+        self.declare_parameter('emergency_stop_dist', 0.6)
         self.declare_parameter('watchdog_timeout', 1.5)
-        
-        # [NEW] 타겟 실제 키 파라미터화
         self.declare_parameter('target_real_height', TARGET_REAL_HEIGHT)
 
         # 파라미터 로드
@@ -102,9 +100,10 @@ class TrackingControllerNode(Node):
         self.lock_counter = 0
         self.lock_threshold = 45
 
-        # [NEW] 거리 추정용 기준값 (Reference)
+        # [NEW] 거리 추정용 기준값 & 플래그
         self.ref_lidar_dist = None    # 기준 라이다 거리
         self.ref_bbox_height = None   # 기준 바운딩 박스 높이
+        self.is_calibrated = False    # 학습 완료 여부 (True면 더 이상 업데이트 안 함)
 
         # 시리얼 초기화
         self.ser = self.init_serial()
@@ -129,8 +128,8 @@ class TrackingControllerNode(Node):
         self.control_timer = self.create_timer(0.02, self.control_loop)
 
         self.get_logger().info('=' * 50)
-        self.get_logger().info('🚗 Tracking Controller Node 시작')
-        self.get_logger().info(f'👉 설정된 타겟 키: {self.target_height_m}m')
+        self.get_logger().info('🚗 Smart Tracking Controller (One-Shot Calib)')
+        self.get_logger().info(f'👉 타겟 키: {self.target_height_m}m')
         self.get_logger().info('=' * 50)
 
     def init_serial(self):
@@ -161,17 +160,22 @@ class TrackingControllerNode(Node):
         center_x = self.image_width // 2
         center_y = self.image_height // 2
 
+        # 락온 유지 체크
         if self.locked_target_id is not None:
             for det in self.latest_detections:
                 if det.track_id == self.locked_target_id:
                     return det
+            
+            # 타겟을 놓침 -> 락온 해제 및 학습 데이터 초기화
             self.locked_target_id = None
             self.lock_counter = 0
-            self.get_logger().warn('🔓 락온 해제 - 타겟 lost')
+            self.is_calibrated = False  # [중요] 타겟 놓치면 학습도 초기화 (새로운 사람일 수 있으니)
+            self.get_logger().warn('🔓 락온 해제 (Target Lost) -> 학습 초기화')
 
         best_det = None
         best_center_dist = float('inf')
 
+        # 화면 중앙에 가까운 객체 탐색
         for det in self.latest_detections:
             det_cx = (det.x_min + det.x_max) / 2
             det_cy = (det.y_min + det.y_max) / 2
@@ -182,6 +186,7 @@ class TrackingControllerNode(Node):
                     best_center_dist = dist_to_center
                     best_det = det
 
+        # 락온 카운터 관리
         if best_det:
             self.lock_counter += 1
             if self.lock_counter >= self.lock_threshold:
@@ -189,6 +194,7 @@ class TrackingControllerNode(Node):
         else:
             self.lock_counter = max(0, self.lock_counter - 2)
 
+        # fallback: closest_id
         if best_det is None and self.closest_object_id is not None:
             for det in self.latest_detections:
                 if det.track_id == self.closest_object_id:
@@ -219,7 +225,7 @@ class TrackingControllerNode(Node):
 
         error_dist = current_distance - self.target_dist
 
-        # [수정] 너무 가까우면 정지 (후진 방지)
+        # [수정] 너무 가까우면 정지
         if error_dist < self.stop_deadzone:
             self.integral_dist = 0
             self.prev_error_dist = error_dist
@@ -247,7 +253,6 @@ class TrackingControllerNode(Node):
         if self.ser is None: return
 
         try:
-            # 후진(r) 제거됨
             if speed_z > 0:
                 cmd = f"x={int(steer)}\nz={speed_z}\n"
             else:
@@ -277,7 +282,7 @@ class TrackingControllerNode(Node):
             self.status_pub.publish(Int32(data=0))
             return
 
-        # 2. [중요] 거리 추정 로직 (LiDAR + Vision Fusion)
+        # 2. [핵심] 거리 추정 로직 (One-Shot Calibration)
         target = self.get_target_detection()
         final_dist = 0.0
         dist_source = "NONE"
@@ -285,29 +290,33 @@ class TrackingControllerNode(Node):
         if target:
             bbox_h = target.y_max - target.y_min
             
-            # (A) 라이다 데이터가 건강한 경우 -> 기준값 학습(Calibration)
+            # (A) 라이다 데이터가 건강한 경우
             if self.latest_distance is not None and self.latest_distance > 0:
                 final_dist = self.latest_distance
                 dist_source = "LiDAR"
                 
-                # 기준값 업데이트 (학습)
-                self.ref_lidar_dist = final_dist
-                self.ref_bbox_height = bbox_h
+                # [수정됨] 매번 업데이트하지 않고, '아직 학습 안 됐을 때'만 저장 (One-shot)
+                # 락온 상태이고, 거리가 2m 이내로 안정적일 때만 학습
+                if self.locked_target_id is not None and not self.is_calibrated and 0.2 < final_dist < 2.0:
+                     self.ref_lidar_dist = final_dist
+                     self.ref_bbox_height = bbox_h
+                     self.is_calibrated = True
+                     self.get_logger().info(f"✅ 거리 비율 학습 완료: {final_dist:.2f}m / {bbox_h}px")
                 
-            # (B) 라이다가 죽었거나 이상한 경우 -> 비전 추정(Estimation)
+            # (B) 라이다가 죽었거나 이상한 경우 (비전 추정)
             else:
-                if self.ref_lidar_dist is not None and self.ref_bbox_height is not None and bbox_h > 0:
-                    # 학습된 비율을 사용하여 거리 추정
+                if self.is_calibrated and bbox_h > 0:
+                    # [핵심] 학습된 비율(고정값)을 사용하여 거리 추정
                     final_dist = self.ref_lidar_dist * (self.ref_bbox_height / bbox_h)
                     dist_source = "Vision(Ref)"
                 else:
-                    # [핵심] 기준값도 없으면 사용자가 설정한 키(target_height_m) 사용
+                    # 학습 전이면 설정된 키 기반 추정
                     if bbox_h > 10:
                         final_dist = (self.target_height_m * self.image_height) / (bbox_h * 2.0)
-                        final_dist = max(0.2, min(5.0, final_dist)) # 최소 20cm까지 허용
+                        final_dist = max(0.2, min(5.0, final_dist))
                         dist_source = "Vision(Basic)"
 
-        # 3. 긴급 정지 (추정된 거리 기반)
+        # 3. 긴급 정지
         if final_dist > 0 and final_dist < self.emergency_stop_dist:
             self.get_logger().warn(f'🚨 긴급 정지! ({final_dist:.2f}m via {dist_source})', throttle_duration_sec=0.5)
             self.emergency_stop()
