@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-RC Car Tracking Controller Node (One-Shot Calibration)
-- 기준값(Calibration) 로직 개선:
-  최초 락온 시점의 안정적인 데이터만 '딱 한 번' 학습하고,
-  주행 중 튀는 값(이상치)으로 오염되지 않도록 업데이트를 막습니다.
+RC Car Tracking Controller Node (Strict Lock-on)
+- 락온(Lock-on) 확정 전까지는 절대 움직이지 않음 (속도 0)
+- 조향(Steer)은 미리 움직여서 타겟 조준
+- 타겟 실제 키 설정 적용 (0.2~0.3m)
 """
 
 import rclpy
@@ -23,9 +23,7 @@ except ImportError:
 # ==========================================
 # 📏 [사용자 설정] 타겟의 실제 키 (단위: m)
 # ==========================================
-# 실제 사람: 1.7
-# A4용지 프린트: 0.2 ~ 0.3 (자로 재보세요!)
-TARGET_REAL_HEIGHT = 0.15
+TARGET_REAL_HEIGHT = 0.3  # A4용지/인형 등
 
 
 class TrackingControllerNode(Node):
@@ -100,10 +98,10 @@ class TrackingControllerNode(Node):
         self.lock_counter = 0
         self.lock_threshold = 45
 
-        # [NEW] 거리 추정용 기준값 & 플래그
-        self.ref_lidar_dist = None    # 기준 라이다 거리
-        self.ref_bbox_height = None   # 기준 바운딩 박스 높이
-        self.is_calibrated = False    # 학습 완료 여부 (True면 더 이상 업데이트 안 함)
+        # 거리 추정용 기준값
+        self.ref_lidar_dist = None
+        self.ref_bbox_height = None
+        self.is_calibrated = False
 
         # 시리얼 초기화
         self.ser = self.init_serial()
@@ -128,8 +126,8 @@ class TrackingControllerNode(Node):
         self.control_timer = self.create_timer(0.02, self.control_loop)
 
         self.get_logger().info('=' * 50)
-        self.get_logger().info('🚗 Smart Tracking Controller (One-Shot Calib)')
-        self.get_logger().info(f'👉 타겟 키: {self.target_height_m}m')
+        self.get_logger().info('🚗 Smart Controller: Lock-on First Mode')
+        self.get_logger().info('👉 락온 완료 전에는 움직이지 않습니다.')
         self.get_logger().info('=' * 50)
 
     def init_serial(self):
@@ -166,16 +164,16 @@ class TrackingControllerNode(Node):
                 if det.track_id == self.locked_target_id:
                     return det
             
-            # 타겟을 놓침 -> 락온 해제 및 학습 데이터 초기화
+            # 놓침 -> 초기화
             self.locked_target_id = None
             self.lock_counter = 0
-            self.is_calibrated = False  # [중요] 타겟 놓치면 학습도 초기화 (새로운 사람일 수 있으니)
-            self.get_logger().warn('🔓 락온 해제 (Target Lost) -> 학습 초기화')
+            self.is_calibrated = False
+            self.get_logger().warn('🔓 락온 해제 (Target Lost)')
 
         best_det = None
         best_center_dist = float('inf')
 
-        # 화면 중앙에 가까운 객체 탐색
+        # 화면 중앙 탐색
         for det in self.latest_detections:
             det_cx = (det.x_min + det.x_max) / 2
             det_cy = (det.y_min + det.y_max) / 2
@@ -194,7 +192,7 @@ class TrackingControllerNode(Node):
         else:
             self.lock_counter = max(0, self.lock_counter - 2)
 
-        # fallback: closest_id
+        # Fallback (가까운 객체)
         if best_det is None and self.closest_object_id is not None:
             for det in self.latest_detections:
                 if det.track_id == self.closest_object_id:
@@ -203,8 +201,7 @@ class TrackingControllerNode(Node):
         return best_det
 
     def calculate_steer(self, target_det):
-        if target_det is None:
-            return 0.0
+        if target_det is None: return 0.0
         
         target_cx = (target_det.x_min + target_det.x_max) / 2
         center_x = self.image_width / 2
@@ -214,9 +211,8 @@ class TrackingControllerNode(Node):
         return steer_val
 
     def calculate_speed_pid(self, current_distance):
-        """속도 PID 제어 (후진 없음)"""
-        if current_distance is None or current_distance <= 0:
-            return 0
+        """속도 PID (락온 전에는 호출되지 않음)"""
+        if current_distance is None or current_distance <= 0: return 0
 
         current_time = time.time()
         dt = current_time - self.last_pid_time
@@ -225,13 +221,11 @@ class TrackingControllerNode(Node):
 
         error_dist = current_distance - self.target_dist
 
-        # [수정] 너무 가까우면 정지
         if error_dist < self.stop_deadzone:
             self.integral_dist = 0
             self.prev_error_dist = error_dist
             return 0
 
-        # PID 계산
         p_term = self.kp_speed * error_dist
         self.integral_dist += error_dist * dt
         self.integral_dist = max(-50, min(50, self.integral_dist))
@@ -241,7 +235,6 @@ class TrackingControllerNode(Node):
 
         output = p_term + i_term + d_term
 
-        # [수정] 전진만 허용
         speed_z = 0
         if output > 0:
             speed_z = int(max(self.min_speed, min(self.max_speed, abs(output))))
@@ -249,9 +242,7 @@ class TrackingControllerNode(Node):
         return speed_z
 
     def send_motor_command(self, steer, speed_z):
-        """STM32로 명령 전송"""
         if self.ser is None: return
-
         try:
             if speed_z > 0:
                 cmd = f"x={int(steer)}\nz={speed_z}\n"
@@ -259,10 +250,8 @@ class TrackingControllerNode(Node):
                 cmd = f"x={int(steer)}\nz=0\n"
 
             if cmd == self.last_cmd: return
-
             self.ser.write(cmd.encode())
             self.last_cmd = cmd
-
         except Exception as e:
             self.get_logger().error(f'시리얼 전송 에러: {e}')
             self.last_cmd = None
@@ -282,65 +271,67 @@ class TrackingControllerNode(Node):
             self.status_pub.publish(Int32(data=0))
             return
 
-        # 2. [핵심] 거리 추정 로직 (One-Shot Calibration)
+        # 2. 타겟 찾기 & 거리 추정
         target = self.get_target_detection()
         final_dist = 0.0
         dist_source = "NONE"
 
         if target:
+            # (A) 거리 계산 (라이다 or 비전)
             bbox_h = target.y_max - target.y_min
             
-            # (A) 라이다 데이터가 건강한 경우
             if self.latest_distance is not None and self.latest_distance > 0:
                 final_dist = self.latest_distance
                 dist_source = "LiDAR"
-                
-                # [수정됨] 매번 업데이트하지 않고, '아직 학습 안 됐을 때'만 저장 (One-shot)
-                # 락온 상태이고, 거리가 2m 이내로 안정적일 때만 학습
+                # 락온 확정 후 & 첫 Calibration
                 if self.locked_target_id is not None and not self.is_calibrated and 0.2 < final_dist < 2.0:
                      self.ref_lidar_dist = final_dist
                      self.ref_bbox_height = bbox_h
                      self.is_calibrated = True
-                     self.get_logger().info(f"✅ 거리 비율 학습 완료: {final_dist:.2f}m / {bbox_h}px")
-                
-            # (B) 라이다가 죽었거나 이상한 경우 (비전 추정)
+                     self.get_logger().info(f"✅ 비율 학습 완료: {final_dist:.2f}m")
             else:
                 if self.is_calibrated and bbox_h > 0:
-                    # [핵심] 학습된 비율(고정값)을 사용하여 거리 추정
                     final_dist = self.ref_lidar_dist * (self.ref_bbox_height / bbox_h)
                     dist_source = "Vision(Ref)"
                 else:
-                    # 학습 전이면 설정된 키 기반 추정
                     if bbox_h > 10:
                         final_dist = (self.target_height_m * self.image_height) / (bbox_h * 2.0)
                         final_dist = max(0.2, min(5.0, final_dist))
                         dist_source = "Vision(Basic)"
-
-        # 3. 긴급 정지
-        if final_dist > 0 and final_dist < self.emergency_stop_dist:
-            self.get_logger().warn(f'🚨 긴급 정지! ({final_dist:.2f}m via {dist_source})', throttle_duration_sec=0.5)
-            self.emergency_stop()
-            self.status_pub.publish(Int32(data=1))
-            return
-
-        # 4. 타겟 없음 처리
+        
+        # 3. 타겟 없음 처리
         if target is None:
             self.send_motor_command(0, 0)
             self.get_logger().info(f'👀 탐색 중... ({self.lock_counter})', throttle_duration_sec=1.0)
             self.status_pub.publish(Int32(data=2))
             return
 
-        # 5. 제어 계산 및 전송
-        steer_val = self.calculate_steer(target)
-        speed_z = self.calculate_speed_pid(final_dist)
+        # 4. 제어 계산 (수정된 부분)
+        steer_val = self.calculate_steer(target) # 조향은 항상 계산 (타겟 조준)
+
+        # [핵심] 락온 확정 전에는 속도 0 강제
+        if self.locked_target_id is None:
+            speed_z = 0
+            dist_source = "LOCKING..." # 로그용
+        else:
+            # 락온 됐을 때만 속도 계산
+            # 긴급 정지 체크도 락온 됐을 때만 의미 있음
+            if final_dist > 0 and final_dist < self.emergency_stop_dist:
+                self.get_logger().warn(f'🚨 긴급 정지! ({final_dist:.2f}m)', throttle_duration_sec=0.5)
+                speed_z = 0 # 모터 끔
+                self.emergency_stop() # 확실하게 멈춤
+            else:
+                speed_z = self.calculate_speed_pid(final_dist)
+
+        # 5. 명령 전송
         self.send_motor_command(steer_val, speed_z)
 
-        # 6. 상태 발행 및 로그
+        # 6. 상태 발행
         self.steer_pub.publish(Float32(data=float(steer_val)))
         self.speed_pub.publish(Float32(data=float(speed_z)))
         self.status_pub.publish(Int32(data=3))
 
-        lock_str = 'LOCKED' if self.locked_target_id is not None else 'UNLOCKED'
+        lock_str = 'LOCKED' if self.locked_target_id is not None else f'WAIT({self.lock_counter})'
         
         self.get_logger().info(
             f'🎯 {lock_str} | Steer:{steer_val:+.0f} | Spd:{speed_z} | '
