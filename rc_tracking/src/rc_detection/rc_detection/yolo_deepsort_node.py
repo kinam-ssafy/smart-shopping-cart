@@ -73,7 +73,8 @@ class YOLODeepSORTNode(Node):
             nms_max_overlap=1.0,
             max_cosine_distance=0.3,
             nn_budget=None,
-            embedder="mobilenet",
+            embedder="torchreid",
+            embedder_model_name="osnet_x1_0", # [중요] 모델명 지정
             half=True,
             embedder_gpu=True
         )
