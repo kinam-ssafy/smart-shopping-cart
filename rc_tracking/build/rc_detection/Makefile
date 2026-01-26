@@ -315,17 +315,17 @@ rc_detection__rosidl_typesupport_cpp/fast:
 .PHONY : rc_detection__rosidl_typesupport_cpp/fast
 
 #=============================================================================
-# Target rules for targets named ament_cmake_python_copy_rc_detection
+# Target rules for targets named ament_cmake_python_symlink_rc_detection
 
 # Build rule for target.
-ament_cmake_python_copy_rc_detection: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ament_cmake_python_copy_rc_detection
-.PHONY : ament_cmake_python_copy_rc_detection
+ament_cmake_python_symlink_rc_detection: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ament_cmake_python_symlink_rc_detection
+.PHONY : ament_cmake_python_symlink_rc_detection
 
 # fast build rule for target.
-ament_cmake_python_copy_rc_detection/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ament_cmake_python_copy_rc_detection.dir/build.make CMakeFiles/ament_cmake_python_copy_rc_detection.dir/build
-.PHONY : ament_cmake_python_copy_rc_detection/fast
+ament_cmake_python_symlink_rc_detection/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ament_cmake_python_symlink_rc_detection.dir/build.make CMakeFiles/ament_cmake_python_symlink_rc_detection.dir/build
+.PHONY : ament_cmake_python_symlink_rc_detection/fast
 
 #=============================================================================
 # Target rules for targets named ament_cmake_python_build_rc_detection_egg
@@ -875,7 +875,7 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... test"
 	@echo "... ament_cmake_python_build_rc_detection_egg"
-	@echo "... ament_cmake_python_copy_rc_detection"
+	@echo "... ament_cmake_python_symlink_rc_detection"
 	@echo "... rc_detection"
 	@echo "... rc_detection__cpp"
 	@echo "... rc_detection__py"

@@ -61,13 +61,13 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 122,
+				"line" : 106,
 				"parent" : 6
 			}
 		]
 	},
-	"id" : "ament_cmake_python_copy_rc_detection::@6890427a1f51a3e7e1df",
-	"name" : "ament_cmake_python_copy_rc_detection",
+	"id" : "ament_cmake_python_symlink_rc_detection::@6890427a1f51a3e7e1df",
+	"name" : "ament_cmake_python_symlink_rc_detection",
 	"paths" : 
 	{
 		"build" : ".",
@@ -95,13 +95,13 @@
 		{
 			"backtrace" : 7,
 			"isGenerated" : true,
-			"path" : "/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/CMakeFiles/ament_cmake_python_copy_rc_detection",
+			"path" : "/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/CMakeFiles/ament_cmake_python_symlink_rc_detection",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 0,
 			"isGenerated" : true,
-			"path" : "/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/CMakeFiles/ament_cmake_python_copy_rc_detection.rule",
+			"path" : "/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/CMakeFiles/ament_cmake_python_symlink_rc_detection.rule",
 			"sourceGroupIndex" : 1
 		}
 	],

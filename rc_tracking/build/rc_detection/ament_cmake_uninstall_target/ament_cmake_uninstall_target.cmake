@@ -55,3 +55,6 @@ endforeach()
 message(STATUS "Execute custom uninstall script")
 
 # begin of custom uninstall code
+
+# uninstall files installed using the symlink install functions
+include("/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/ament_cmake_symlink_install/ament_cmake_symlink_install_uninstall_script.cmake")

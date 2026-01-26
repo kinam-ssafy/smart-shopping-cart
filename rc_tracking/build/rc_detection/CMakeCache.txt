@@ -25,7 +25,7 @@ AMENT_CMAKE_ENVIRONMENT_PARENT_PREFIX_PATH_GENERATION:BOOL=ON
 
 //Replace the CMake install command with a custom implementation
 // using symlinks instead of copying resources
-AMENT_CMAKE_SYMLINK_INSTALL:BOOL=OFF
+AMENT_CMAKE_SYMLINK_INSTALL:BOOL=1
 
 //Generate an uninstall target to revert the effects of the install
 // step
@@ -617,4 +617,6 @@ _Python3_EXECUTABLE:INTERNAL=/home/ssafy/miniforge3/envs/rc_car/bin/python3
 //Python3 Properties
 _Python3_INTERPRETER_PROPERTIES:INTERNAL=Python;3;10;19;64;;cpython-310-aarch64-linux-gnu;/home/ssafy/miniforge3/envs/rc_car/lib/python3.10;/home/ssafy/miniforge3/envs/rc_car/lib/python3.10;/home/ssafy/miniforge3/envs/rc_car/lib/python3.10/site-packages;/home/ssafy/miniforge3/envs/rc_car/lib/python3.10/site-packages
 _Python3_INTERPRETER_SIGNATURE:INTERNAL=845442d42e719c6f788fdb90203378bb
+//Index for unique symlink install targets
+__AMENT_CMAKE_SYMLINK_INSTALL_TARGETS_INDEX:INTERNAL=3
 

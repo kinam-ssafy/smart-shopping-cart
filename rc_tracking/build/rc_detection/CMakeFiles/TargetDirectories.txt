@@ -9,7 +9,7 @@
 /home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/CMakeFiles/rc_detection__rosidl_typesupport_fastrtps_cpp.dir
 /home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/CMakeFiles/rc_detection__rosidl_typesupport_introspection_cpp.dir
 /home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/CMakeFiles/rc_detection__rosidl_typesupport_cpp.dir
-/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/CMakeFiles/ament_cmake_python_copy_rc_detection.dir
+/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/CMakeFiles/ament_cmake_python_symlink_rc_detection.dir
 /home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/CMakeFiles/ament_cmake_python_build_rc_detection_egg.dir
 /home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/CMakeFiles/rc_detection__rosidl_generator_py.dir
 /home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/CMakeFiles/rc_detection__rosidl_typesupport_fastrtps_c__pyext.dir

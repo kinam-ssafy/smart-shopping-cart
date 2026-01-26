@@ -1,0 +1,1 @@
+ament_cmake_symlink_install_targets("TARGET_FILES" "/home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection/rosidl_generator_py/rc_detection/rc_detection_s__rosidl_typesupport_fastrtps_c.cpython-310-aarch64-linux-gnu.so" "TARGETS" "rc_detection__rosidl_typesupport_fastrtps_c__pyext" "DESTINATION" "lib/python3.10/site-packages/rc_detection")

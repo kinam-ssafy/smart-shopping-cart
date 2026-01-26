@@ -1,0 +1,22 @@
+-- Found ament_cmake: 1.3.12 (/opt/ros/humble/share/ament_cmake/cmake)
+-- Override CMake install command with custom implementation using symlinks instead of copying resources
+-- Found rosidl_default_generators: 1.2.0 (/opt/ros/humble/share/rosidl_default_generators/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Found rosidl_adapter: 3.1.8 (/opt/ros/humble/share/rosidl_adapter/cmake)
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found std_msgs: 4.9.0 (/opt/ros/humble/share/std_msgs/cmake)
+-- Found sensor_msgs: 4.9.0 (/opt/ros/humble/share/sensor_msgs/cmake)
+-- Found ament_cmake_ros: 0.10.0 (/opt/ros/humble/share/ament_cmake_ros/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found python_cmake_module: 0.10.0 (/opt/ros/humble/share/python_cmake_module/cmake)
+-- Using PYTHON_EXECUTABLE: /home/ssafy/miniforge3/envs/rc_car/bin/python3
+-- Using PYTHON_INCLUDE_DIRS: /home/ssafy/miniforge3/envs/rc_car/include/python3.10
+-- Using PYTHON_LIBRARIES: /home/ssafy/miniforge3/envs/rc_car/lib/libpython3.10.so
+-- Using numpy include directory: /home/ssafy/miniforge3/envs/rc_car/lib/python3.10/site-packages/numpy/core/include
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/ssafy/Desktop/S14P11A401/rc_tracking/build/rc_detection
+[35m[1mConsolidate compiler generated dependencies of target rc_detection__rosidl_generator_c[0m
+[  2%] Built target rc_detection__cpp
+[ 12%] Built target rc_detection__rosidl_generator_c
