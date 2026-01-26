@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-Distance LiDAR Node (Pure ROS Version)
-- Hardware: 'ydlidar_ros2_driver'가 담당 (/scan 발행)
-- This Node: '/scan'을 구독하여 객체 거리 계산 및 안전장치 역할 수행
+Distance LiDAR Node (Pure ROS Version - QoS Fixed)
 """
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import qos_profile_sensor_data  # <--- [핵심] 이거 추가됨
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Int32, Float32
 import math
@@ -31,19 +30,19 @@ class DistanceLidarNode(Node):
         self.image_width = 640
         self.camera_fov = 60.0
         
-        # [설정] 라이다-카메라 오프셋 (0.0 또는 180.0 등 상황에 맞게)
+        # [설정] 라이다-카메라 오프셋
         self.declare_parameter('lidar_camera_offset', 0.0)
         self.lidar_offset_deg = self.get_parameter('lidar_camera_offset').value
         
         # ==========================================
         # ROS 2 Subscribers
         # ==========================================
-        # 1. 라이다 스캔 데이터 구독 (공식 드라이버가 보내주는 것)
+        # 1. 라이다 스캔 데이터 구독 (QoS 수정됨!)
         self.create_subscription(
             LaserScan,
             '/scan',
             self.scan_callback,
-            10
+            qos_profile_sensor_data  # <--- [핵심] Best Effort 호환 설정
         )
 
         # 2. YOLO 감지 데이터 구독
@@ -65,27 +64,20 @@ class DistanceLidarNode(Node):
         # 계산 주기 (20Hz)
         self.create_timer(0.05, self.process_and_publish)
         
-        self.get_logger().info('✅ Pure ROS Distance Node Started')
+        self.get_logger().info('✅ Pure ROS Distance Node Started (QoS Fixed)')
         self.get_logger().info(f'   Offset: {self.lidar_offset_deg} deg')
 
     def scan_callback(self, msg):
-        """ /scan 토픽이 들어올 때마다 저장하고 전방 안전거리 계산 """
         with self.scan_lock:
             self.latest_scan = msg
-        
-        # 전방 안전 거리 즉시 계산 (반응속도 최우선)
         self.publish_front_safety_dist(msg)
 
     def detection_callback(self, msg):
-        """ YOLO 감지 데이터 수신 """
         self.latest_detections = msg.detections
 
     def publish_front_safety_dist(self, scan_msg):
-        """ 
-        LaserScan 메시지를 분석하여 전방 ±20도 이내 최소 거리 발행 
-        """
         min_dist = float('inf')
-        fov_rad = math.radians(20.0) # ±20도
+        fov_rad = math.radians(20.0) 
         offset_rad = math.radians(self.lidar_offset_deg)
 
         angle_min = scan_msg.angle_min
@@ -95,26 +87,21 @@ class DistanceLidarNode(Node):
             if r < scan_msg.range_min or r > scan_msg.range_max:
                 continue
             
-            # 각도 계산 및 보정
             current_angle = angle_min + (i * angle_inc)
             corrected_angle = current_angle + offset_rad
             
-            # 정규화 (-PI ~ PI)
             while corrected_angle > math.pi: corrected_angle -= 2*math.pi
             while corrected_angle <= -math.pi: corrected_angle += 2*math.pi
             
-            # 전방 시야각 확인
             if abs(corrected_angle) <= fov_rad:
                 if r < min_dist:
                     min_dist = r
         
-        # 결과 발행
         msg = Float32()
         msg.data = min_dist if min_dist != float('inf') else -1.0
         self.scan_min_pub.publish(msg)
 
     def get_distance_from_lidar(self, center_x):
-        """ 특정 픽셀(center_x) 방향의 LiDAR 거리 계산 (Pure ROS 방식) """
         with self.scan_lock:
             if self.latest_scan is None: return None
             scan = self.latest_scan
@@ -131,7 +118,6 @@ class DistanceLidarNode(Node):
         if scan.angle_increment == 0: return None
         target_index = int((target_rad - scan.angle_min) / scan.angle_increment)
         
-        # 주변 데이터 평균 (노이즈 제거)
         window = 3 
         valid_ranges = []
         
@@ -146,7 +132,6 @@ class DistanceLidarNode(Node):
         return None
 
     def process_and_publish(self):
-        """ YOLO 타겟과 라이다 거리 매칭 후 발행 """
         if not self.latest_detections: return
 
         best_det = None
