@@ -1,37 +1,28 @@
 #!/usr/bin/env python3
 """
-Distance LiDAR Node
-- LiDAR로 객체 거리 계산 및 발행 (/distance)
-- 전방 안전 거리 감지 (/scan_min_dist)
+Distance LiDAR Node (Pure ROS Version)
+- Hardware: 'ydlidar_ros2_driver'가 담당 (/scan 발행)
+- This Node: '/scan'을 구독하여 객체 거리 계산 및 안전장치 역할 수행
 """
 
 import rclpy
 from rclpy.node import Node
+from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Int32, Float32
 import math
 import threading
-import time
-import sys
 
-try:
-    import ydlidar
-    YDLIDAR_AVAILABLE = True
-except ImportError:
-    print("❌ ydlidar 모듈 없음")
-    YDLIDAR_AVAILABLE = False
-    sys.exit(1)
-
+# 커스텀 메시지 확인
 try:
     from rc_detection.msg import Detection, DetectionArray
 except ImportError:
     DetectionArray = None
 
-
 class DistanceLidarNode(Node):
     def __init__(self):
         super().__init__('distance_lidar_node')
         
-        # 데이터 저장
+        # 데이터 저장소
         self.latest_scan = None
         self.latest_detections = None
         self.scan_lock = threading.Lock()
@@ -40,136 +31,127 @@ class DistanceLidarNode(Node):
         self.image_width = 640
         self.camera_fov = 60.0
         
-        # [수정] 오프셋 파라미터
-        self.declare_parameter('lidar_camera_offset', 179.17)
+        # [설정] 라이다-카메라 오프셋 (0.0 또는 180.0 등 상황에 맞게)
+        self.declare_parameter('lidar_camera_offset', 0.0)
         self.lidar_offset_deg = self.get_parameter('lidar_camera_offset').value
-
-        # LiDAR 초기화
-        self.laser = None
-        self.lidar_thread = None
-        self.running = False
-        if not self.init_lidar():
-            raise RuntimeError('LiDAR initialization failed')
         
-        # Subscribers
+        # ==========================================
+        # ROS 2 Subscribers
+        # ==========================================
+        # 1. 라이다 스캔 데이터 구독 (공식 드라이버가 보내주는 것)
+        self.create_subscription(
+            LaserScan,
+            '/scan',
+            self.scan_callback,
+            10
+        )
+
+        # 2. YOLO 감지 데이터 구독
         if DetectionArray is not None:
-            self.create_subscription(DetectionArray, '/detections', self.detection_callback, 10)
-        
-        # [핵심] Publishers 추가
+            self.create_subscription(
+                DetectionArray,
+                '/detections',
+                self.detection_callback,
+                10
+            )
+            
+        # ==========================================
+        # ROS 2 Publishers
+        # ==========================================
         self.closest_id_pub = self.create_publisher(Int32, '/closest_object_id', 10)
-        self.distance_pub = self.create_publisher(Float32, '/distance', 10)       # 타겟 거리
-        self.scan_min_pub = self.create_publisher(Float32, '/scan_min_dist', 10)  # 전방 장애물 거리
+        self.distance_pub = self.create_publisher(Float32, '/distance', 10)
+        self.scan_min_pub = self.create_publisher(Float32, '/scan_min_dist', 10)
         
-        # Timer
-        self.create_timer(0.1, self.process_and_publish) # 10Hz로 변경 (반응 속도 향상)
+        # 계산 주기 (20Hz)
+        self.create_timer(0.05, self.process_and_publish)
         
-        self.get_logger().info(f'✅ Distance Node 시작 (오프셋: {self.lidar_offset_deg}도)')
+        self.get_logger().info('✅ Pure ROS Distance Node Started')
+        self.get_logger().info(f'   Offset: {self.lidar_offset_deg} deg')
 
-    def init_lidar(self):
-        try:
-            ydlidar.os_init()
-            self.laser = ydlidar.CYdLidar()
-            port = "/dev/ttyUSB0"  # 라이다 포트 확인 필요
-            self.laser.setlidaropt(ydlidar.LidarPropSerialPort, port)
-            self.laser.setlidaropt(ydlidar.LidarPropSerialBaudrate, 128000)
-            self.laser.setlidaropt(ydlidar.LidarPropLidarType, ydlidar.TYPE_TRIANGLE)
-            self.laser.setlidaropt(ydlidar.LidarPropDeviceType, ydlidar.YDLIDAR_TYPE_SERIAL)
-            self.laser.setlidaropt(ydlidar.LidarPropScanFrequency, 8.0) # 주파수 상향
-            self.laser.setlidaropt(ydlidar.LidarPropSampleRate, 4)
-            self.laser.setlidaropt(ydlidar.LidarPropSingleChannel, True)
-            
-            if self.laser.initialize() and self.laser.turnOn():
-                self.running = True
-                self.lidar_thread = threading.Thread(target=self.lidar_scan_loop, daemon=True)
-                self.lidar_thread.start()
-                return True
-            return False
-        except Exception as e:
-            self.get_logger().error(f'LiDAR Init Fail: {e}')
-            return False
+    def scan_callback(self, msg):
+        """ /scan 토픽이 들어올 때마다 저장하고 전방 안전거리 계산 """
+        with self.scan_lock:
+            self.latest_scan = msg
+        
+        # 전방 안전 거리 즉시 계산 (반응속도 최우선)
+        self.publish_front_safety_dist(msg)
 
-    def lidar_scan_loop(self):
-        scan = ydlidar.LaserScan()
-        while self.running and ydlidar.os_isOk():
-            if self.laser.doProcessSimple(scan):
-                with self.scan_lock:
-                    self.latest_scan = {
-                        'ranges': [p.range for p in scan.points],
-                        'angles': [p.angle for p in scan.points]
-                    }
-                
-                # [추가] 전방 부채꼴(±20도) 안전 거리 즉시 계산 및 발행
-                self.publish_front_safety_dist(scan)
-            else:
-                time.sleep(0.001)
+    def detection_callback(self, msg):
+        """ YOLO 감지 데이터 수신 """
+        self.latest_detections = msg.detections
 
-    def publish_front_safety_dist(self, scan):
-        """전방 ±20도 내 가장 가까운 장애물 거리 발행 (안전장치용)"""
+    def publish_front_safety_dist(self, scan_msg):
+        """ 
+        LaserScan 메시지를 분석하여 전방 ±20도 이내 최소 거리 발행 
+        """
         min_dist = float('inf')
-        FOV_HALF = 20.0
+        fov_rad = math.radians(20.0) # ±20도
+        offset_rad = math.radians(self.lidar_offset_deg)
+
+        angle_min = scan_msg.angle_min
+        angle_inc = scan_msg.angle_increment
         
-        for p in scan.points:
-            r = p.range
-            if r < 0.1: continue # 노이즈
+        for i, r in enumerate(scan_msg.ranges):
+            if r < scan_msg.range_min or r > scan_msg.range_max:
+                continue
             
-            # 각도 변환 및 오프셋 적용
-            deg = math.degrees(p.angle) + self.lidar_offset_deg
-            # 정규화
-            while deg > 180: deg -= 360
-            while deg <= -180: deg += 360
+            # 각도 계산 및 보정
+            current_angle = angle_min + (i * angle_inc)
+            corrected_angle = current_angle + offset_rad
             
-            if abs(deg) <= FOV_HALF:
+            # 정규화 (-PI ~ PI)
+            while corrected_angle > math.pi: corrected_angle -= 2*math.pi
+            while corrected_angle <= -math.pi: corrected_angle += 2*math.pi
+            
+            # 전방 시야각 확인
+            if abs(corrected_angle) <= fov_rad:
                 if r < min_dist:
                     min_dist = r
         
+        # 결과 발행
         msg = Float32()
         msg.data = min_dist if min_dist != float('inf') else -1.0
         self.scan_min_pub.publish(msg)
 
-    def detection_callback(self, msg):
-        self.latest_detections = msg.detections
-
     def get_distance_from_lidar(self, center_x):
-        """특정 픽셀(center_x) 방향의 LiDAR 거리 계산"""
+        """ 특정 픽셀(center_x) 방향의 LiDAR 거리 계산 (Pure ROS 방식) """
         with self.scan_lock:
             if self.latest_scan is None: return None
-            ranges = self.latest_scan['ranges']
-            angles = self.latest_scan['angles']
+            scan = self.latest_scan
         
-        # 픽셀 -> 각도 변환
         pixel_offset = center_x - (self.image_width / 2.0)
-        angle_offset = pixel_offset * (self.camera_fov / self.image_width)
-        target_deg = angle_offset + self.lidar_offset_deg
+        angle_offset_deg = pixel_offset * (self.camera_fov / self.image_width)
         
-        # 정규화
-        while target_deg > 180: target_deg -= 360
-        while target_deg <= -180: target_deg += 360
-        
+        target_deg = angle_offset_deg + self.lidar_offset_deg
         target_rad = math.radians(target_deg)
-        window_rad = math.radians(3.0) # ±3도 오차 허용
         
+        while target_rad > math.pi: target_rad -= 2*math.pi
+        while target_rad <= -math.pi: target_rad += 2*math.pi
+        
+        if scan.angle_increment == 0: return None
+        target_index = int((target_rad - scan.angle_min) / scan.angle_increment)
+        
+        # 주변 데이터 평균 (노이즈 제거)
+        window = 3 
         valid_ranges = []
-        for i, a in enumerate(angles):
-            # 각도 차이 (Wrap-around 처리)
-            diff = abs(a - target_rad)
-            if diff > math.pi: diff = 2*math.pi - diff
-            
-            if diff < window_rad:
-                r = ranges[i]
-                if 0.1 < r < 10.0: valid_ranges.append(r)
+        
+        for i in range(target_index - window, target_index + window + 1):
+            if 0 <= i < len(scan.ranges):
+                r = scan.ranges[i]
+                if scan.range_min < r < scan.range_max:
+                    valid_ranges.append(r)
         
         if valid_ranges:
             return sum(valid_ranges) / len(valid_ranges)
         return None
 
     def process_and_publish(self):
-        """가장 가까운 객체 거리 계산 및 발행"""
+        """ YOLO 타겟과 라이다 거리 매칭 후 발행 """
         if not self.latest_detections: return
 
         best_det = None
         min_dist = float('inf')
 
-        # 감지된 모든 객체 중 가장 가까운 놈 찾기
         for det in self.latest_detections:
             dist = self.get_distance_from_lidar(det.center_x)
             if dist and dist < min_dist:
@@ -177,31 +159,21 @@ class DistanceLidarNode(Node):
                 best_det = det
         
         if best_det:
-            # 1. ID 발행
             id_msg = Int32()
             id_msg.data = int(best_det.track_id)
             self.closest_id_pub.publish(id_msg)
             
-            # 2. [핵심] 거리 발행 (/distance) -> 이게 없어서 N/A 였음
             dist_msg = Float32()
             dist_msg.data = float(min_dist)
             self.distance_pub.publish(dist_msg)
-
-    def cleanup(self):
-        self.running = False
-        if self.laser:
-            self.laser.turnOff()
-            self.laser.disconnecting()
 
 def main(args=None):
     rclpy.init(args=args)
     node = DistanceLidarNode()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
+    except KeyboardInterrupt: pass
     finally:
-        node.cleanup()
         node.destroy_node()
         rclpy.shutdown()
 

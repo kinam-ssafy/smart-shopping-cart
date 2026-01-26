@@ -1,7 +1,0 @@
-{
-  "package_name": "rc_detection",
-  "non_idl_tuples": [
-    "/home/ssafy/Desktop/S14P11A401/rc_tracking/src/rc_detection:msg/Detection.msg",
-    "/home/ssafy/Desktop/S14P11A401/rc_tracking/src/rc_detection:msg/DetectionArray.msg"
-  ]
-}
