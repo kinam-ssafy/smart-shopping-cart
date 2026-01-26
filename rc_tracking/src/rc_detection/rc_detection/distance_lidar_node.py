@@ -73,7 +73,7 @@ class DistanceLidarNode(Node):
         self.get_logger().info('Distance LiDAR Node Started (Python SDK)')
         self.get_logger().info('=' * 60)
 
-        self.declare_parameter('lidar_camera_offset', 0.0)
+        self.declare_parameter('lidar_camera_offset', 179.06)
         self.lidar_offset_deg = self.get_parameter('lidar_camera_offset').value
 
         self.get_logger().info(f'🛠️ LiDAR 오차 보정값: {self.lidar_offset_deg}도')
@@ -190,27 +190,29 @@ class DistanceLidarNode(Node):
     def get_distance_from_lidar(self, center_x, bbox_width, track_id=None):
         """
         바운딩 박스 중심점에 해당하는 LiDAR 거리 계산
+        (오프셋 적용 및 ±180도 경계선 처리 포함)
         """
         with self.scan_lock:
             if self.latest_scan is None:
                 return None
-            
             scan_data = self.latest_scan
         
-        # 이미지 중심에서의 픽셀 오프셋
+        # 1. 이미지 픽셀 -> 기본 각도 변환
         pixel_offset = center_x - (self.image_width / 2.0)
-        
-        # 픽셀을 각도로 변환
         angle_per_pixel = self.camera_fov / self.image_width
         angle_offset = pixel_offset * angle_per_pixel
-        # target_angle = math.radians(angle_offset)
-
-        # [수정] 2. 오차값 적용
-        # 카메라 각도 + 오차값 = 실제 라이다 각도
+        
+        # 2. [핵심] 오프셋 적용 (카메라 각도 + 179.17도)
+        # 179.17도는 __init__에서 self.lidar_offset_deg로 설정되어 있어야 함
         final_angle_deg = angle_offset + self.lidar_offset_deg
+        
+        # 각도를 -180 ~ +180 범위로 정규화 (필수)
+        while final_angle_deg > 180: final_angle_deg -= 360
+        while final_angle_deg <= -180: final_angle_deg += 360
+            
         target_angle = math.radians(final_angle_deg)
         
-        # 가장 가까운 LiDAR 포인트 찾기
+        # 3. 가장 가까운 LiDAR 포인트 찾기
         ranges = scan_data['ranges']
         angles = scan_data['angles']
         
@@ -219,62 +221,29 @@ class DistanceLidarNode(Node):
         
         # target_angle에 가장 가까운 인덱스 찾기
         min_diff = float('inf')
-        best_idx = 0
         
-        for i, angle in enumerate(angles):
-            diff = abs(angle - target_angle)
-            if diff < min_diff:
-                min_diff = diff
-                best_idx = i
-        
-        # ±10도 윈도우 내의 평균 계산
-        window_angle = math.radians(10)
+        # 윈도우 내의 유효 데이터 수집
+        window_angle = math.radians(5.0) # 5도로 좁힘 (정확도 향상)
         valid_ranges = []
-        window_data = []  # 디버그용: 거리가 0보다 큰 데이터만
         
         for i, angle in enumerate(angles):
-            if abs(angle - target_angle) < window_angle:
+            # [핵심] 각도 차이 계산 (Wrap-around 처리: 179도와 -179도는 2도 차이)
+            diff = abs(angle - target_angle)
+            if diff > math.pi:
+                diff = 2 * math.pi - diff
+            
+            # 윈도우 안에 들어오는지 확인
+            if diff < window_angle:
                 r = ranges[i]
-                angle_deg = math.degrees(angle)
-                if r > 0:  # 거리가 0보다 큰 데이터만 저장
-                    window_data.append((angle_deg, r))
-                if 0.1 < r < 10.0:  # 유효 범위
+                if 0.1 < r < 10.0:  # 유효 거리 필터링
                     valid_ranges.append(r)
         
-        # 디버그 출력
-        if track_id is not None:
-            print(f"\n{'='*60}")
-            print(f"🎯 Track ID: {track_id}")
-            print(f"📐 중앙으로부터 각도: {math.degrees(target_angle):+.2f}°")
-            
-            if valid_ranges:
-                avg_distance = sum(valid_ranges) / len(valid_ranges)
-                print(f"📍 거리: {avg_distance:.3f}m")
-            else:
-                print(f"📍 거리: 측정 실패")
-            
-            print(f"\n📡 LiDAR RAW 데이터 (거리 > 0): {len(window_data)}개")
-            if window_data:
-                raw_list = [f"{r:.3f}m" for _, r in sorted(window_data)]
-                print(f"   {raw_list}")
-            else:
-                print(f"   없음")
-            
-            print(f"\n✅ Valid Ranges: {len(valid_ranges)}개")
-            if valid_ranges:
-                valid_list = [f"{r:.3f}m" for r in sorted(valid_ranges)]
-                print(f"   {valid_list}")
-            else:
-                print(f"   없음")
-            
-            print(f"{'='*60}\n")
+        # 디버그 출력 (옵션)
+        # if track_id is not None and valid_ranges:
+        #     print(f"ID:{track_id} | 각도:{final_angle_deg:.1f}도 | 거리:{sum(valid_ranges)/len(valid_ranges):.3f}m")
         
         if valid_ranges:
             return sum(valid_ranges) / len(valid_ranges)
-        
-        # 윈도우에 유효 데이터 없으면 가장 가까운 포인트 사용
-        if 0.1 < ranges[best_idx] < 10.0:
-            return ranges[best_idx]
         
         return None
     
