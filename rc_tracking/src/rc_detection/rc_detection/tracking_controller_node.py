@@ -52,7 +52,7 @@ class TrackingControllerNode(Node):
 
         # 안전 설정
         self.declare_parameter('stop_deadzone', 0.15)      # 목표 거리 ± 데드존
-        self.declare_parameter('emergency_stop_dist', 0.4)  # 긴급 정지 거리
+        self.declare_parameter('emergency_stop_dist', 0.5)  # 긴급 정지 거리
         self.declare_parameter('watchdog_timeout', 1.5)   # 통신 타임아웃
 
         # 파라미터 로드
@@ -426,9 +426,15 @@ class TrackingControllerNode(Node):
             direction = "STOP"
             speed_val = 0
 
+        # 락온 상태 표시
+        lock_status = f'🔒LOCKED' if self.locked_target_id is not None else f'🔓UNLOCKED({self.lock_counter}/{self.lock_threshold})'
+
+        # 라이다 거리 정보
+        lidar_dist_str = f'{self.latest_distance:.2f}m' if self.latest_distance is not None else 'N/A'
+
         self.get_logger().info(
-            f'🎯 ID:{target.track_id} | Steer:{steer_val:+.1f} | '
-            f'{direction}:{speed_val} | Dist:{current_dist:.2f}m',
+            f'🎯 ID:{target.track_id} | {lock_status} | Steer:{steer_val:+.1f} | '
+            f'{direction}:{speed_val} | Dist:{current_dist:.2f}m | LiDAR:{lidar_dist_str}',
             throttle_duration_sec=0.5
         )
 
