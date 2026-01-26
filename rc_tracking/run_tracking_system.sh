@@ -38,7 +38,8 @@ echo "[3/5] YOLO + DeepSORT 노드 시작 중..."
 python3 /home/ssafy/Desktop/S14P11A401/rc_tracking/src/rc_detection/rc_detection/yolo_deepsort_node.py \
     --ros-args \
     -p model_path:=/home/ssafy/Desktop/S14P11A401/rc_tracking/yolo26m.engine \
-    -p show_preview:=false > /tmp/yolo.log 2>&1 &
+    -p show_preview:=false \
+    -p publish_debug_image:=true > /tmp/yolo.log 2>&1 &
 YOLO_PID=$!
 sleep 5
 
@@ -79,10 +80,15 @@ echo "  - Controller: tail -f /tmp/controller.log"
 echo ""
 echo "ROS2 토픽:"
 echo "  - /detections        : 객체 감지 결과"
+echo "  - /yolo_debug_image  : YOLO 시각화 이미지 (노트북에서 보기용)"
 echo "  - /closest_object_id : 가장 가까운 객체 ID"
 echo "  - /control/steer     : 조향값"
 echo "  - /control/speed     : 속도"
 echo "  - /control/status    : 상태 (0:STOP, 1:EMERGENCY, 2:SEARCH, 3:TRACKING)"
+echo ""
+echo "노트북에서 영상 보기:"
+echo "  ros2 run rqt_image_view rqt_image_view"
+echo "  (토픽 선택: /yolo_debug_image)"
 echo ""
 echo "종료:"
 echo "  ./stop_all.sh"

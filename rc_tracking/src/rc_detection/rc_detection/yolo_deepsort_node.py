@@ -35,22 +35,24 @@ class YOLODeepSORTNode(Node):
         # 파라미터 설정
         # ====================================================================
         self.declare_parameter('model_path', 'yolo26m.engine')
-        self.declare_parameter('confidence_threshold', 0.6)
+        self.declare_parameter('confidence_threshold', 0.7)
         self.declare_parameter('target_class', 'person')      # 추적할 대상 클래스
         self.declare_parameter('image_topic', '/camera/image_raw')
         self.declare_parameter('show_preview', True)
+        self.declare_parameter('publish_debug_image', True)  # 디버그 이미지 발행 여부
 
         # 락온 관련 파라미터
-        self.declare_parameter('lock_frame_count', 30)        # 락온까지 필요한 프레임 수
-        self.declare_parameter('similarity_threshold', 0.5)   # 색상 유사도 기준 (낮을수록 너그러움)
+        self.declare_parameter('lock_frame_count', 45)        # 락온까지 필요한 프레임 수
+        self.declare_parameter('similarity_threshold', 0.6)   # 색상 유사도 기준 (낮을수록 너그러움)
         self.declare_parameter('track_max_age', 15)           # 트랙 유지 시간 (프레임)
-        self.declare_parameter('track_n_init', 3)             # 확정까지 필요한 연속 감지 수
+        self.declare_parameter('track_n_init', 1)             # 확정까지 필요한 연속 감지 수
 
         model_path = self.get_parameter('model_path').value
         self.conf_threshold = self.get_parameter('confidence_threshold').value
         self.target_class = self.get_parameter('target_class').value
         image_topic = self.get_parameter('image_topic').value
         self.show_preview = self.get_parameter('show_preview').value
+        self.publish_debug_image = self.get_parameter('publish_debug_image').value
 
         # 락온 파라미터 로드
         self.lock_frame_count = self.get_parameter('lock_frame_count').value
@@ -128,6 +130,14 @@ class YOLODeepSORTNode(Node):
             self.detection_pub = self.create_publisher(
                 DetectionArray,
                 '/detections',
+                10
+            )
+
+        # 디버그 이미지 발행용 Publisher
+        if self.publish_debug_image:
+            self.debug_image_pub = self.create_publisher(
+                Image,
+                '/yolo_debug_image',
                 10
             )
 
@@ -404,8 +414,20 @@ class YOLODeepSORTNode(Node):
             cv2.putText(vis_image, 'TARGET LOST!', (50, 240),
                        cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 3)
 
-        cv2.imshow('YOLO + DeepSORT Tracking', vis_image)
-        cv2.waitKey(1)
+        # ROS2 토픽으로 디버그 이미지 발행
+        if self.publish_debug_image and hasattr(self, 'debug_image_pub'):
+            try:
+                debug_msg = self.bridge.cv2_to_imgmsg(vis_image, encoding='bgr8')
+                debug_msg.header.stamp = self.get_clock().now().to_msg()
+                debug_msg.header.frame_id = 'camera_link'
+                self.debug_image_pub.publish(debug_msg)
+            except Exception as e:
+                self.get_logger().error(f'디버그 이미지 발행 실패: {e}', throttle_duration_sec=5.0)
+
+        # 로컬 창 표시 (선택적)
+        if self.show_preview:
+            cv2.imshow('YOLO + DeepSORT Tracking', vis_image)
+            cv2.waitKey(1)
 
 
 def main(args=None):
