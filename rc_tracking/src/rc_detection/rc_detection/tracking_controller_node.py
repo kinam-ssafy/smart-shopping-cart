@@ -23,7 +23,9 @@ except ImportError:
 # ==========================================
 # 📏 [사용자 설정] 타겟의 실제 키 (단위: m)
 # ==========================================
-TARGET_REAL_HEIGHT = 0.3  # A4용지/인형 등
+# 실제 사람: 1.7
+# A4용지 프린트: 0.2 ~ 0.3 (자로 재보세요!)
+TARGET_REAL_HEIGHT = 1.7
 
 
 class TrackingControllerNode(Node):
