@@ -7,7 +7,7 @@ RFID 태그 데이터를 수신하여 UID 추적기에 전달합니다.
 
 import asyncio
 from bleak import BleakClient
-from uid_tracker import parse_msg, UIDTracker
+from .uid_tracker import parse_msg, UIDTracker
 
 
 async def run_ble_session(
