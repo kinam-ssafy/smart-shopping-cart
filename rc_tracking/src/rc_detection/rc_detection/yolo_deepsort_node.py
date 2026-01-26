@@ -87,7 +87,7 @@ class YOLODeepSORTNode(Node):
         super().__init__('yolo_deepsort_node')
 
         # 파라미터 설정
-        self.declare_parameter('model_path', 'yolo26m.engine')
+        self.declare_parameter('model_path', 'yolo26s.engine')
         self.declare_parameter('confidence_threshold', 0.6)
         self.declare_parameter('target_class', 'person')
         
