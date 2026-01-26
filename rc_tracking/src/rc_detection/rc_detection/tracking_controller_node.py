@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-RC Car Tracking Controller Node (No Reverse Version)
-- 후진 로직 제거: 목표 거리보다 가까우면 정지(STOP)
+RC Car Tracking Controller Node (Photo Test Optimized)
+- 사용자가 설정한 '타겟 실제 키'를 기반으로 비전 거리 추정
+- 라이다 데이터가 있으면 비율을 자동 보정(Calibration)
+- 후진 없음 (No Reverse)
 """
 
 import rclpy
@@ -17,6 +19,13 @@ try:
 except ImportError:
     print("❌ Detection 메시지 import 실패")
     DETECTION_MSG_AVAILABLE = False
+
+# ==========================================
+# 📏 [사용자 설정] 타겟의 실제 키 (단위: m)
+# ==========================================
+# 실제 사람: 1.7
+# A4용지 프린트: 0.2 ~ 0.3 (자로 재보세요!)
+TARGET_REAL_HEIGHT = 0.3  # <--- 여기를 수정하세요!
 
 
 class TrackingControllerNode(Node):
@@ -38,7 +47,7 @@ class TrackingControllerNode(Node):
         self.declare_parameter('max_steer', 30)
 
         # 속도 PID
-        self.declare_parameter('target_distance', 1.0)  # 목표 거리 (m)
+        self.declare_parameter('target_distance', 0.8)  # 목표 거리 (m)
         self.declare_parameter('kp_speed', 40.0)
         self.declare_parameter('ki_speed', 0.5)
         self.declare_parameter('kd_speed', 10.0)
@@ -47,8 +56,11 @@ class TrackingControllerNode(Node):
 
         # 안전 설정
         self.declare_parameter('stop_deadzone', 0.25)
-        self.declare_parameter('emergency_stop_dist', 0.7)
+        self.declare_parameter('emergency_stop_dist', 0.6) # 사진 테스트라 조금 줄임
         self.declare_parameter('watchdog_timeout', 1.5)
+        
+        # [NEW] 타겟 실제 키 파라미터화
+        self.declare_parameter('target_real_height', TARGET_REAL_HEIGHT)
 
         # 파라미터 로드
         self.serial_port = self.get_parameter('serial_port').value
@@ -69,6 +81,7 @@ class TrackingControllerNode(Node):
         self.stop_deadzone = self.get_parameter('stop_deadzone').value
         self.emergency_stop_dist = self.get_parameter('emergency_stop_dist').value
         self.watchdog_timeout = self.get_parameter('watchdog_timeout').value
+        self.target_height_m = self.get_parameter('target_real_height').value
 
         # 상태 변수
         self.latest_detections = None
@@ -88,6 +101,10 @@ class TrackingControllerNode(Node):
         self.locked_target_id = None
         self.lock_counter = 0
         self.lock_threshold = 45
+
+        # [NEW] 거리 추정용 기준값 (Reference)
+        self.ref_lidar_dist = None    # 기준 라이다 거리
+        self.ref_bbox_height = None   # 기준 바운딩 박스 높이
 
         # 시리얼 초기화
         self.ser = self.init_serial()
@@ -112,8 +129,8 @@ class TrackingControllerNode(Node):
         self.control_timer = self.create_timer(0.02, self.control_loop)
 
         self.get_logger().info('=' * 50)
-        self.get_logger().info('🚗 Tracking Controller Node 시작 (No Reverse)')
-        self.get_logger().info(f'   목표 거리: {self.target_dist}m')
+        self.get_logger().info('🚗 Tracking Controller Node 시작')
+        self.get_logger().info(f'👉 설정된 타겟 키: {self.target_height_m}m')
         self.get_logger().info('=' * 50)
 
     def init_serial(self):
@@ -169,7 +186,6 @@ class TrackingControllerNode(Node):
             self.lock_counter += 1
             if self.lock_counter >= self.lock_threshold:
                 self.locked_target_id = best_det.track_id
-                self.get_logger().info(f'🔒 락온 완료! Target ID: {self.locked_target_id}')
         else:
             self.lock_counter = max(0, self.lock_counter - 2)
 
@@ -201,11 +217,9 @@ class TrackingControllerNode(Node):
         if dt <= 0: dt = 0.02
         self.last_pid_time = current_time
 
-        # 양수: 목표보다 멀다 (전진 필요)
-        # 음수: 목표보다 가깝다 (정지)
         error_dist = current_distance - self.target_dist
 
-        # [수정] 너무 가까우면 그냥 정지 (후진 안함)
+        # [수정] 너무 가까우면 정지 (후진 방지)
         if error_dist < self.stop_deadzone:
             self.integral_dist = 0
             self.prev_error_dist = error_dist
@@ -229,15 +243,15 @@ class TrackingControllerNode(Node):
         return speed_z
 
     def send_motor_command(self, steer, speed_z):
-        """STM32로 명령 전송 (전진/정지)"""
+        """STM32로 명령 전송"""
         if self.ser is None: return
 
         try:
-            # 후진(r) 로직 제거됨
+            # 후진(r) 제거됨
             if speed_z > 0:
                 cmd = f"x={int(steer)}\nz={speed_z}\n"
             else:
-                cmd = f"x={int(steer)}\nz=0\n" # 정지 시에도 조향은 유지 (선택사항)
+                cmd = f"x={int(steer)}\nz=0\n"
 
             if cmd == self.last_cmd: return
 
@@ -263,49 +277,65 @@ class TrackingControllerNode(Node):
             self.status_pub.publish(Int32(data=0))
             return
 
-        # 2. 긴급 정지
-        if self.latest_distance is not None and self.latest_distance < self.emergency_stop_dist:
-            self.get_logger().warn(f'🚨 긴급 정지! ({self.latest_distance:.2f}m)', throttle_duration_sec=0.5)
+        # 2. [중요] 거리 추정 로직 (LiDAR + Vision Fusion)
+        target = self.get_target_detection()
+        final_dist = 0.0
+        dist_source = "NONE"
+
+        if target:
+            bbox_h = target.y_max - target.y_min
+            
+            # (A) 라이다 데이터가 건강한 경우 -> 기준값 학습(Calibration)
+            if self.latest_distance is not None and self.latest_distance > 0:
+                final_dist = self.latest_distance
+                dist_source = "LiDAR"
+                
+                # 기준값 업데이트 (학습)
+                self.ref_lidar_dist = final_dist
+                self.ref_bbox_height = bbox_h
+                
+            # (B) 라이다가 죽었거나 이상한 경우 -> 비전 추정(Estimation)
+            else:
+                if self.ref_lidar_dist is not None and self.ref_bbox_height is not None and bbox_h > 0:
+                    # 학습된 비율을 사용하여 거리 추정
+                    final_dist = self.ref_lidar_dist * (self.ref_bbox_height / bbox_h)
+                    dist_source = "Vision(Ref)"
+                else:
+                    # [핵심] 기준값도 없으면 사용자가 설정한 키(target_height_m) 사용
+                    if bbox_h > 10:
+                        final_dist = (self.target_height_m * self.image_height) / (bbox_h * 2.0)
+                        final_dist = max(0.2, min(5.0, final_dist)) # 최소 20cm까지 허용
+                        dist_source = "Vision(Basic)"
+
+        # 3. 긴급 정지 (추정된 거리 기반)
+        if final_dist > 0 and final_dist < self.emergency_stop_dist:
+            self.get_logger().warn(f'🚨 긴급 정지! ({final_dist:.2f}m via {dist_source})', throttle_duration_sec=0.5)
             self.emergency_stop()
             self.status_pub.publish(Int32(data=1))
             return
 
-        # 3. 타겟 찾기
-        target = self.get_target_detection()
+        # 4. 타겟 없음 처리
         if target is None:
             self.send_motor_command(0, 0)
             self.get_logger().info(f'👀 탐색 중... ({self.lock_counter})', throttle_duration_sec=1.0)
             self.status_pub.publish(Int32(data=2))
             return
 
-        # 4. 제어 계산
+        # 5. 제어 계산 및 전송
         steer_val = self.calculate_steer(target)
-        
-        current_dist = self.latest_distance
-        if current_dist is None or current_dist <= 0:
-            # 거리 없으면 비전 추정값 사용
-            bbox_h = target.y_max - target.y_min
-            if bbox_h > 10:
-                current_dist = (1.7 * self.image_height) / (bbox_h * 2.0)
-                current_dist = max(0.5, min(5.0, current_dist))
-
-        # [수정] 속도 계산 (후진 제거됨)
-        speed_z = self.calculate_speed_pid(current_dist)
-
-        # 5. 명령 전송
+        speed_z = self.calculate_speed_pid(final_dist)
         self.send_motor_command(steer_val, speed_z)
 
-        # 6. 상태 발행
+        # 6. 상태 발행 및 로그
         self.steer_pub.publish(Float32(data=float(steer_val)))
         self.speed_pub.publish(Float32(data=float(speed_z)))
         self.status_pub.publish(Int32(data=3))
 
         lock_str = 'LOCKED' if self.locked_target_id is not None else 'UNLOCKED'
-        dist_str = f'{self.latest_distance:.2f}m' if self.latest_distance else 'N/A'
         
-        # 로그 간소화
         self.get_logger().info(
-            f'🎯 {lock_str} | Steer:{steer_val:+.0f} | Spd:{speed_z} | Dist:{dist_str}',
+            f'🎯 {lock_str} | Steer:{steer_val:+.0f} | Spd:{speed_z} | '
+            f'Dist:{final_dist:.2f}m ({dist_source})',
             throttle_duration_sec=0.5
         )
 
