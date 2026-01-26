@@ -81,6 +81,7 @@ class TrackingControllerNode(Node):
         self.latest_detections = None
         self.closest_object_id = None
         self.latest_distance = None
+        self.last_cmd = None
 
         self.last_detection_time = time.time()
         self.last_distance_time = time.time()
@@ -288,11 +289,12 @@ class TrackingControllerNode(Node):
         return speed_z, speed_r
 
     def send_motor_command(self, steer, speed_z, speed_r):
-        """STM32로 모터 명령 전송"""
+        """STM32로 모터 명령 전송 (중복 명령 필터링 적용)"""
         if self.ser is None:
             return
 
         try:
+            # 1. 명령 문자열 생성
             if speed_z > 0:
                 cmd = f"x={int(steer)}\nz={speed_z}\n"
             elif speed_r > 0:
@@ -300,9 +302,18 @@ class TrackingControllerNode(Node):
             else:
                 cmd = f"x={int(steer)}\nz=0\n"
 
+            # 2. [최적화] 이전 명령과 동일하면 전송하지 않음 (Skipping)
+            if cmd == self.last_cmd:
+                return
+
+            # 3. 명령 전송 및 현재 명령 저장
             self.ser.write(cmd.encode())
+            self.last_cmd = cmd  # 현재 보낸 명령을 저장해둠
+
         except Exception as e:
             self.get_logger().error(f'시리얼 전송 에러: {e}')
+            # 에러 발생 시 last_cmd를 초기화하여 다음 루프에서 재시도할 수 있게 함
+            self.last_cmd = None
 
     def emergency_stop(self):
         """긴급 정지"""
