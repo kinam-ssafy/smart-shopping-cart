@@ -1,10 +1,10 @@
 # app.py
 import asyncio
-from config import settings
-from mqtt_client import mqtt_connect, publish_uid_list
-from ble_scanner import find_addr_by_service_uuid
-from uid_tracker import UIDTracker
-from ble_session import run_ble_session
+from core.config import settings
+from core.mqtt_client import mqtt_connect, publish_uid_list
+from core.ble_scanner import find_addr_by_service_uuid
+from core.uid_tracker import UIDTracker
+from core.ble_session import run_ble_session
 
 async def main():
     mqttc = mqtt_connect(
