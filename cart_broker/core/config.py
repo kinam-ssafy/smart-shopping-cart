@@ -9,9 +9,7 @@ import os
 from dataclasses import dataclass
 from dotenv import load_dotenv
 
-# .env 파일에서 환경변수 로드
-# 프로젝트 루트의 .env 파일을 자동으로 찾아 로드합니다
-load_dotenv()
+load_dotenv("../.env")
 
 
 @dataclass(frozen=True)
