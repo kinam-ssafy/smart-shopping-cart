@@ -103,11 +103,12 @@ class YOLODeepSORTNode(Node):
         # ----------------------------------
         self.declare_parameter('model_path', 'yolo26s.engine')
         self.declare_parameter('confidence_threshold', 0.6)
-        self.declare_parameter('target_class', 'person')
+        # self.declare_parameter('target_class', 'person')
+        self.declare_parameter('target_class', 'teddy bear')
         
         # 락온/추적 관련 튜닝 파라미터
         self.declare_parameter('lock_frame_count', 45)       # 중앙에 몇 프레임 머물러야 락온할지
-        self.declare_parameter('similarity_threshold', 0.6)  # 히스토그램 유사도 기준 (0~1)
+        self.declare_parameter('similarity_threshold', 0.7)  # 히스토그램 유사도 기준 (0~1)
         self.declare_parameter('track_max_age', 15)          # 화면에서 사라져도 몇 프레임까지 기억할지
         self.declare_parameter('track_n_init', 3)            # 몇 프레임 연속 탐지되어야 진짜로 인정할지
 
