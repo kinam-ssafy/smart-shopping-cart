@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { notFound } from 'next/navigation';
+import { use, useState } from 'react';
 import { SearchButton } from '@/components/ui/buttons/Button';
 import StoreMap from '@/components/map/StoreMap';
 import ExpandableProductCard from '@/components/ui/product/ExpandableProductCard';
@@ -66,8 +67,19 @@ const MOCK_CART_ITEMS = [
     },
 ];
 
-export default function CartPage() {
+export default function CartPage({ params }: { params: Promise<{ id: string }> }) {
     const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
+
+    // params를 unwrap (Next.js 15 이상)
+    const { id: cartId } = use(params);
+
+    // ID 검증: 숫자인지 확인
+    const isValidId = /^\d+$/.test(cartId); // 정규식으로 숫자만 허용
+
+    // ID가 숫자가 아니면 404 페이지로
+    if (!isValidId) {
+        notFound();
+    }
 
     // 총액 계산
     const totalAmount = MOCK_CART_ITEMS.reduce(
@@ -85,6 +97,11 @@ export default function CartPage() {
                         size="medium"
                         onClick={() => window.location.href = '/search'}
                     />
+                </div>
+
+                {/* 카트 ID 표시 (개발용, 나중에 제거 가능) */}
+                <div className="text-sm text-gray-500 mb-2 text-center">
+                    Cart ID: {cartId}
                 </div>
 
                 {/* 지도 (정사각형, 축소) */}
