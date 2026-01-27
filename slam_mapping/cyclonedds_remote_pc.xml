@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CycloneDDS>
+  <Domain id="0">
+    <General>
+      <NetworkInterfaceAddress>auto</NetworkInterfaceAddress>
+      <AllowMulticast>false</AllowMulticast>
+      <MaxMessageSize>65500B</MaxMessageSize>
+    </General>
+    
+    <Discovery>
+      <ParticipantIndex>auto</ParticipantIndex>
+      <Peers>
+        <!-- RC 카의 IP 주소를 여기에 입력 (예: 192.168.0.100) -->
+        <Peer address="RC_CAR_IP"/>
+      </Peers>
+      <ExternalDomainId>0</ExternalDomainId>
+    </Discovery>
+    
+    <Internal>
+      <MinimumSocketReceiveBufferSize>10MB</MinimumSocketReceiveBufferSize>
+    </Internal>
+    
+    <Tracing>
+      <Verbosity>warning</Verbosity>
+      <OutputFile>stdout</OutputFile>
+    </Tracing>
+  </Domain>
+  
+  <!-- UDP 포트 범위 제한: 8765만 사용 -->
+  <CycloneDDS>
+    <Domain>
+      <Discovery>
+        <Ports>
+          <Base>8765</Base>
+          <DomainGain>0</DomainGain>
+          <ParticipantGain>0</ParticipantGain>
+          <MulticastMetaOffset>0</MulticastMetaOffset>
+          <UnicastMetaOffset>0</UnicastMetaOffset>
+          <MulticastDataOffset>1</MulticastDataOffset>
+          <UnicastDataOffset>1</UnicastDataOffset>
+        </Ports>
+      </Discovery>
+    </Domain>
+  </CycloneDDS>
+</CycloneDDS>

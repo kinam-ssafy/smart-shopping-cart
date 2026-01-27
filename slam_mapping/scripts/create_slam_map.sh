@@ -46,7 +46,7 @@ echo ""
 
 # 1. YDLidar Simple Node (Static TF만 퍼블리시)
 echo "[1/4] Starting YDLidar Simple node..."
-python3 "$PROJECT_DIR/slam_mapping2/ydlidar_simple_node.py" --port "$LIDAR_PORT" &
+/usr/bin/python3.10 "$PROJECT_DIR/slam_mapping2/ydlidar_simple_node.py" --port "$LIDAR_PORT" &
 LIDAR_PID=$!
 sleep 3
 
@@ -71,10 +71,11 @@ ros2 run cartographer_ros cartographer_occupancy_grid_node \
 GRID_PID=$!
 sleep 1
 
-# 4. RViz
-echo "[4/4] Starting RViz..."
-rviz2 -d "$PROJECT_DIR/rviz/slam.rviz" &
-RVIZ_PID=$!
+# 4. RViz (원격 연결용으로 비활성화)
+echo "[4/4] RViz disabled (use remote RViz from laptop)"
+# echo "[4/4] Starting RViz..."
+# rviz2 -d "$PROJECT_DIR/rviz/slam.rviz" &
+# RVIZ_PID=$!
 
 echo ""
 echo "============================================"
@@ -93,7 +94,7 @@ echo "============================================"
 cleanup() {
     echo ""
     echo "Stopping all nodes..."
-    kill $RVIZ_PID 2>/dev/null
+    # kill $RVIZ_PID 2>/dev/null
     kill $GRID_PID 2>/dev/null
     kill $CARTO_PID 2>/dev/null
     kill $LIDAR_PID 2>/dev/null

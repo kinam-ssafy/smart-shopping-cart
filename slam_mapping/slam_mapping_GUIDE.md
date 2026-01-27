@@ -157,7 +157,7 @@ python3 scripts/test_standalone.py --port /dev/ttyUSB0
 
 Jetson Nano가 디스플레이 없이 실행되는 경우:
 
-#### 옵션 1: RViz 비활성화
+#### 옵션 1: RViz 비활성화 (권장)
 
 `scripts/create_slam_map.sh` 수정:
 ```bash
@@ -167,15 +167,137 @@ Jetson Nano가 디스플레이 없이 실행되는 경우:
 # RVIZ_PID=$!
 ```
 
-#### 옵션 2: 원격 RViz 사용
+#### 옵션 2: 원격 RViz 사용 (윈도우/리눅스 노트북)
 
-노트북에서 Jetson Nano의 ROS2 토픽을 구독:
+**방법 A: WSL2 Ubuntu에서 RViz 실행 (윈도우 사용자 권장)** ⭐
+
+1. **RC카(우분투)에서 설정**:
+```bash
+# RC카 IP 확인
+hostname -I  # 예: 192.168.0.100
+
+# RViz 비활성화 상태로 SLAM 실행
+./scripts/create_slam_map.sh /dev/ttyUSB0
+
+# ROS_DOMAIN_ID 확인 (기본값: 0)
+echo $ROS_DOMAIN_ID
+```
+
+2. **윈도우 노트북에서 WSL2 Ubuntu 설치** (아직 없는 경우):
+```powershell
+# PowerShell (관리자 권한)
+wsl --install -d Ubuntu-22.04
+```
+
+3. **WSL2 Ubuntu에서 ROS2 및 RViz 설치**:
+```bash
+# WSL2 Ubuntu 터미널에서
+sudo apt update
+sudo apt install software-properties-common
+sudo add-apt-repository universe
+
+# ROS2 Humble 설치
+sudo apt update && sudo apt install curl -y
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+sudo apt update
+sudo apt install ros-humble-rviz2 ros-humble-rmw-cyclonedds-cpp
+
+# WSLg X11 지원 확인 (Windows 11 권장)
+echo $DISPLAY  # :0 이 나와야 함
+```
+
+4. **WSL2에서 RViz 실행**:
+```bash
+# WSL2 Ubuntu에서
+source /opt/ros/humble/setup.bash
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export ROS_DOMAIN_ID=0
+
+# CycloneDDS 설정 파일 생성 (네트워크 탐색 활성화)
+mkdir -p ~/cyclonedds
+cat > ~/cyclonedds/config.xml << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<CycloneDDS>
+  <Domain>
+    <General>
+      <NetworkInterfaceAddress>auto</NetworkInterfaceAddress>
+      <AllowMulticast>true</AllowMulticast>
+    </General>
+    <Discovery>
+      <ParticipantIndex>auto</ParticipantIndex>
+      <EnableTopicDiscoveryEndpoints>true</EnableTopicDiscoveryEndpoints>
+    </Discovery>
+  </Domain>
+</CycloneDDS>
+EOF
+
+export CYCLONEDDS_URI=file://$HOME/cyclonedds/config.xml
+
+# RViz 실행 (RC카의 rviz 설정 파일 다운로드 필요)
+# 설정 파일이 없으면 기본 RViz 실행
+rviz2
+
+# 또는 RC카에서 설정 파일 복사 후
+# scp ssafy@192.168.0.100:~/Desktop/seon-il/S14P11A401/slam_mapping/rviz/slam.rviz ~/slam.rviz
+# rviz2 -d ~/slam.rviz
+```
+
+5. **RViz에서 토픽 확인**:
+```bash
+# 다른 WSL2 터미널에서 토픽 확인
+source /opt/ros/humble/setup.bash
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export ROS_DOMAIN_ID=0
+export CYCLONEDDS_URI=file://$HOME/cyclonedds/config.xml
+
+ros2 topic list
+# /scan, /map, /tf, /tf_static 등이 보여야 함
+```
+
+**방법 B: SSH 터널링 + rosbridge (포트 8765) - 대체 방법**
+
+네트워크 환경이 복잡한 경우 rosbridge를 사용합니다.
+
+1. **RC카에서 rosbridge 설치 및 실행**:
+```bash
+# rosbridge 설치
+sudo apt install ros-humble-rosbridge-suite
+
+# SLAM 실행 (다른 터미널)
+./scripts/create_slam_map.sh /dev/ttyUSB0
+
+# rosbridge 실행
+source /opt/ros/humble/setup.bash
+ros2 launch rosbridge_server rosbridge_websocket_launch.xml port:=8765
+```
+
+2. **윈도우에서 SSH 터널링** (PowerShell):
+```powershell
+# RC카로 SSH 터널링 (포트 8765)
+ssh -L 8765:localhost:8765 ssafy@192.168.0.100
+
+# 연결 유지
+```
+
+3. **웹 기반 Visualizer 사용**:
+- [ROS3D](http://robotwebtools.org/tools.html) 또는 [Foxglove Studio](https://foxglove.dev/) 사용
+- WebSocket 연결: `ws://localhost:8765`
+
+**방법 C: 리눅스 노트북에서 직접 실행**
 
 ```bash
-# Jetson Nano와 노트북이 같은 네트워크에 있어야 함
-# 노트북에서 실행
+# 노트북 (Ubuntu)에서
+source /opt/ros/humble/setup.bash
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 export ROS_DOMAIN_ID=0
-rviz2 -d ~/slam_mapping/rviz/slam.rviz
+
+# CycloneDDS 설정
+export CYCLONEDDS_URI=file:///path/to/cyclonedds/config.xml
+
+# RViz 실행
+rviz2 -d slam.rviz
 ```
 
 ### 성능 최적화

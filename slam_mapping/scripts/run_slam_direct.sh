@@ -35,7 +35,7 @@ echo ""
 
 # 1. YDLidar Node (먼저 시작해서 TF 준비)
 echo "[1/4] Starting YDLidar node..."
-python3 "$PROJECT_DIR/slam_mapping2/ydlidar_ros2_node.py" --port "$LIDAR_PORT" &
+/usr/bin/python3.10 "$PROJECT_DIR/slam_mapping2/ydlidar_ros2_node.py" --port "$LIDAR_PORT" &
 LIDAR_PID=$!
 sleep 3
 

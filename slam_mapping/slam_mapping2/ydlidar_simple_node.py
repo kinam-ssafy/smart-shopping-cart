@@ -109,19 +109,31 @@ class YDLidarSimpleNode(Node):
             ydlidar.os_init()
             self.laser = ydlidar.CYdLidar()
 
+            # 사용자가 지정한 포트 사용 (lidarPortList 결과 무시)
             ports = ydlidar.lidarPortList()
-            port = self.port
             for k, v in ports.items():
-                port = v
-                self.get_logger().info(f'Found: {port}')
-
-            self.laser.setlidaropt(ydlidar.LidarPropSerialPort, port)
+                self.get_logger().info(f'Found: {v}')
+            
+            # 실제 사용할 포트는 self.port 사용
+            self.get_logger().info(f'Using port: {self.port}')
+            
+            self.laser.setlidaropt(ydlidar.LidarPropSerialPort, self.port)
             self.laser.setlidaropt(ydlidar.LidarPropSerialBaudrate, 128000)
             self.laser.setlidaropt(ydlidar.LidarPropLidarType, ydlidar.TYPE_TRIANGLE)
             self.laser.setlidaropt(ydlidar.LidarPropDeviceType, ydlidar.YDLIDAR_TYPE_SERIAL)
-            self.laser.setlidaropt(ydlidar.LidarPropScanFrequency, 8.0)  # 더 빠른 스캔
-            self.laser.setlidaropt(ydlidar.LidarPropSampleRate, 5)  # 더 많은 샘플
+            self.laser.setlidaropt(ydlidar.LidarPropScanFrequency, 10.0)  # 10Hz (안정적)
+            self.laser.setlidaropt(ydlidar.LidarPropSampleRate, 9)  # 9K (안정적)
             self.laser.setlidaropt(ydlidar.LidarPropSingleChannel, True)
+            
+            # 추가 안정성 설정
+            self.laser.setlidaropt(ydlidar.LidarPropFixedResolution, False)
+            self.laser.setlidaropt(ydlidar.LidarPropReversion, False)
+            self.laser.setlidaropt(ydlidar.LidarPropInverted, False)
+            self.laser.setlidaropt(ydlidar.LidarPropAutoReconnect, True)
+            self.laser.setlidaropt(ydlidar.LidarPropMaxRange, 16.0)
+            self.laser.setlidaropt(ydlidar.LidarPropMinRange, 0.12)
+            self.laser.setlidaropt(ydlidar.LidarPropMaxAngle, 180.0)
+            self.laser.setlidaropt(ydlidar.LidarPropMinAngle, -180.0)
 
             if self.laser.initialize() and self.laser.turnOn():
                 self.scan_data = ydlidar.LaserScan()

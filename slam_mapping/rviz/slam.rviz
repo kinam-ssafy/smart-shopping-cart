@@ -75,7 +75,7 @@ Visualization Manager:
     # Submaps (Cartographer 서브맵)
     - Class: rviz_default_plugins/MarkerArray
       Name: Submaps
-      Enabled: true
+      Enabled: false
       Topic:
         Value: /submap_list
         Depth: 5

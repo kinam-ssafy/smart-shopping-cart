@@ -71,8 +71,8 @@ TRAJECTORY_BUILDER_2D.ceres_scan_matcher.occupied_space_weight = 10.0  -- 스캔
 TRAJECTORY_BUILDER_2D.ceres_scan_matcher.translation_weight = 1.0  -- 이동 제약 감소
 TRAJECTORY_BUILDER_2D.ceres_scan_matcher.rotation_weight = 1.0  -- 회전 제약 감소
 
--- 서브맵 설정 (더 많은 데이터로 안정적인 서브맵)
-TRAJECTORY_BUILDER_2D.submaps.num_range_data = 90  -- 더 많은 스캔으로 서브맵 완성
+-- 서브맵 설정 (빠른 서브맵 생성으로 에러 방지)
+TRAJECTORY_BUILDER_2D.submaps.num_range_data = 45  -- 더 빨리 서브맵 완성 (기본값)
 TRAJECTORY_BUILDER_2D.submaps.grid_options_2d.resolution = 0.05  -- 5cm/pixel (안정성 우선)
 
 -- Motion Filter (이동 시 더 자주 업데이트)
