@@ -1,0 +1,23 @@
+# Build results
+bin/
+obj/
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+
+# VS Code
+.vscode/
+
+# .NET Core
+*.log
+*.cache
+
+# Secrets
+.env
+appsettings.*.local.json
+
+# OS files
+.DS_Store
+Thumbs.db

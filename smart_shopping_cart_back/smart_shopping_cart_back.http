@@ -1,0 +1,6 @@
+@smart_shopping_cart_back_HostAddress = http://localhost:5067
+
+GET {{smart_shopping_cart_back_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
