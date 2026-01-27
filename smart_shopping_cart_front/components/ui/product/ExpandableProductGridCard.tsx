@@ -4,6 +4,17 @@ import { useRef, useEffect } from 'react';
 import ProductGridCard from './ProductGridCard';
 import ProductDetail from './ProductDetail';
 
+export interface ProductDetailType {
+    images: string[];
+    description: string;
+    averageRating: number;
+    reviews: Array<{
+        rating: number;
+        content: string;
+        images?: string[];
+    }>;
+}
+
 interface ExpandableProductGridCardProps {
     /** 제품 ID */
     id: string;
@@ -26,35 +37,20 @@ interface ExpandableProductGridCardProps {
     /** 매장 위치 (예: A-1, B-3) */
     location?: string;
 
-    /** 상세 정보 */
-    detail: {
-        images: string[];
-        description: string;
-        averageRating: number;
-        reviews: Array<{
-            rating: number;
-            content: string;
-            images?: string[];
-        }>;
-    };
-
     /** 확장 상태 (외부에서 제어) */
     isExpanded: boolean;
 
     /** 확장 토글 핸들러 */
     onToggle: () => void;
 
-    /** 그리드 내 위치 (행 번호 계산용) */
-    index: number;
-
     /** 추가 CSS 클래스 */
     className?: string;
 }
 
 /**
- * 확장 가능한 그리드형 제품 카드 컴포넌트
- * 클릭 시 상세 정보가 그리드 전체 너비로 확장되며, 선택된 카드는 시각적으로 강조됨
- * 확장 시 같은 행의 다른 카드들은 위치 유지
+ * 확장 가능한 그리드형 제품 카드 컴포넌트 (카드 부분만)
+ * 클릭 시 선택 상태가 시각적으로 강조됨
+ * 확장 영역은 부모 컴포넌트에서 별도로 렌더링해야 함
  */
 export default function ExpandableProductGridCard({
     id,
@@ -64,73 +60,54 @@ export default function ExpandableProductGridCard({
     quantity,
     rating,
     location,
-    detail,
     isExpanded,
     onToggle,
-    index,
     className = '',
 }: ExpandableProductGridCardProps) {
-    const detailRef = useRef<HTMLDivElement>(null);
-
-    // 확장될 때 스크롤
-    useEffect(() => {
-        if (isExpanded && detailRef.current) {
-            setTimeout(() => {
-                detailRef.current?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'nearest',
-                });
-            }, 100);
-        }
-    }, [isExpanded]);
-
-    // 2열 그리드에서 행 번호 계산 (0-based)
-    const rowIndex = Math.floor(index / 2);
-
-    // 확장 영역의 grid-row 위치: 카드가 있는 행의 다음 행
-    const detailRowStart = rowIndex * 2 + 2; // 카드 행 + 확장 행
-
     return (
-        <>
-            {/* 제품 카드 - 선택 시 테두리 강조 */}
-            <div className={className}>
-                <div className={`
-          transition-all duration-200
-          ${isExpanded ? 'ring-2 ring-blue-500 ring-offset-2 rounded-[22px]' : ''}
-        `}>
-                    <ProductGridCard
-                        id={id}
-                        name={name}
-                        price={price}
-                        image={image}
-                        quantity={quantity}
-                        rating={rating}
-                        location={location}
-                        onClick={onToggle}
-                    />
-                </div>
+        <div className={className}>
+            <div className={`
+                transition-all duration-200
+                ${isExpanded ? 'ring-2 ring-blue-500 ring-offset-2 rounded-[22px]' : ''}
+            `}>
+                <ProductGridCard
+                    id={id}
+                    name={name}
+                    price={price}
+                    image={image}
+                    quantity={quantity}
+                    rating={rating}
+                    location={location}
+                    onClick={onToggle}
+                />
             </div>
+        </div>
+    );
+}
 
-            {/* 확장 영역 (상세 정보) - 그리드 전체 너비 차지, 같은 행 다음에 배치 */}
-            {isExpanded && (
-                <div
-                    ref={detailRef}
-                    className="col-span-2"
-                    style={{
-                        gridColumn: '1 / -1',
-                        gridRow: detailRowStart,
-                    }}
-                >
-                    <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <ProductDetail
-                            images={detail.images}
-                            description={detail.description}
-                            averageRating={detail.averageRating}
-                            reviews={detail.reviews}
-                        />
-                    </div>
-                </div>
-            )}
-        </>
+interface ExpandedDetailProps {
+    detail: ProductDetailType;
+    detailRef?: React.RefObject<HTMLDivElement | null>;
+}
+
+/**
+ * 확장된 상세 정보 컴포넌트
+ * 그리드의 전체 너비를 차지하며, 행 단위로 렌더링됨
+ */
+export function ExpandedDetail({ detail, detailRef }: ExpandedDetailProps) {
+    return (
+        <div
+            ref={detailRef}
+            className="col-span-2"
+        >
+            <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                <ProductDetail
+                    images={detail.images}
+                    description={detail.description}
+                    averageRating={detail.averageRating}
+                    reviews={detail.reviews}
+                />
+            </div>
+        </div>
     );
 }

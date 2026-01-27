@@ -1,0 +1,182 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+
+Visualization Manager:
+  Class: ""
+  Displays:
+    # Grid
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 1
+      Line Style:
+        Line Width: 0.03
+        Value: Lines
+      Normal Cell Count: 0
+      Plane: XY
+      Plane Cell Count: 30
+      Reference Frame: map
+      Color: 100; 100; 100
+
+    # TF Frames (로봇 위치 표시)
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        base_link:
+          Value: true
+        laser:
+          Value: true
+        map:
+          Value: true
+        odom:
+          Value: true
+      Marker Scale: 1.0
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Update Interval: 0
+
+    # LaserScan (현재 스캔 - 밝은 녹색, 크게)
+    - Class: rviz_default_plugins/LaserScan
+      Name: LaserScan
+      Enabled: true
+      Topic:
+        Value: /scan
+        Depth: 5
+        Durability Policy: Volatile
+        Reliability Policy: Best Effort
+      Color: 0; 255; 100
+      Size (m): 0.05
+      Style: Spheres
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+
+    # Map (Occupancy Grid)
+    - Class: rviz_default_plugins/Map
+      Name: Map
+      Enabled: true
+      Topic:
+        Value: /map
+        Depth: 1
+        Durability Policy: Transient Local
+        Reliability Policy: Reliable
+      Alpha: 0.8
+      Color Scheme: map
+      Draw Behind: true
+
+    # Submaps (Cartographer 서브맵)
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Submaps
+      Enabled: true
+      Topic:
+        Value: /submap_list
+        Depth: 5
+        Durability Policy: Volatile
+        Reliability Policy: Reliable
+
+    # Trajectory (로봇 이동 경로 - 빨간색 선)
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Trajectory
+      Enabled: true
+      Topic:
+        Value: /trajectory_node_list
+        Depth: 5
+        Durability Policy: Volatile
+        Reliability Policy: Reliable
+
+    # Constraint List (루프 클로저 연결선)
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Constraints
+      Enabled: true
+      Topic:
+        Value: /constraint_list
+        Depth: 5
+        Durability Policy: Volatile
+        Reliability Policy: Reliable
+
+    # Landmark Poses (랜드마크)
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Landmarks
+      Enabled: false
+      Topic:
+        Value: /landmark_poses_list
+        Depth: 5
+        Durability Policy: Volatile
+        Reliability Policy: Reliable
+
+    # Robot Pose (Cartographer tracked pose)
+    - Class: rviz_default_plugins/Pose
+      Name: Robot Pose
+      Enabled: true
+      Topic:
+        Value: /tracked_pose
+        Depth: 5
+        Durability Policy: Volatile
+        Reliability Policy: Reliable
+      Shape:
+        Alpha: 1
+        Axes Length: 0.5
+        Axes Radius: 0.08
+        Color: 255; 0; 0
+        Head Length: 0.15
+        Head Radius: 0.12
+        Shaft Length: 0.4
+        Shaft Radius: 0.08
+        Value: Arrow
+
+    # Robot Marker (로봇 형태 시각화 - 원형)
+    - Class: rviz_default_plugins/Marker
+      Name: Robot Shape
+      Enabled: true
+      Topic:
+        Value: /robot_marker
+        Depth: 5
+        Durability Policy: Volatile
+        Reliability Policy: Reliable
+
+  Global Options:
+    Background Color: 30; 30; 30
+    Fixed Frame: map
+    Frame Rate: 30
+
+  Name: SLAM Visualization
+  Tools:
+    - Class: rviz_default_plugins/Interact
+      Hide Inactive Objects: true
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+      Line color: 128; 128; 0
+    - Class: rviz_default_plugins/SetInitialPose
+      Topic:
+        Value: /initialpose
+    - Class: rviz_default_plugins/SetGoal
+      Topic:
+        Value: /goal_pose
+
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Enable Stereo Rendering:
+        Value: false
+      Name: TopDownOrtho
+      Near Clip Distance: 0.01
+      Scale: 80
+      Target Frame: base_link
+      X: 0
+      Y: 0
+
+Window Geometry:
+  Height: 900
+  Width: 1400
+  X: 50
+  Y: 50
