@@ -1,0 +1,29 @@
+version: '3.8'
+
+# 백엔드 서버용 docker-compose
+# EC2에서 이미 실행 중인 MQTT 브로커에 연결
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smart-cart-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      # MQTT 브로커 연결 정보
+      - MQTT__Broker=${MQTT_BROKER:-mqtt-broker}
+      - MQTT__Port=${MQTT_PORT:-1883}
+      - MQTT__Topic=${MQTT_TOPIC:-cart/1}
+      - MQTT__Username=${MQTT_USERNAME}
+      - MQTT__Password=${MQTT_PASSWORD}
+    networks:
+      - cart-network
+
+networks:
+  cart-network:
+    # EC2의 기존 네트워크에 연결
+    external: true
