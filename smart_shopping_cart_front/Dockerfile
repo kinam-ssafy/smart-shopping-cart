@@ -18,6 +18,10 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy source code
 COPY . .
 
+# Build argument for API URL (빌드 시점에 주입)
+ARG NEXT_PUBLIC_API_URL=http://localhost:8123
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
 # Build Next.js application
 RUN npm run build
 
