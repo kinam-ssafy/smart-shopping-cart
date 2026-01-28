@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace smart_shopping_cart_back.Services;
 
@@ -10,13 +11,18 @@ namespace smart_shopping_cart_back.Services;
 /// </summary>
 public class SseService
 {
-    // 연결된 SSE 클라이언트 목록 (Thread-safe)
     private readonly ConcurrentDictionary<string, HttpResponse> _clients = new();
     private readonly ILogger<SseService> _logger;
+    private readonly JsonSerializerOptions _jsonOptions;
 
     public SseService(ILogger<SseService> logger)
     {
         _logger = logger;
+        _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
     }
 
     /// <summary>
@@ -40,11 +46,29 @@ public class SseService
     }
 
     /// <summary>
-    /// 모든 SSE 클라이언트에게 UID 배열 전송
+    /// 특정 클라이언트에게 상품 목록 전송 (초기 연결 시)
     /// </summary>
-    public async Task BroadcastUidsAsync(string[] uids)
+    public async Task SendToClientAsync(HttpResponse response, List<CartProductDto> products)
     {
-        var data = JsonSerializer.Serialize(new { uids });
+        try
+        {
+            var data = JsonSerializer.Serialize(new { products }, _jsonOptions);
+            var message = $"data: {data}\n\n";
+            await response.WriteAsync(message);
+            await response.Body.FlushAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"[SSE] 전송 실패: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 모든 SSE 클라이언트에게 상품 목록 전송
+    /// </summary>
+    public async Task BroadcastProductsAsync(List<CartProductDto> products)
+    {
+        var data = JsonSerializer.Serialize(new { products }, _jsonOptions);
         var message = $"data: {data}\n\n";
 
         foreach (var (clientId, response) in _clients)
@@ -56,7 +80,30 @@ public class SseService
             }
             catch (Exception)
             {
-                // 연결 끊긴 클라이언트 제거
+                RemoveClient(clientId);
+            }
+        }
+
+        _logger.LogInformation($"[SSE] 브로드캐스트: {products.Count}개 상품 → {_clients.Count}명");
+    }
+
+    /// <summary>
+    /// 모든 SSE 클라이언트에게 UID 배열 전송 (레거시 호환)
+    /// </summary>
+    public async Task BroadcastUidsAsync(string[] uids)
+    {
+        var data = JsonSerializer.Serialize(new { uids }, _jsonOptions);
+        var message = $"data: {data}\n\n";
+
+        foreach (var (clientId, response) in _clients)
+        {
+            try
+            {
+                await response.WriteAsync(message);
+                await response.Body.FlushAsync();
+            }
+            catch (Exception)
+            {
                 RemoveClient(clientId);
             }
         }
