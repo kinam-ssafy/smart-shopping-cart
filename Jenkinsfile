@@ -10,7 +10,7 @@ pipeline {
         HOST_PORT = '8002'
         CONTAINER_PORT = '3000'
         // 백엔드 API URL (EC2 퍼블릭 IP로 변경 필요)
-        API_URL = 'http://52.79.195.17:8123'
+        API_URL = 'https://i14a401.p.ssafy.io'
     }
     
     stages {
