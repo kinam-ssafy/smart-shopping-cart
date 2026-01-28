@@ -57,9 +57,18 @@ static async Task<List<CardTemplateDto>> BuildCardsAsync(
         .GroupBy(x => x.ProductId)
         .ToDictionary(g => g.Key, g => g.Select(x => x.Dto).ToList());
 
-    var avgByProduct = reviews
-        .GroupBy(x => x.ProductId)
-        .ToDictionary(g => g.Key, g => g.Average(x => (double)x.Rating));
+    var ratingStats = await db.Reviews
+        .AsNoTracking()
+        .Where(r => ids.Contains(r.ProductId))
+        .GroupBy(r => r.ProductId)
+        .Select(g => new
+        {
+            ProductId = g.Key,
+            Avg = g.Average(r => (double)r.Rating),
+            Cnt = g.Count()
+        });
+
+    var avgByProduct = ratingStats.ToDictionary(g => g.Key, g => g.Avg);
 
     var orderIndex = ids.Select((id, idx) => (id, idx)).ToDictionary(x => x.id, x => x.idx);
 
