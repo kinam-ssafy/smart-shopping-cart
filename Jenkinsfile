@@ -9,6 +9,8 @@ pipeline {
         // 포트 설정 (EC2 포트 제한: 8000-9000)
         HOST_PORT = '8002'
         CONTAINER_PORT = '3000'
+        // 백엔드 API URL (EC2 퍼블릭 IP로 변경 필요)
+        API_URL = 'http://52.79.195.17:8123'
     }
     
     stages {
@@ -24,7 +26,9 @@ pipeline {
                 echo '🐳 Docker 이미지 빌드 중...'
                 dir('smart_shopping_cart_front') {
                     sh '''
-                        docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
+                        docker build \
+                            --build-arg NEXT_PUBLIC_API_URL=${API_URL} \
+                            -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
                         docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
                     '''
                 }
