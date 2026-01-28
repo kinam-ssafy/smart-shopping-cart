@@ -1,88 +1,78 @@
 'use client';
 
 import { notFound } from 'next/navigation';
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import { SearchButton } from '@/components/ui/buttons/Button';
 import StoreMap from '@/components/map/StoreMap';
 import ExpandableProductCard from '@/components/ui/product/ExpandableProductCard';
 import CartFooter from '@/components/layout/CartFooter';
+import { CartProduct, CartSseMessage } from '@/types/cart';
 
-// 목데이터: 장바구니 상품들
-const MOCK_CART_ITEMS = [
-    {
-        id: '1',
-        name: 'Fresh Organic Apples',
-        price: 4.99,
-        image: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=200&h=200&fit=crop',
-        quantity: 3,
-        rating: 4.5,
-        location: 'A-1',
-        detail: {
-            images: [
-                'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400&h=300&fit=crop',
-                'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=300&fit=crop',
-            ],
-            description: 'Fresh, crispy organic apples from local farms. Perfect for snacking or baking.',
-            averageRating: 4.5,
-            reviews: [
-                { rating: 5, content: 'Best apples I\'ve ever tasted!' },
-                { rating: 4, content: 'Very fresh and crispy.' },
-            ]
-        }
-    },
-    {
-        id: '2',
-        name: 'Whole Milk',
-        price: 3.49,
-        image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=200&h=200&fit=crop',
-        quantity: 2,
-        rating: 4.8,
-        location: 'A-4',
-        detail: {
-            images: ['https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=300&fit=crop'],
-            description: 'Fresh whole milk, rich in calcium and vitamins.',
-            averageRating: 4.8,
-            reviews: [
-                { rating: 5, content: 'Great quality milk!' },
-            ]
-        }
-    },
-    {
-        id: '3',
-        name: 'Artisan Sourdough Bread',
-        price: 5.99,
-        image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&h=200&fit=crop',
-        quantity: 1,
-        rating: 4.9,
-        location: 'C-1',
-        detail: {
-            images: ['https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=300&fit=crop'],
-            description: 'Handcrafted sourdough bread with a crispy crust and soft interior.',
-            averageRating: 4.9,
-            reviews: [
-                { rating: 5, content: 'Amazing bread!' },
-                { rating: 5, content: 'Best sourdough in town.' },
-            ]
-        }
-    },
-];
+// 백엔드 API URL (환경변수로 설정 가능)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function CartPage({ params }: { params: Promise<{ id: string }> }) {
-    const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
+    const [cartItems, setCartItems] = useState<CartProduct[]>([]);
+    const [isConnected, setIsConnected] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     // params를 unwrap (Next.js 15 이상)
     const { id: cartId } = use(params);
 
     // ID 검증: 숫자인지 확인
-    const isValidId = /^\d+$/.test(cartId); // 정규식으로 숫자만 허용
+    const isValidId = /^\d+$/.test(cartId);
 
     // ID가 숫자가 아니면 404 페이지로
     if (!isValidId) {
         notFound();
     }
 
+    // SSE 연결
+    useEffect(() => {
+        let eventSource: EventSource | null = null;
+
+        const connectSSE = () => {
+            eventSource = new EventSource(`${API_BASE_URL}/api/cart/stream`);
+
+            eventSource.onopen = () => {
+                setIsConnected(true);
+                setError(null);
+                console.log('[SSE] 연결됨');
+            };
+
+            eventSource.onmessage = (event) => {
+                try {
+                    const data: CartSseMessage = JSON.parse(event.data);
+                    if (data.products) {
+                        setCartItems(data.products);
+                        console.log('[SSE] 상품 수신:', data.products.length, '개');
+                    }
+                } catch (e) {
+                    console.error('[SSE] 파싱 오류:', e);
+                }
+            };
+
+            eventSource.onerror = () => {
+                setIsConnected(false);
+                setError('연결 끊김. 재연결 시도 중...');
+                console.log('[SSE] 연결 오류, 재연결 시도...');
+
+                eventSource?.close();
+
+                // 3초 후 재연결
+                setTimeout(connectSSE, 3000);
+            };
+        };
+
+        connectSSE();
+
+        return () => {
+            eventSource?.close();
+        };
+    }, []);
+
     // 총액 계산
-    const totalAmount = MOCK_CART_ITEMS.reduce(
+    const totalAmount = cartItems.reduce(
         (sum, item) => sum + item.price * item.quantity,
         0
     );
@@ -91,18 +81,26 @@ export default function CartPage({ params }: { params: Promise<{ id: string }> }
         <div className="min-h-screen bg-gray-50 flex flex-col">
             {/* 메인 콘텐츠 영역 */}
             <div className="flex-1 px-4 py-3">
-                {/* 상단: Search 버튼 (우측 정렬) */}
-                <div className="flex justify-end mb-3">
+                {/* 상단: Search 버튼 + 연결 상태 */}
+                <div className="flex justify-between items-center mb-3">
+                    <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span className="text-xs text-gray-500">
+                            {isConnected ? '실시간 연결' : '연결 끊김'}
+                        </span>
+                    </div>
                     <SearchButton
                         size="medium"
                         onClick={() => window.location.href = '/search'}
                     />
                 </div>
 
-                {/* 카트 ID 표시 (개발용, 나중에 제거 가능) */}
-                <div className="text-sm text-gray-500 mb-2 text-center">
-                    Cart ID: {cartId}
-                </div>
+                {/* 에러 메시지 */}
+                {error && (
+                    <div className="text-center text-sm text-orange-600 mb-2">
+                        {error}
+                    </div>
+                )}
 
                 {/* 지도 (정사각형, 축소) */}
                 <div className="mb-6 max-w-sm mx-auto">
@@ -114,23 +112,47 @@ export default function CartPage({ params }: { params: Promise<{ id: string }> }
                     {/* 장바구니 타이틀 */}
                     <h2 className="text-xl font-bold text-gray-800 mb-4 pl-1">
                         Shopping Basket
+                        <span className="text-sm font-normal text-gray-500 ml-2">
+                            ({cartItems.length}개)
+                        </span>
                     </h2>
 
-                    <div className="space-y-3">
-                        {MOCK_CART_ITEMS.map((item) => (
-                            <ExpandableProductCard
-                                key={item.id}
-                                id={item.id}
-                                name={item.name}
-                                price={item.price}
-                                image={item.image}
-                                quantity={item.quantity}
-                                rating={item.rating}
-                                location={item.location}
-                                detail={item.detail}
-                            />
-                        ))}
-                    </div>
+                    {cartItems.length === 0 ? (
+                        <div className="text-center py-12 text-gray-400">
+                            <p className="text-lg mb-2">장바구니가 비어있습니다</p>
+                            <p className="text-sm">상품을 카트에 담아주세요</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {cartItems.map((item) => (
+                                <ExpandableProductCard
+                                    key={item.id}
+                                    id={String(item.id)}
+                                    name={item.name}
+                                    price={item.price}
+                                    image={item.image || 'https://via.placeholder.com/200'}
+                                    quantity={item.quantity}
+                                    rating={item.rating}
+                                    location={item.location}
+                                    detail={item.detail ? {
+                                        images: item.detail.images,
+                                        description: item.detail.description,
+                                        averageRating: item.detail.averageRating,
+                                        reviews: item.detail.reviews.map(r => ({
+                                            rating: r.rating,
+                                            content: r.content,
+                                            images: r.images
+                                        }))
+                                    } : {
+                                        images: [],
+                                        description: '',
+                                        averageRating: 0,
+                                        reviews: []
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 

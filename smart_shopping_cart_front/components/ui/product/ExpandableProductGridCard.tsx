@@ -3,6 +3,7 @@
 import { useRef, useEffect } from 'react';
 import ProductGridCard from './ProductGridCard';
 import ProductDetail from './ProductDetail';
+import NavigationButton from '../buttons/NavigationButton';
 
 export interface ProductDetailType {
     images: string[];
@@ -43,6 +44,9 @@ interface ExpandableProductGridCardProps {
     /** 확장 토글 핸들러 */
     onToggle: () => void;
 
+    /** RFID 태그 보유 여부 (false면 회색 처리 및 확장 불가) */
+    hasRfid?: boolean;
+
     /** 추가 CSS 클래스 */
     className?: string;
 }
@@ -50,6 +54,7 @@ interface ExpandableProductGridCardProps {
 /**
  * 확장 가능한 그리드형 제품 카드 컴포넌트 (카드 부분만)
  * 클릭 시 선택 상태가 시각적으로 강조됨
+ * hasRfid가 false면 회색으로 표시되고 확장 불가
  * 확장 영역은 부모 컴포넌트에서 별도로 렌더링해야 함
  */
 export default function ExpandableProductGridCard({
@@ -62,13 +67,22 @@ export default function ExpandableProductGridCard({
     location,
     isExpanded,
     onToggle,
+    hasRfid = true,
     className = '',
 }: ExpandableProductGridCardProps) {
+    // RFID가 없으면 클릭해도 확장되지 않음
+    const handleClick = () => {
+        if (hasRfid) {
+            onToggle();
+        }
+    };
+
     return (
         <div className={className}>
             <div className={`
                 transition-all duration-200
-                ${isExpanded ? 'ring-2 ring-blue-500 ring-offset-2 rounded-[22px]' : ''}
+                ${isExpanded && hasRfid ? 'ring-2 ring-blue-500 ring-offset-2 rounded-[22px]' : ''}
+                ${!hasRfid ? 'grayscale opacity-60' : ''}
             `}>
                 <ProductGridCard
                     id={id}
@@ -78,7 +92,7 @@ export default function ExpandableProductGridCard({
                     quantity={quantity}
                     rating={rating}
                     location={location}
-                    onClick={onToggle}
+                    onClick={handleClick}
                 />
             </div>
         </div>
@@ -87,14 +101,18 @@ export default function ExpandableProductGridCard({
 
 interface ExpandedDetailProps {
     detail: ProductDetailType;
+    location?: string;
+    onNavigate?: () => void;
     detailRef?: React.RefObject<HTMLDivElement | null>;
+    /** RFID 태그 보유 여부 (false면 네비게이션 버튼 숨김) */
+    hasRfid?: boolean;
 }
 
 /**
  * 확장된 상세 정보 컴포넌트
  * 그리드의 전체 너비를 차지하며, 행 단위로 렌더링됨
  */
-export function ExpandedDetail({ detail, detailRef }: ExpandedDetailProps) {
+export function ExpandedDetail({ detail, location, onNavigate, detailRef, hasRfid = true }: ExpandedDetailProps) {
     return (
         <div
             ref={detailRef}
@@ -107,6 +125,12 @@ export function ExpandedDetail({ detail, detailRef }: ExpandedDetailProps) {
                     averageRating={detail.averageRating}
                     reviews={detail.reviews}
                 />
+                {/* RFID가 있는 상품만 네비게이션 버튼 표시 */}
+                {location && onNavigate && hasRfid && (
+                    <div className="flex justify-end mt-2 px-4">
+                        <NavigationButton onClick={onNavigate} />
+                    </div>
+                )}
             </div>
         </div>
     );

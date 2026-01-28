@@ -14,6 +14,7 @@ import ExpandableProductGridCard, { ExpandedDetail } from '@/components/ui/produ
 import LocationIcon from '@/components/icons/LocationIcon';
 import CartFooter from '@/components/layout/CartFooter';
 import StoreMap from '@/components/map/StoreMap';
+import NavigationButton from '@/components/ui/buttons/NavigationButton';
 
 export default function UIKitPage() {
     const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
@@ -255,6 +256,7 @@ export default function UIKitPage() {
                                 quantity: 3,
                                 rating: 4.5,
                                 location: 'A-1',
+                                hasRfid: true,
                                 detail: {
                                     images: [
                                         "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400&h=300&fit=crop",
@@ -280,13 +282,14 @@ export default function UIKitPage() {
                                 id: '2',
                                 name: 'Premium Chocolate Bar',
                                 price: 12.50,
-                                image: "https://images.unsplash.com/photo-1606312619070-d48b4ceb6b3d?w=300&h=300&fit=crop",
+                                image: "https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=300&h=300&fit=crop",
                                 quantity: 1,
                                 rating: 4.8,
                                 location: 'B-3',
+                                hasRfid: false, // RFID 없음 - 회색 처리됨
                                 detail: {
                                     images: [
-                                        "https://images.unsplash.com/photo-1606312619070-d48b4ceb6b3d?w=400&h=300&fit=crop"
+                                        "https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=400&h=300&fit=crop"
                                     ],
                                     description: "Premium dark chocolate with nuts and caramel. Made with the finest ingredients.",
                                     averageRating: 4.8,
@@ -294,6 +297,52 @@ export default function UIKitPage() {
                                         {
                                             rating: 5.0,
                                             content: "Best chocolate ever!",
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                id: '3',
+                                name: 'Organic Whole Milk',
+                                price: 3.49,
+                                image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=300&h=300&fit=crop",
+                                quantity: 2,
+                                rating: 4.2,
+                                location: 'C-2',
+                                hasRfid: true,
+                                detail: {
+                                    images: [
+                                        "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=300&fit=crop"
+                                    ],
+                                    description: "Fresh organic whole milk from grass-fed cows. Rich in calcium and vitamins.",
+                                    averageRating: 4.2,
+                                    reviews: [
+                                        {
+                                            rating: 4.0,
+                                            content: "Great taste and quality!",
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                id: '4',
+                                name: 'Artisan Sourdough Bread',
+                                price: 5.99,
+                                image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=300&h=300&fit=crop",
+                                quantity: 1,
+                                rating: 4.9,
+                                location: 'D-5',
+                                hasRfid: false, // RFID 없음 - 회색 처리됨
+                                detail: {
+                                    images: [
+                                        "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=300&fit=crop"
+                                    ],
+                                    description: "Handcrafted sourdough bread with a crispy crust and soft interior.",
+                                    averageRating: 4.9,
+                                    reviews: [
+                                        {
+                                            rating: 5.0,
+                                            content: "The best bread I've ever had!",
                                         }
                                     ]
                                 }
@@ -320,6 +369,7 @@ export default function UIKitPage() {
                                             location={product.location}
                                             isExpanded={expandedCardId === product.id}
                                             onToggle={() => setExpandedCardId(expandedCardId === product.id ? null : product.id)}
+                                            hasRfid={product.hasRfid}
                                         />
                                     ))}
 
@@ -330,6 +380,9 @@ export default function UIKitPage() {
                                     {expandedProductInRow && (
                                         <ExpandedDetail
                                             detail={expandedProductInRow.detail}
+                                            location={expandedProductInRow.location}
+                                            onNavigate={() => alert(`Navigate to ${expandedProductInRow.location}!`)}
+                                            hasRfid={expandedProductInRow.hasRfid}
                                         />
                                     )}
                                 </React.Fragment>
@@ -429,6 +482,21 @@ export default function UIKitPage() {
                     Three.js based 3D store layout with product locations (drag to rotate, scroll to zoom)
                 </p>
                 <StoreMap />
+            </section>
+
+            {/* Navigation Button */}
+            <section className="mb-8">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                    Navigation Button
+                </h2>
+                <p className="text-sm text-gray-600 mb-4">
+                    Button for navigating to product location
+                </p>
+                <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex gap-4 items-center justify-center">
+                        <NavigationButton onClick={() => alert('Navigate to product location!')} />
+                    </div>
+                </div>
             </section>
         </div>
     );
