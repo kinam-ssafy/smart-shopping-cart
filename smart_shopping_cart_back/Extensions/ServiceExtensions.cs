@@ -15,6 +15,9 @@ public static class ServiceExtensions
     /// </summary>
     public static IServiceCollection AddMqttServices(this IServiceCollection services)
     {
+        // CartDbService: 카트 DB 서비스 (Singleton)
+        services.AddSingleton<CartDbService>();
+
         // MqttService: MQTT 브로커 통신 (Singleton)
         services.AddSingleton<MqttService>();
 
