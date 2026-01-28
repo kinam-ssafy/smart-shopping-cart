@@ -38,6 +38,7 @@ INSERT INTO categories (category_id, name, parent_category_id) VALUES
 ('cat-water', '생수/탄산수', 'pc-beverages'),
 ('cat-juice', '주스', 'pc-beverages'),
 ('cat-coffee', '커피/차', 'pc-beverages'),
+('cat-beverages', '기타음료', 'pc-beverages'),
 -- 과자
 ('cat-chips', '스낵/칩', 'pc-snacks'),
 ('cat-candy', '사탕/젤리', 'pc-snacks'),
