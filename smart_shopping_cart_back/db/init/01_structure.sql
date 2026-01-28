@@ -24,12 +24,13 @@ CREATE TABLE categories (
 );
 
 CREATE TABLE products (
-  product_id text PRIMARY KEY,  -- index increment 찾아보기
+  product_id BIGSERIAL PRIMARY KEY,  -- 대용량 데이터 대비 BIGSERIAL 사용
   name text NOT NULL,
   category_id text NOT NULL REFERENCES categories(category_id),
   price numeric(12,2) NOT NULL CHECK (price >= 0),
   description text,
   active boolean NOT NULL DEFAULT true,
+  has_rfid boolean NOT NULL DEFAULT false,  -- RFID 태그 보유 여부
   bay text NOT NULL,  -- 가로 위치
   level integer NOT NULL CHECK (level >= 0), -- 세로 위치
   position_index integer NOT NULL CHECK (position_index >= 0), -- 방향(앞/뒤 등)
@@ -38,9 +39,21 @@ CREATE TABLE products (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- RFID 보유 상품만 빠르게 조회하기 위한 Partial Index
+CREATE INDEX idx_products_has_rfid ON products(product_id) WHERE has_rfid = true;
+
+-- RFID UID와 상품 매핑 테이블
+CREATE TABLE product_rfids (
+  rfid_uid TEXT PRIMARY KEY,              -- RFID UID (예: "01:5B:F1:05")
+  product_id BIGINT NOT NULL REFERENCES products(product_id),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_product_rfids_product_id ON product_rfids(product_id);
+
 CREATE TABLE product_images (
   product_image_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  product_id text NOT NULL REFERENCES products(product_id),
+  product_id BIGINT NOT NULL REFERENCES products(product_id),
   image_url text NOT NULL,
   image_alt_text text,
   sort_order integer NOT NULL DEFAULT 0,
@@ -66,7 +79,7 @@ CREATE TABLE reviews (
   review_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   image_url TEXT NOT NULL,
   image_alt_text TEXT,
-  product_id TEXT NOT NULL REFERENCES products(product_id),
+  product_id BIGINT NOT NULL REFERENCES products(product_id),
   rating INTEGER NOT NULL CHECK (rating >= 0 AND rating <= 5),
   content TEXT,
   created_at timestamptz NOT NULL DEFAULT now()
@@ -74,7 +87,7 @@ CREATE TABLE reviews (
 
 CREATE TABLE rag_chunks (
   chunk_id uuid PRIMARY KEY DEFAULT gen_random_uuid(), -- 청크 고유 id, 외부 레퍼런스로 사용하기 용이
-  product_id TEXT NOT NULL REFERENCES products(product_id),
+  product_id BIGINT NOT NULL REFERENCES products(product_id),
   source_type TEXT NOT NULL DEFAULT 'description', 
   chunk_index INTEGER NOT NULL, -- 청크된 텍스트 덩어리의 (순서) 번호
   chunk_text TEXT NOT NULL,  -- 임베딩된 텍스트, products.description에 포함되지만 같지는 않음
