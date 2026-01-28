@@ -1,6 +1,7 @@
 #!/bin/bash
 # ============================================
-# SLAM 맵 생성 스크립트
+# SLAM 맵 생성 스크립트 (Headless - RViz 없음)
+# RC카 (Jetson Nano) 전용
 # YDLidar + Cartographer를 사용한 실시간 맵핑
 # ============================================
 
@@ -15,6 +16,7 @@ LIDAR_PORT="${1:-/dev/ttyUSB0}"
 
 echo "============================================"
 echo "   YDLidar Cartographer SLAM - 맵 생성"
+echo "   (Headless Mode - RViz 비활성화)"
 echo "   - TF 간소화: base_link -> laser (static)"
 echo "   - Cartographer가 odom TF 관리"
 echo "   - 해상도: 2.5cm/pixel"
@@ -70,7 +72,7 @@ echo "Starting nodes..."
 echo ""
 
 # 1. YDLidar Simple Node (Static TF만 퍼블리시)
-echo "[1/4] Starting YDLidar Simple node..."
+echo "[1/3] Starting YDLidar Simple node..."
 /usr/bin/python3.10 "$PROJECT_DIR/slam_mapping2/ydlidar_simple_node.py" --port "$LIDAR_PORT" &
 LIDAR_PID=$!
 sleep 3
@@ -82,7 +84,7 @@ ros2 topic echo /tf_static --once 2>/dev/null && echo "Static TF OK" || echo "TF
 sleep 2
 
 # 2. Cartographer Node
-echo "[2/4] Starting Cartographer..."
+echo "[2/3] Starting Cartographer..."
 ros2 run cartographer_ros cartographer_node \
     -configuration_directory "$PROJECT_DIR/config" \
     -configuration_basename ydlidar_2d.lua &
@@ -90,26 +92,22 @@ CARTO_PID=$!
 sleep 5
 
 # 3. Occupancy Grid Node
-echo "[3/4] Starting Occupancy Grid (resolution: 0.05)..."
+echo "[3/3] Starting Occupancy Grid (resolution: 0.05)..."
 ros2 run cartographer_ros cartographer_occupancy_grid_node \
     --ros-args -p resolution:=0.05 -p publish_period_sec:=0.3 &
 GRID_PID=$!
 sleep 1
 
-# 4. RViz (원격 연결용으로 비활성화)
-# echo "[4/4] RViz disabled (use remote RViz from laptop)"
-echo "[4/4] Starting RViz..."
-rviz2 -d "$PROJECT_DIR/rviz/slam.rviz" &
-RVIZ_PID=$!
-
 echo ""
 echo "============================================"
-echo "  All nodes started!"
+echo "  All nodes started! (Headless Mode)"
 echo ""
 echo "  TF Tree (Cartographer manages):"
 echo "    map -> odom -> base_link -> laser"
 echo ""
 echo "  Map Resolution: 2.5cm per pixel"
+echo ""
+echo "  원격 PC에서 RViz를 실행하여 시각화하세요"
 echo ""
 echo "  Move LiDAR slowly for detailed mapping"
 echo "  Press Ctrl+C to stop"
@@ -119,7 +117,6 @@ echo "============================================"
 cleanup() {
     echo ""
     echo "Stopping all nodes..."
-    kill $RVIZ_PID 2>/dev/null
     kill $GRID_PID 2>/dev/null
     kill $CARTO_PID 2>/dev/null
     kill $LIDAR_PID 2>/dev/null
@@ -130,4 +127,3 @@ trap cleanup EXIT INT TERM
 
 # 메인 프로세스 대기
 wait $LIDAR_PID
-
