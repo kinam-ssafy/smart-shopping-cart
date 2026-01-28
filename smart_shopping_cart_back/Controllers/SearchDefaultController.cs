@@ -49,12 +49,4 @@ public class SearchController : ControllerBase
 
         return Ok(new SearchDefaultResponseDto(popular, recommended));
     }
-
-    // Wherever BuildCardsAsync currently lives, call it the same way.
-    // Ideally inject a service, but you can keep it static for now.
-    private static Task<List<CardTemplateDto>> BuildCardsAsync(
-        AppDbContext db,
-        IEnumerable<string> productIds,
-        CancellationToken ct = default)
-        => Models.YourCardBuilder.BuildCardsAsync(db, productIds, ct); // <- adjust to your actual location
 }
