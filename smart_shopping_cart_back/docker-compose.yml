@@ -1,9 +1,33 @@
 version: '3.8'
 
-# 백엔드 서버용 docker-compose
+# 백엔드 서버 + DB docker-compose
 # EC2에서 이미 실행 중인 MQTT 브로커에 연결
 
 services:
+  # PostgreSQL + PostGIS 데이터베이스
+  db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    container_name: smart-cart-db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+      - POSTGRES_DB=${DB_NAME:-smart_cart}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - cart-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # .NET 백엔드 서버
   backend:
     build:
       context: .
@@ -20,8 +44,17 @@ services:
       - MQTT__Topic=${MQTT_TOPIC:-cart/1}
       - MQTT__Username=${MQTT_USERNAME}
       - MQTT__Password=${MQTT_PASSWORD}
+      # DB 연결 정보
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${DB_NAME:-smart_cart};Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-password}
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - cart-network
+
+volumes:
+  db_data:
+
 
 networks:
   cart-network:
