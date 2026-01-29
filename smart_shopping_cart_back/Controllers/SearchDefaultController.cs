@@ -44,9 +44,14 @@ public class SearchController : ControllerBase
             .Select(p => p.ProductId)
             .ToListAsync(ct);
 
-        var popular = await BuildCardsAsync(_db, popularIds, ct);
-        var recommended = await BuildCardsAsync(_db, recommendedIds, ct);
+        var popular = await CardQueryService.BuildCardsAsync(_db, popularIds, ct);
+        var recommended = await CardQueryService.BuildCardsAsync(_db, recommendedIds, ct);
 
         return Ok(new SearchDefaultResponseDto(popular, recommended));
     }
+    private static Task<List<CardTemplateDto>> BuildCardsAsync(
+        AppDbContext db,
+        IEnumerable<string> productIds,
+        CancellationToken ct = default)
+        => CardQueryService.BuildCardsAsync(db, productIds, ct); 
 }

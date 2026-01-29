@@ -28,3 +28,8 @@ public sealed record ReviewForCardDto(
     string? Content,
     DateTimeOffset CreatedAt
 );
+
+public sealed record SearchDefaultResponseDto(
+    List<CardTemplateDto> Popular,
+    List<CardTemplateDto> Recommended
+);
