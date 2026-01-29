@@ -2,15 +2,8 @@ pipeline {
     agent any
     
     environment {
-        // Docker 이미지 이름
-        DOCKER_IMAGE = 'smart-cart-backend'
-        // 컨테이너 이름
-        CONTAINER_NAME = 'smart-cart-backend'
-        // 포트 설정 (docker-compose.yml과 동일하게 8123)
+        // 포트 설정 (docker-compose.yml과 동일)
         HOST_PORT = '8123'
-        CONTAINER_PORT = '5000'
-        // 네트워크 이름
-        NETWORK_NAME = 'cart-network'
     }
     
     stages {
@@ -21,54 +14,47 @@ pipeline {
             }
         }
         
-        stage('Build Docker Image') {
+        stage('Deploy with Docker Compose') {
             steps {
-                echo '🐳 Docker 이미지 빌드 중...'
+                echo '🚀 Docker Compose 배포...'
                 dir('smart_shopping_cart_back') {
-                    sh '''
-                        docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
-                        docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
-                    '''
+                    // 젠킨스 Credentials에서 .env 파일 가져오기
+                    withCredentials([file(credentialsId: 'smart-cart-back-env', variable: 'ENV_FILE')]) {
+                        sh '''
+                            # 1. Credentials 내용을 실제 .env 파일로 복사
+                            cp $ENV_FILE .env
+                            
+                            # 2. docker-compose 설치 (없으면 설치)
+                            if ! command -v docker-compose &> /dev/null; then
+                                # 홈 디렉토리(~/.local/bin)에 설치하여 캐싱 활용
+                                mkdir -p ~/.local/bin
+                                export PATH=$HOME/.local/bin:$PATH
+                                
+                                if [ ! -f ~/.local/bin/docker-compose ]; then
+                                    echo "🔧 docker-compose 최초 설치..."
+                                    curl -L "https://github.com/docker/compose/releases/download/v2.24.1/docker-compose-$(uname -s)-$(uname -m)" -o ~/.local/bin/docker-compose
+                                    chmod +x ~/.local/bin/docker-compose
+                                fi
+                                DOCKER_COMPOSE="~/.local/bin/docker-compose"
+                            else
+                                DOCKER_COMPOSE="docker-compose"
+                            fi
+
+                            # 3. 배포 실행
+                            echo "🔄 컨테이너 재시작..."
+                            $DOCKER_COMPOSE down || true
+                            $DOCKER_COMPOSE up -d --build
+                        '''
+                    }
                 }
-            }
-        }
-        
-        stage('Stop Previous Container') {
-            steps {
-                echo '🛑 이전 컨테이너 정지...'
-                sh '''
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm ${CONTAINER_NAME} || true
-                '''
-            }
-        }
-        
-        stage('Deploy') {
-            steps {
-                echo '🚀 새 컨테이너 배포 (docker run)...'
-                sh '''
-                    # 네트워크 생성 (없으면 생성, 있으면 무시)
-                    docker network create ${NETWORK_NAME} || true
-                    
-                    # 컨테이너 실행
-                    # 주의: DB 컨테이너도 'cart-network'에 있어야 서로 통신 가능
-                    docker run -d \
-                        --name ${CONTAINER_NAME} \
-                        -p ${HOST_PORT}:${CONTAINER_PORT} \
-                        --network ${NETWORK_NAME} \
-                        --restart unless-stopped \
-                        --env-file ./smart_shopping_cart_back/.env \
-                        ${DOCKER_IMAGE}:latest
-                '''
             }
         }
         
         stage('Health Check') {
             steps {
                 echo '💚 헬스 체크...'
-                // 호스트의 8123 포트로 확인
                 sh '''
-                    sleep 10
+                    sleep 15
                     curl -f http://172.17.0.1:${HOST_PORT}/api/cart/status || exit 1
                 '''
             }
@@ -76,7 +62,7 @@ pipeline {
         
         stage('Cleanup') {
             steps {
-                echo '🧹 오래된 이미지 정리...'
+                echo '🧹 이미지 정리...'
                 sh '''
                     docker image prune -f
                 '''
@@ -86,10 +72,10 @@ pipeline {
     
     post {
         success {
-            echo '✅ 백엔드 배포 성공!'
+            echo '✅ 백엔드 배포 성공'
         }
         failure {
-            echo '❌ 백엔드 배포 실패!'
+            echo '❌ 백엔드 배포 실패'
         }
     }
 }
