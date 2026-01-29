@@ -21,8 +21,11 @@ pipeline {
                     // 젠킨스 Credentials에서 .env 파일 가져오기
                     withCredentials([file(credentialsId: 'smart-cart-back-env', variable: 'ENV_FILE')]) {
                         sh '''
-                            # 1. Credentials 내용을 실제 .env 파일로 복사
-                            cp $ENV_FILE .env
+                            # 디버깅: 파일 확인
+                            ls -la
+
+                            # 1. Credentials 내용을 실제 .env 파일로 복사 (cp 대신 cat 사용이 더 안전함)
+                            cat "$ENV_FILE" > .env
                             
                             # 2. docker-compose 설치 (없으면 설치)
                             if ! command -v docker-compose &> /dev/null; then
