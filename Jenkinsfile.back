@@ -29,16 +29,16 @@ pipeline {
                             
                             # 2. docker-compose 설치 (없으면 설치)
                             if ! command -v docker-compose &> /dev/null; then
-                                # 홈 디렉토리(~/.local/bin)에 설치하여 캐싱 활용
-                                mkdir -p ~/.local/bin
+                                # 홈 디렉토리($HOME/.local/bin)에 설치하여 캐싱 활용
+                                mkdir -p $HOME/.local/bin
                                 export PATH=$HOME/.local/bin:$PATH
                                 
-                                if [ ! -f ~/.local/bin/docker-compose ]; then
+                                if [ ! -f $HOME/.local/bin/docker-compose ]; then
                                     echo "🔧 docker-compose 최초 설치..."
-                                    curl -L "https://github.com/docker/compose/releases/download/v2.24.1/docker-compose-$(uname -s)-$(uname -m)" -o ~/.local/bin/docker-compose
-                                    chmod +x ~/.local/bin/docker-compose
+                                    curl -L "https://github.com/docker/compose/releases/download/v2.24.1/docker-compose-$(uname -s)-$(uname -m)" -o $HOME/.local/bin/docker-compose
+                                    chmod +x $HOME/.local/bin/docker-compose
                                 fi
-                                DOCKER_COMPOSE="~/.local/bin/docker-compose"
+                                DOCKER_COMPOSE="$HOME/.local/bin/docker-compose"
                             else
                                 DOCKER_COMPOSE="docker-compose"
                             fi
