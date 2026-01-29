@@ -14,9 +14,13 @@ public class AppDbContext : DbContext
     public DbSet<ProductRfid> ProductRfids { get; set; }
     public DbSet<Review> Reviews { get; set; }
     public DbSet<Cart> Carts { get; set; }
+    public DbSet<RagChunk> RagChunks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Require Pgvector extension
+        modelBuilder.HasPostgresExtension("vector");
+
         base.OnModelCreating(modelBuilder);
 
         // Configure One-to-Many relationships

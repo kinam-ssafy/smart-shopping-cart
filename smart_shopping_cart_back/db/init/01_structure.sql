@@ -91,7 +91,7 @@ CREATE TABLE rag_chunks (
   source_type TEXT NOT NULL DEFAULT 'description', 
   chunk_index INTEGER NOT NULL, -- 청크된 텍스트 덩어리의 (순서) 번호
   chunk_text TEXT NOT NULL,  -- 임베딩된 텍스트, products.description에 포함되지만 같지는 않음
-  embedding vector(768) NOT NULL, -- 숫자 정할 필요; OpenAI 기준 768/1536/etc
+  embedding vector(1536) NOT NULL, -- OpenAI text-embedding-3-small 기준 1536차원
   metadata JSONB DEFAULT '{}'::jsonb,
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (product_id, source_type, chunk_index)
