@@ -172,7 +172,7 @@ export default function SearchPage() {
                 <div className="flex justify-start mb-3">
                     <BackButton
                         size="medium"
-                        onClick={() => window.location.href = '/cart'}
+                        onClick={() => window.location.href = '/cart/1'}
                     />
                 </div>
 
