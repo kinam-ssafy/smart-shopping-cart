@@ -21,8 +21,8 @@ pipeline {
                     sh '''
                         # 기존 컨테이너 내리고 이미지 새로 빌드하여 실행
                         # .env 파일은 서버의 해당 위치에 존재한다고 가정
-                        docker compose down || true
-                        docker compose up -d --build
+                        docker-compose down || true
+                        docker-compose up -d --build
                     '''
                 }
             }
