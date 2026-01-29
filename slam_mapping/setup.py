@@ -17,7 +17,7 @@ setup(
         (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
         (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
         (os.path.join('share', package_name, 'urdf'), glob('urdf/*.urdf')),
-        (os.path.join('share', package_name, 'maps'), glob('maps/*')),
+        # maps/ 디렉토리는 런타임에 생성되므로 패키지에 포함하지 않음
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -30,6 +30,7 @@ setup(
         'console_scripts': [
             'ydlidar_node = slam_mapping2.ydlidar_node:main',
             'odom_publisher = slam_mapping2.odom_publisher:main',
+            'tf_to_web = slam_mapping2.tf_to_web:main',
         ],
     },
 )
