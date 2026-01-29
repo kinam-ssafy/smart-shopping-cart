@@ -1,4 +1,5 @@
 using smart_shopping_cart_back.Extensions;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +8,11 @@ builder.Services.AddControllers();
 builder.Services.AddCorsPolicy();      // CORS 설정
 builder.Services.AddMqttServices();    // MQTT 서비스 + 백그라운드 서비스
 builder.Services.AddSseServices();     // SSE 서비스
+
+// DB & Repository
+builder.Services.AddDbContext<smart_shopping_cart_back.Data.AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<smart_shopping_cart_back.Repositories.ICartRepository, smart_shopping_cart_back.Repositories.CartRepository>();
 
 var app = builder.Build();
 
