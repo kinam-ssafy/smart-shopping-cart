@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using smart_shopping_cart_back.Services;
+using Microsoft.EntityFrameworkCore;
+using smart_shopping_cart_back.Data;
 
 namespace smart_shopping_cart_back.Controllers;
 
@@ -34,7 +36,7 @@ public class SearchController : ControllerBase
             .Take(100)
             .ToListAsync(ct);
 
-        var cards = await BuildCardsAsync(db, ids, ct);
+        var cards = await CardQueryService.BuildCardsAsync(_db, ids, ct);
         return Ok(cards);
     }
 }

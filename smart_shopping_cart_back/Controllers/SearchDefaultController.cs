@@ -1,15 +1,18 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using smart_shopping_cart_back.Services;
+using smart_shopping_cart_back.DTOs;
+using smart_shopping_cart_back.Data;
 
 namespace smart_shopping_cart_back.Controllers;
 
 [ApiController]
 [Route("")]
-public class SearchController : ControllerBase
+public class SearchDefaultController : ControllerBase
 {
     private readonly AppDbContext _db;
 
-    public SearchController(AppDbContext db)
+    public SearchDefaultController(AppDbContext db)
     {
         _db = db;
     }
