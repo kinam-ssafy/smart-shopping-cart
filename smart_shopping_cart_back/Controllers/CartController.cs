@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using smart_shopping_cart_back.Services;
+using smart_shopping_cart_back.Models;
 
 namespace smart_shopping_cart_back.Controllers;
 

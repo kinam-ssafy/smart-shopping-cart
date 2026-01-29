@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using smart_shopping_cart_back.Models;
 
 namespace smart_shopping_cart_back.Services;
 
