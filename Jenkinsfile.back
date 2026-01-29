@@ -56,9 +56,15 @@ pipeline {
         stage('Health Check') {
             steps {
                 echo '💚 헬스 체크...'
+                // 1. 젠킨스 컨테이너를 'cart-network'에 연결 (컨테이너 간 통신 가능하게 함)
+                // $HOSTNAME은 젠킨스 컨테이너의 ID입니다.
+                sh 'docker network connect cart-network $HOSTNAME || true'
+                
+                // 2. 호스트 IP 대신 컨테이너 이름(smart-cart-backend)으로 직접 접속 (포트 5000)
                 sh '''
-                    sleep 15
-                    curl -f http://172.17.0.1:${HOST_PORT}/api/cart/status || exit 1
+                    sleep 10
+                    echo "Checking health of: http://smart-cart-backend:5000/api/cart/status"
+                    curl -v -f http://smart-cart-backend:5000/api/cart/status || exit 1
                 '''
             }
         }
