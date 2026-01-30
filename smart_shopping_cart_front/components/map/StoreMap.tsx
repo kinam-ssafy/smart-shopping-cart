@@ -179,8 +179,10 @@ function PolygonShelf({ fixture }: { fixture: FixtureData }) {
 }
 
 function ShelfLabel({ center, label, subLabel, height, color }: { center: number[]; label: string; subLabel: string; height: number; color: string }) {
+    // Shape는 (x, -y)로 그려진 후 X축 -90도 회전 → 최종 Z = +y (원래 geometry Y)
+    // 따라서 라벨 Z 위치도 +center[1] 사용
     return (
-        <group position={[center[0], height, -center[1]]}>
+        <group position={[center[0], height, center[1]]}>
             <Text fontSize={0.4} color="white" anchorX="center" anchorY="bottom" outlineWidth={0.04} outlineColor="#000">
                 {label}
             </Text>
@@ -220,6 +222,19 @@ function UserMarker({ position }: { position: UserPosition }) {
 // 컴포넌트: 씬
 // ============================================================
 function StoreScene({ mapData, userPosition }: { mapData: MapDataResponse; userPosition: UserPosition }) {
+    // 맵 경계의 중심점 계산
+    const mapCenter = useMemo(() => {
+        const boundary = mapData.storeMap.boundary;
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        boundary.forEach(p => {
+            if (p[0] < minX) minX = p[0];
+            if (p[0] > maxX) maxX = p[0];
+            if (p[1] < minY) minY = p[1];
+            if (p[1] > maxY) maxY = p[1];
+        });
+        return { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
+    }, [mapData.storeMap.boundary]);
+
     return (
         <>
             <ambientLight intensity={0.6} />
@@ -234,8 +249,9 @@ function StoreScene({ mapData, userPosition }: { mapData: MapDataResponse; userP
 
             <UserMarker position={userPosition} />
 
-            <OrbitControls enablePan enableZoom enableRotate target={[2, 0, -7]} />
-            <PerspectiveCamera makeDefault position={[5, 15, 10]} fov={50} />
+            {/* 와이드 3인칭 뷰: 맵 중심을 바라보는 높은 시점 */}
+            <OrbitControls enablePan enableZoom enableRotate target={[mapCenter.x, 0, mapCenter.y]} />
+            <PerspectiveCamera makeDefault position={[mapCenter.x + 15, 25, mapCenter.y + 15]} fov={50} />
             <gridHelper args={[50, 50, '#EEEEEE', '#EEEEEE']} position={[0, -0.1, 0]} />
         </>
     );
@@ -253,15 +269,23 @@ export default function StoreMap({ className = '' }: StoreMapProps) {
     // API에서 지도 데이터 가져오기
     useEffect(() => {
         async function fetchMapData() {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8123';
+            console.log('[StoreMap] API 요청 시작:', `${apiUrl}/api/map`);
+
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8123';
                 const response = await fetch(`${apiUrl}/api/map`);
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
                 const data: MapDataResponse = await response.json();
+                console.log('[StoreMap] API 응답 성공:', {
+                    storeMapId: data.storeMap.id,
+                    fixtureCount: data.fixtures.length,
+                    fixtures: data.fixtures.map(f => f.label)
+                });
                 setMapData(data);
             } catch (err) {
+                console.error('[StoreMap] API 요청 실패:', err);
                 setError(err instanceof Error ? err.message : '지도 데이터 로드 실패');
             } finally {
                 setLoading(false);
@@ -270,20 +294,8 @@ export default function StoreMap({ className = '' }: StoreMapProps) {
         fetchMapData();
     }, []);
 
-    // 실시간 위치 시뮬레이션
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setPos((prev: UserPosition) => {
-                const time = Date.now() / 1000;
-                const radius = 3;
-                const newX = Math.cos(time) * radius;
-                const newY = 3 + Math.sin(time) * radius;
-                const newTheta = Math.atan2(Math.cos(time), -Math.sin(time)) * 180 / Math.PI;
-                return { x: Number(newX.toFixed(2)), y: Number(newY.toFixed(2)), theta: Number(newTheta.toFixed(1)) };
-            });
-        }, 100);
-        return () => clearInterval(interval);
-    }, []);
+    // TODO: 실시간 위치는 MQTT/SSE로 수신하여 setPos() 호출
+    // 현재는 기본값 고정 (x: 0.06, y: 0.11, theta: 18.5)
 
     // 로딩 화면
     if (loading) {
