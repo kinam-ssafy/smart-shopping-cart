@@ -49,7 +49,7 @@ public class SseService
     /// <summary>
     /// 특정 클라이언트에게 상품 목록 전송 (초기 연결 시)
     /// </summary>
-    public async Task SendToClientAsync(HttpResponse response, List<CartProductDto> products)
+    public async Task SendToClientAsync(HttpResponse response, List<ProductDto> products)
     {
         try
         {
@@ -67,7 +67,7 @@ public class SseService
     /// <summary>
     /// 모든 SSE 클라이언트에게 상품 목록 전송
     /// </summary>
-    public async Task BroadcastProductsAsync(List<CartProductDto> products)
+    public async Task BroadcastProductsAsync(List<ProductDto> products)
     {
         var data = JsonSerializer.Serialize(new { products }, _jsonOptions);
         var message = $"data: {data}\n\n";

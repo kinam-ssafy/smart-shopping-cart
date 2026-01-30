@@ -15,7 +15,7 @@ public class SearchService : ISearchService
         _db = db;
     }
 
-    public async Task<List<CardTemplateDto>> SearchByNameAsync(string query, CancellationToken ct)
+    public async Task<List<ProductDto>> SearchByNameAsync(string query, CancellationToken ct)
     {
         // Simple search example
         var ids = await _db.Products

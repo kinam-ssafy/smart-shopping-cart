@@ -17,7 +17,7 @@ public class SearchController : ControllerBase
 
     // GET /api/search?query=...
     [HttpGet("")]
-    public async Task<ActionResult<List<CardTemplateDto>>> Search([FromQuery] string query, CancellationToken ct)
+    public async Task<ActionResult<List<ProductDto>>> Search([FromQuery] string query, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(query))
             return BadRequest(new { error = "query is required" });
