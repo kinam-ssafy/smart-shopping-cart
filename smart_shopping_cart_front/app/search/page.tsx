@@ -4,137 +4,67 @@ import React, { useState, useRef, useEffect } from 'react';
 import { BackButton } from '@/components/ui/buttons/Button';
 import SearchInput from '@/components/ui/SearchInput';
 import SectionHeader from '@/components/ui/SectionHeader';
-import ExpandableProductGridCard, { ExpandedDetail, ProductDetailType } from '@/components/ui/product/ExpandableProductGridCard';
+import ExpandableProductGridCard, { ExpandedDetail } from '@/components/ui/product/ExpandableProductGridCard';
+import { Product, SearchDefaultResponse } from '@/types/cart';
 
-// 목데이터: 추천 상품들
-const MOCK_RECOMMENDED_PRODUCTS = [
-    {
-        id: '1',
-        name: 'Fresh Organic Apples',
-        price: 4.99,
-        image: [
-            'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=300&h=300&fit=crop',
-            'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=300&h=300&fit=crop',
-        ],
-        quantity: 3,
-        rating: 4.5,
-        location: 'A-1',
-        detail: {
-            images: [
-                'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400&h=300&fit=crop',
-                'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=300&fit=crop',
-            ],
-            description: 'Fresh, crispy organic apples from local farms. Perfect for snacking or baking.',
-            averageRating: 4.5,
-            reviews: [
-                { rating: 5, content: 'Best apples I\'ve ever tasted!' },
-                { rating: 4, content: 'Very fresh and crispy.' },
-            ]
-        }
-    },
-    {
-        id: '2',
-        name: 'Premium Chocolate Bar',
-        price: 12.50,
-        image: 'https://images.unsplash.com/photo-1606312619070-d48b4ceb6b3d?w=300&h=300&fit=crop',
-        quantity: 1,
-        rating: 4.8,
-        location: 'B-3',
-        detail: {
-            images: ['https://images.unsplash.com/photo-1606312619070-d48b4ceb6b3d?w=400&h=300&fit=crop'],
-            description: 'Rich, smooth premium chocolate with nuts and caramel.',
-            averageRating: 4.8,
-            reviews: [
-                { rating: 5, content: 'Absolutely delicious!' },
-            ]
-        }
-    },
-    {
-        id: '3',
-        name: 'Organic Whole Milk',
-        price: 3.49,
-        image: [
-            'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=300&h=300&fit=crop',
-            'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=300&h=300&fit=crop',
-        ],
-        quantity: 2,
-        rating: 4.2,
-        location: 'C-2',
-        detail: {
-            images: [
-                'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=300&fit=crop',
-                'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400&h=300&fit=crop',
-            ],
-            description: 'Fresh whole milk, rich in calcium and vitamins.',
-            averageRating: 4.2,
-            reviews: [
-                { rating: 4, content: 'Great quality milk!' },
-            ]
-        }
-    },
-    {
-        id: '4',
-        name: 'Artisan Sourdough Bread',
-        price: 5.99,
-        image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=300&h=300&fit=crop',
-        quantity: 1,
-        rating: 4.9,
-        location: 'D-5',
-        detail: {
-            images: ['https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=300&fit=crop'],
-            description: 'Handcrafted sourdough bread with a crispy crust and soft interior.',
-            averageRating: 4.9,
-            reviews: [
-                { rating: 5, content: 'Amazing bread!' },
-                { rating: 5, content: 'Best sourdough in town.' },
-            ]
-        }
-    },
-    {
-        id: '5',
-        name: 'Fresh Orange Juice',
-        price: 6.99,
-        image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=300&h=300&fit=crop',
-        quantity: 2,
-        rating: 4.6,
-        location: 'C-4',
-        detail: {
-            images: ['https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&h=300&fit=crop'],
-            description: 'Freshly squeezed orange juice, packed with vitamin C.',
-            averageRating: 4.6,
-            reviews: [
-                { rating: 5, content: 'So refreshing!' },
-                { rating: 4, content: 'Tastes great!' },
-            ]
-        }
-    },
-    {
-        id: '6',
-        name: 'Crispy Potato Chips',
-        price: 3.99,
-        image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=300&h=300&fit=crop',
-        quantity: 1,
-        rating: 4.3,
-        location: 'D-1',
-        detail: {
-            images: ['https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400&h=300&fit=crop'],
-            description: 'Crispy, golden potato chips. Perfect for snacking.',
-            averageRating: 4.3,
-            reviews: [
-                { rating: 4, content: 'Very crunchy!' },
-            ]
-        }
-    },
-];
+// API Base URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function SearchPage() {
-    const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
+    const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSection, setSelectedSection] = useState('Recommended');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const expandedDetailRef = useRef<HTMLDivElement>(null);
 
+    // Data State
+    const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+    const [popularProducts, setPopularProducts] = useState<Product[]>([]);
+    const [searchResults, setSearchResults] = useState<Product[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+
     const sections = ['Recommended', 'Popular'];
+
+    // 1. 초기 데이터 로드 (추천/인기)
+    useEffect(() => {
+        const fetchDefaultData = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/search/default`);
+                if (!res.ok) throw new Error('Failed to fetch default data');
+                const data: SearchDefaultResponse = await res.json();
+                setRecommendedProducts(data.recommended);
+                setPopularProducts(data.popular);
+            } catch (error) {
+                console.error('Error fetching default search data:', error);
+            }
+        };
+
+        fetchDefaultData();
+    }, []);
+
+    // 2. 검색 실행
+    const handleSearch = async (query: string) => {
+        setSearchQuery(query);
+        setExpandedCardId(null); // 검색 시 확장 닫기
+
+        if (!query.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/search?query=${encodeURIComponent(query)}`);
+            if (!res.ok) throw new Error('Search failed');
+            const data: Product[] = await res.json();
+            setSearchResults(data);
+        } catch (error) {
+            console.error('Search error:', error);
+            setSearchResults([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     // 확장 시 스크롤
     useEffect(() => {
@@ -148,21 +78,17 @@ export default function SearchPage() {
         }
     }, [expandedCardId]);
 
-    const handleSearch = (query: string) => {
-        setSearchQuery(query);
-    };
-
     const handleSectionChange = (section: string) => {
         setSelectedSection(section);
         setIsMenuOpen(false);
     };
 
-    // 검색어로 상품 필터링
-    const filteredProducts = searchQuery
-        ? MOCK_RECOMMENDED_PRODUCTS.filter(product =>
-            product.name.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        : MOCK_RECOMMENDED_PRODUCTS;
+    // 현재 표시할 상품 목록 결정
+    const displayProducts = searchQuery
+        ? searchResults
+        : selectedSection === 'Recommended'
+            ? recommendedProducts
+            : popularProducts;
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -193,7 +119,7 @@ export default function SearchPage() {
                             onMenuClick={() => setIsMenuOpen(!isMenuOpen)}
                         />
 
-                        {/* 드롭다운 메뉴 (아코디언 스타일) */}
+                        {/* 드롭다운 메뉴 */}
                         <div className={`
                             overflow-hidden transition-all duration-300 ease-in-out
                             ${isMenuOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}
@@ -227,49 +153,69 @@ export default function SearchPage() {
                     </h3>
                 )}
 
+                {/* Loading State */}
+                {isLoading && (
+                    <div className="text-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                    </div>
+                )}
+
                 {/* Product Grid (2열) */}
-                <div className="grid grid-cols-2 gap-3 mt-4">
-                    {/* 행 단위로 렌더링 */}
-                    {Array.from({ length: Math.ceil(filteredProducts.length / 2) }).map((_, rowIndex) => {
-                        const startIdx = rowIndex * 2;
-                        const rowProducts = filteredProducts.slice(startIdx, startIdx + 2);
-                        const expandedProductInRow = rowProducts.find(p => expandedCardId === p.id);
+                {!isLoading && (
+                    <div className="grid grid-cols-2 gap-3 mt-4">
+                        {Array.from({ length: Math.ceil(displayProducts.length / 2) }).map((_, rowIndex) => {
+                            const startIdx = rowIndex * 2;
+                            const rowProducts = displayProducts.slice(startIdx, startIdx + 2);
+                            const expandedProductInRow = rowProducts.find(p => expandedCardId === p.id);
 
-                        return (
-                            <React.Fragment key={`row-${rowIndex}`}>
-                                {/* 행의 카드들 */}
-                                {rowProducts.map((product) => (
-                                    <ExpandableProductGridCard
-                                        key={product.id}
-                                        id={product.id}
-                                        name={product.name}
-                                        price={product.price}
-                                        image={product.image}
-                                        quantity={product.quantity}
-                                        rating={product.rating}
-                                        location={product.location}
-                                        isExpanded={expandedCardId === product.id}
-                                        onToggle={() => setExpandedCardId(expandedCardId === product.id ? null : product.id)}
-                                    />
-                                ))}
+                            return (
+                                <React.Fragment key={`row-${rowIndex}`}>
+                                    {/* 행의 카드들 */}
+                                    {rowProducts.map((product) => (
+                                        <ExpandableProductGridCard
+                                            key={product.id}
+                                            id={String(product.id)}
+                                            name={product.name}
+                                            price={product.price}
+                                            image={product.images} // Array passed directly
+                                            quantity={product.quantity}
+                                            rating={product.rating}
+                                            location={product.location}
+                                            isExpanded={expandedCardId === product.id}
+                                            onToggle={() => setExpandedCardId(expandedCardId === product.id ? null : product.id)}
+                                            hasRfid={product.hasRfid}
+                                        />
+                                    ))}
 
-                                {/* 빈 자리 채우기 (마지막 행이 1개만 있을 때) */}
-                                {rowProducts.length === 1 && <div />}
+                                    {/* 빈 자리 채우기 (마지막 행이 1개만 있을 때) */}
+                                    {rowProducts.length === 1 && <div />}
 
-                                {/* 확장 영역 - 이 행에 확장된 카드가 있으면 렌더링 */}
-                                {expandedProductInRow && (
-                                    <ExpandedDetail
-                                        detail={expandedProductInRow.detail}
-                                        detailRef={expandedDetailRef}
-                                    />
-                                )}
-                            </React.Fragment>
-                        );
-                    })}
-                </div>
+                                    {/* 확장 영역 */}
+                                    {expandedProductInRow && expandedProductInRow.detail && (
+                                        <ExpandedDetail
+                                            detail={{
+                                                images: expandedProductInRow.images, // Use main images
+                                                description: expandedProductInRow.detail.description,
+                                                averageRating: expandedProductInRow.rating,
+                                                reviews: expandedProductInRow.detail.reviews
+                                            }}
+                                            detailRef={expandedDetailRef}
+                                            hasRfid={expandedProductInRow.hasRfid}
+                                            location={expandedProductInRow.location}
+                                            onNavigate={() => {
+                                                console.log('Navigate to:', expandedProductInRow.location);
+                                                // TODO: Implement navigation
+                                            }}
+                                        />
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
+                    </div>
+                )}
 
                 {/* 검색 결과 없음 */}
-                {searchQuery && filteredProducts.length === 0 && (
+                {!isLoading && searchQuery && displayProducts.length === 0 && (
                     <div className="text-center py-12">
                         <p className="text-gray-500 text-lg">No products found</p>
                         <p className="text-gray-400 text-sm mt-2">Try searching with different keywords</p>

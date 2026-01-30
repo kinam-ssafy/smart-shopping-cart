@@ -3,24 +3,23 @@
  */
 
 // 카트 상품 DTO
-export interface CartProduct {
+// 통합 상품 타입 (Backend ProductDto 대응)
+export interface Product {
     id: number;
     name: string;
     price: number;
-    image?: string;
+    images: string[];      // Unified to array
     quantity: number;
     rating: number;
     location?: string;
     hasRfid: boolean;
     rfidUid?: string;
-    detail?: CartProductDetail;
+    detail?: ProductDetail;
 }
 
 // 상품 상세 정보
-export interface CartProductDetail {
-    images: string[];
+export interface ProductDetail {
     description: string;
-    averageRating: number;
     reviews: Review[];
 }
 
@@ -31,9 +30,15 @@ export interface Review {
     images?: string[];
 }
 
+// Search 기본 응답
+export interface SearchDefaultResponse {
+    popular: Product[];
+    recommended: Product[];
+}
+
 // SSE 메시지 타입
 export interface CartSseMessage {
-    products: CartProduct[];
+    products: Product[];
 }
 
 // MQTT 상태 응답
