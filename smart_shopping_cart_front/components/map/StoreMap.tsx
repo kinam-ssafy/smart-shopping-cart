@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Text } from '@react-three/drei';
 import * as THREE from 'three';
+import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 // ============================================================
 // API 응답 타입 정의
@@ -83,7 +84,7 @@ function MapBoundary({ boundary }: { boundary: number[][] }) {
             </mesh>
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
                 <extrudeGeometry args={[shape, extrudeSettings]} />
-                <meshStandardMaterial color="#FAFAFA" transparent opacity={0.3} side={THREE.DoubleSide} />
+                <meshStandardMaterial color="#FAFAFA" transparent opacity={0.1} side={THREE.DoubleSide} />
             </mesh>
             <lineSegments position={[0, 2.5, 0]} rotation={[-Math.PI / 2, 0, 0]}>
                 <edgesGeometry args={[new THREE.ShapeGeometry(shape)]} />
@@ -98,7 +99,7 @@ function MapBoundary({ boundary }: { boundary: number[][] }) {
 }
 
 // ============================================================
-// 컴포넌트: 선반
+// 컴포넌트: 선반 (반투명 처리)
 // ============================================================
 function PolygonShelf({ fixture }: { fixture: FixtureData }) {
     const shape = useMemo(() => createShapeFromCoordinates(fixture.geometry), [fixture.geometry]);
@@ -117,18 +118,27 @@ function PolygonShelf({ fixture }: { fixture: FixtureData }) {
         return [(minX + maxX) / 2, (minZ + maxZ) / 2];
     }, [fixture.geometry]);
 
+    // 반투명 재질 설정
+    const transparentMaterial = <meshStandardMaterial color={style.color} transparent opacity={0.3} depthWrite={false} />;
+    const shelfBodyMaterial = <meshStandardMaterial color="#D7CCC8" transparent opacity={0.3} depthWrite={false} />;
+
     // 냉동고
     if (style.type === 'freezer') {
         return (
             <group>
                 <mesh rotation={[-Math.PI / 2, 0, 0]} castShadow receiveShadow>
                     <extrudeGeometry args={[shape, { steps: 1, depth: 1.0, bevelEnabled: false }]} />
-                    <meshStandardMaterial color="#E1F5FE" />
+                    <meshStandardMaterial color="#E1F5FE" transparent opacity={0.3} depthWrite={false} />
                 </mesh>
                 <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 1.01, 0]}>
                     <shapeGeometry args={[shape]} />
-                    <meshStandardMaterial color="#81D4FA" transparent opacity={0.5} side={THREE.DoubleSide} />
+                    <meshStandardMaterial color="#81D4FA" transparent opacity={0.2} side={THREE.DoubleSide} />
                 </mesh>
+                {/* 테두리로 형태 강조 */}
+                <lineSegments rotation={[-Math.PI / 2, 0, 0]} position={[0, 1.02, 0]}>
+                    <edgesGeometry args={[new THREE.ShapeGeometry(shape)]} />
+                    <lineBasicMaterial color={style.color} />
+                </lineSegments>
                 <ShelfLabel center={center} label={fixture.categoryName} subLabel={fixture.label} height={1.8} color="#5E35B1" />
             </group>
         );
@@ -140,18 +150,24 @@ function PolygonShelf({ fixture }: { fixture: FixtureData }) {
             <group>
                 <mesh rotation={[-Math.PI / 2, 0, 0]} castShadow>
                     <extrudeGeometry args={[shape, { steps: 1, depth: 2.2, bevelEnabled: false }]} />
-                    <meshStandardMaterial color="#E3F2FD" transparent opacity={0.8} />
+                    <meshStandardMaterial color="#E3F2FD" transparent opacity={0.3} depthWrite={false} />
                 </mesh>
+                {/* 선반 층 */}
                 {[0.5, 1.0, 1.5].map((y, i) => (
                     <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, y, 0]}>
                         <shapeGeometry args={[shape]} />
-                        <meshStandardMaterial color="#90CAF9" />
+                        <meshStandardMaterial color="#90CAF9" transparent opacity={0.1} />
                     </mesh>
                 ))}
                 <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 2.2, 0]}>
                     <extrudeGeometry args={[shape, { steps: 1, depth: 0.2, bevelEnabled: false }]} />
-                    <meshStandardMaterial color={style.color} />
+                    {transparentMaterial}
                 </mesh>
+                {/* 테두리 */}
+                <lineSegments rotation={[-Math.PI / 2, 0, 0]} position={[0, 2.4, 0]}>
+                    <edgesGeometry args={[new THREE.ShapeGeometry(shape)]} />
+                    <lineBasicMaterial color={style.color} />
+                </lineSegments>
                 <ShelfLabel center={center} label={fixture.categoryName} subLabel={fixture.label} height={2.8} color={style.color} />
             </group>
         );
@@ -164,23 +180,26 @@ function PolygonShelf({ fixture }: { fixture: FixtureData }) {
             {tiers.map((y, i) => (
                 <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, y, 0]} castShadow receiveShadow>
                     <extrudeGeometry args={[shape, { steps: 1, depth: 0.1, bevelEnabled: false }]} />
-                    <meshStandardMaterial color="#D7CCC8" />
+                    {shelfBodyMaterial}
                 </mesh>
             ))}
             {tiers.map((y, i) => (
                 <mesh key={`prod-${i}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, y + 0.1, 0]}>
                     <extrudeGeometry args={[shape, { steps: 1, depth: 0.3, bevelEnabled: false }]} />
-                    <meshStandardMaterial color={style.color} />
+                    {transparentMaterial}
                 </mesh>
             ))}
+            {/* 상단 테두리 */}
+            <lineSegments rotation={[-Math.PI / 2, 0, 0]} position={[0, 2.21, 0]}>
+                <edgesGeometry args={[new THREE.ShapeGeometry(shape)]} />
+                <lineBasicMaterial color={style.color} linewidth={1} />
+            </lineSegments>
             <ShelfLabel center={center} label={fixture.categoryName} subLabel={fixture.label} height={2.5} color="#5D4037" />
         </group>
     );
 }
 
 function ShelfLabel({ center, label, subLabel, height, color }: { center: number[]; label: string; subLabel: string; height: number; color: string }) {
-    // Shape는 (x, -y)로 그려진 후 X축 -90도 회전 → 최종 Z = +y (원래 geometry Y)
-    // 따라서 라벨 Z 위치도 +center[1] 사용
     return (
         <group position={[center[0], height, center[1]]}>
             <Text fontSize={0.4} color="white" anchorX="center" anchorY="bottom" outlineWidth={0.04} outlineColor="#000">
@@ -219,22 +238,92 @@ function UserMarker({ position }: { position: UserPosition }) {
 }
 
 // ============================================================
+// 컴포넌트: 카메라 리그 (3인칭 추적)
+// ============================================================
+function CameraRig({
+    userPosition,
+    isFollowing,
+    setIsFollowing
+}: {
+    userPosition: UserPosition,
+    isFollowing: boolean,
+    setIsFollowing: (v: boolean) => void
+}) {
+    const { camera } = useThree();
+    const controlsRef = useRef<OrbitControlsImpl>(null);
+
+    useFrame(() => {
+        if (isFollowing && controlsRef.current) {
+            const threeX = userPosition.x;
+            const threeZ = -userPosition.y;
+
+            // 카메라 타겟 업데이트 (사용자 위치)
+            controlsRef.current.target.set(threeX, 0, threeZ);
+
+            // 카메라 위치 업데이트 (3인칭 시점: 뒤 4m, 위 6m)
+            // 사용자 바라보는 방향 (theta) 기준
+            // theta는 0도가 North(Z-?) 라고 가정하거나 데이터에 따라 다름.
+            // 여기서는 단순히 고정된 오프셋을 사용하거나, theta를 반영할 수 있음.
+            // 사용자 theta를 라디안으로 변환 (UserMarker 참조: -theta * PI/180)
+            const rotationRad = -userPosition.theta * (Math.PI / 180);
+
+            // 사용자 뒤쪽 계산
+            // UserMarker가 회전하는 방식에 맞춤
+            // 뒤쪽: rotationRad 반대 방향
+            const dist = 6.0; // 높이 거리
+            const height = 8.0;
+
+            // 간단하게: 항상 사용자 뒤쪽에서 바라보도록 함
+            // 만약 사용자가 회전하면 카메라도 부드럽게 회전
+            const offsetX = Math.sin(rotationRad) * 4; // 뒤쪽으로 좀 떨어짐
+            const offsetZ = Math.cos(rotationRad) * 4;
+
+            // 카메라 위치 = 타겟 + 오프셋
+            // 오프셋을 사용자 뒤쪽으로 설정 (UserMarker의 local Z+가 앞인지 뒤인지에 따라 다름)
+            // 보통 Z-가 앞이면 Z+가 뒤.
+            // threeX + Math.sin(theta)*dist... 복잡하므로
+            // 일단은 간단한 오프셋 적용. theta 반영하려면 아래와 같이:
+
+            // 3인칭 쿼터뷰 (Top-down 약간 뒤)
+            // 사용자 뒤(0,0,1) * 회전
+            const backVector = new THREE.Vector3(0, height, 5).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationRad);
+
+            // 부드러운 이동 (Lerp)
+            const targetPos = new THREE.Vector3(threeX, 0, threeZ).add(backVector);
+
+            camera.position.lerp(targetPos, 0.1);
+            controlsRef.current.update();
+        }
+    });
+
+    return (
+        <OrbitControls
+            ref={controlsRef}
+            enablePan={true}
+            enableZoom={true}
+            enableRotate={true}
+            onStart={() => {
+                // 사용자가 조작을 시작하면 팔로우 모드 해제
+                if (isFollowing) setIsFollowing(false);
+            }}
+        />
+    );
+}
+
+// ============================================================
 // 컴포넌트: 씬
 // ============================================================
-function StoreScene({ mapData, userPosition }: { mapData: MapDataResponse; userPosition: UserPosition }) {
-    // 맵 경계의 중심점 계산
-    const mapCenter = useMemo(() => {
-        const boundary = mapData.storeMap.boundary;
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        boundary.forEach(p => {
-            if (p[0] < minX) minX = p[0];
-            if (p[0] > maxX) maxX = p[0];
-            if (p[1] < minY) minY = p[1];
-            if (p[1] > maxY) maxY = p[1];
-        });
-        return { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
-    }, [mapData.storeMap.boundary]);
-
+function StoreScene({
+    mapData,
+    userPosition,
+    isFollowing,
+    setIsFollowing
+}: {
+    mapData: MapDataResponse;
+    userPosition: UserPosition;
+    isFollowing: boolean;
+    setIsFollowing: (v: boolean) => void;
+}) {
     return (
         <>
             <ambientLight intensity={0.6} />
@@ -249,9 +338,13 @@ function StoreScene({ mapData, userPosition }: { mapData: MapDataResponse; userP
 
             <UserMarker position={userPosition} />
 
-            {/* 와이드 3인칭 뷰: 맵 중심을 바라보는 높은 시점 */}
-            <OrbitControls enablePan enableZoom enableRotate target={[mapCenter.x, 0, mapCenter.y]} />
-            <PerspectiveCamera makeDefault position={[mapCenter.x + 15, 25, mapCenter.y + 15]} fov={50} />
+            {/* 카메라 리그 */}
+            <CameraRig
+                userPosition={userPosition}
+                isFollowing={isFollowing}
+                setIsFollowing={setIsFollowing}
+            />
+
             <gridHelper args={[50, 50, '#EEEEEE', '#EEEEEE']} position={[0, -0.1, 0]} />
         </>
     );
@@ -265,6 +358,7 @@ export default function StoreMap({ className = '' }: StoreMapProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [pos, setPos] = useState<UserPosition>({ x: 0.06, y: 0.11, theta: 18.5 });
+    const [isFollowing, setIsFollowing] = useState(true); // 팔로우 모드 상태
 
     // API에서 지도 데이터 가져오기
     useEffect(() => {
@@ -278,11 +372,6 @@ export default function StoreMap({ className = '' }: StoreMapProps) {
                     throw new Error(`HTTP ${response.status}`);
                 }
                 const data: MapDataResponse = await response.json();
-                console.log('[StoreMap] API 응답 성공:', {
-                    storeMapId: data.storeMap.id,
-                    fixtureCount: data.fixtures.length,
-                    fixtures: data.fixtures.map(f => f.label)
-                });
                 setMapData(data);
             } catch (err) {
                 console.error('[StoreMap] API 요청 실패:', err);
@@ -299,13 +388,7 @@ export default function StoreMap({ className = '' }: StoreMapProps) {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8123';
         const url = `${apiUrl}/api/map/position/stream`;
 
-        console.log('[StoreMap] 위치 SSE 연결 시도:', url);
-
         const eventSource = new EventSource(url);
-
-        eventSource.onopen = () => {
-            console.log('[StoreMap] 위치 SSE 연결됨');
-        };
 
         eventSource.onmessage = (event) => {
             try {
@@ -320,12 +403,7 @@ export default function StoreMap({ className = '' }: StoreMapProps) {
             }
         };
 
-        eventSource.onerror = (err) => {
-            console.error('[StoreMap] 위치 SSE 오류:', err);
-        };
-
         return () => {
-            console.log('[StoreMap] 위치 SSE 연결 해제');
             eventSource.close();
         };
     }, []);
@@ -349,14 +427,37 @@ export default function StoreMap({ className = '' }: StoreMapProps) {
     }
 
     return (
-        <div className={`w-full h-full bg-gray-900 rounded-lg overflow-hidden ${className}`}>
-            <div className="absolute top-4 left-4 z-10 bg-black/50 text-white p-2 rounded text-xs">
-                <p>User Position JSON:</p>
-                <pre>{JSON.stringify(pos, null, 2)}</pre>
-            </div>
+        <div className={`relative w-full h-full bg-gray-900 rounded-lg overflow-hidden ${className}`}>
+            {/* 디버그 오버레이 (삭제 가능) */}
+            {/* <div className="absolute top-4 left-4 z-10 bg-black/50 text-white p-2 rounded text-xs pointer-events-none">
+                <p>User: {pos.x.toFixed(2)}, {pos.y.toFixed(2)}</p>
+                <p>Theta: {pos.theta.toFixed(1)}°</p>
+            </div> */}
+
+            {/* 팔로우 모드 토글 버튼 */}
+            {!isFollowing && (
+                <button
+                    onClick={() => setIsFollowing(true)}
+                    className="absolute top-4 right-4 z-20 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white p-2 rounded-full shadow-lg transition-all border border-white/20"
+                    title="내 위치 따라가기"
+                    aria-label="Follow user"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </button>
+            )}
+
             <Canvas shadows>
-                <StoreScene mapData={mapData} userPosition={pos} />
+                <StoreScene
+                    mapData={mapData}
+                    userPosition={pos}
+                    isFollowing={isFollowing}
+                    setIsFollowing={setIsFollowing}
+                />
             </Canvas>
         </div>
     );
 }
+
