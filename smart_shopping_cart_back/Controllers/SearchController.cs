@@ -1,42 +1,34 @@
 using Microsoft.AspNetCore.Mvc;
 using smart_shopping_cart_back.Services;
-using Microsoft.EntityFrameworkCore;
-using smart_shopping_cart_back.Data;
+using smart_shopping_cart_back.DTOs;
 
 namespace smart_shopping_cart_back.Controllers;
 
 [ApiController]
-[Route("")]
+[Route("api/search")]
 public class SearchController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly ISearchService _searchService;
 
-    public SearchController(AppDbContext db)
+    public SearchController(ISearchService searchService)
     {
-        _db = db;
+        _searchService = searchService;
     }
 
-    [HttpGet("search")]
-    public async Task<IActionResult> Search(
-        [FromQuery] string query,
-        CancellationToken ct
-        )
+    // GET /api/search?query=...
+    [HttpGet("")]
+    public async Task<ActionResult<List<CardTemplateDto>>> Search([FromQuery] string query, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(query))
             return BadRequest(new { error = "query is required" });
 
-        query = query.Trim();
+        return Ok(await _searchService.SearchByNameAsync(query.Trim(), ct));
+    }
 
-        var ids = await _db.Products
-            .AsNoTracking()
-            .Where(p => p.Active)
-            .Where(p => EF.Functions.ILike(p.Name, $"%{query}%"))
-            .OrderBy(p => p.Name)
-            .Select(p => p.ProductId)
-            .Take(100)
-            .ToListAsync(ct);
-
-        var cards = await CardQueryService.BuildCardsAsync(_db, ids, ct);
-        return Ok(cards);
+    // GET /api/search/default
+    [HttpGet("default")]
+    public async Task<ActionResult<SearchDefaultResponseDto>> Default(CancellationToken ct)
+    {
+        return Ok(await _searchService.SearchDefaultAsync(ct));
     }
 }

@@ -1,39 +1,50 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using smart_shopping_cart_back.Services;
-using smart_shopping_cart_back.DTOs;
 using smart_shopping_cart_back.Data;
+using smart_shopping_cart_back.DTOs;
+using smart_shopping_cart_back.Services;
 
-namespace smart_shopping_cart_back.Controllers;
+namespace smart_shopping_cart_back.Services;
 
-[ApiController]
-[Route("")]
-public class SearchDefaultController : ControllerBase
+public class SearchService : ISearchService
 {
     private readonly AppDbContext _db;
 
-    public SearchDefaultController(AppDbContext db)
+    // Dependency Injection: Requesting the Database
+    public SearchService(AppDbContext db)
     {
         _db = db;
     }
 
-    // GET /search_default
-    [HttpGet("search_default")]
-    public async Task<ActionResult<SearchDefaultResponseDto>> SearchDefault(CancellationToken ct)
+    public async Task<List<CardTemplateDto>> SearchByNameAsync(string query, CancellationToken ct)
     {
+        // Simple search example
+        var ids = await _db.Products
+            .AsNoTracking()
+            .Where(p => p.Active && EF.Functions.ILike(p.Name, $"%{query}%"))
+            .Select(p => p.ProductId)
+            .ToListAsync(ct);
+
+        return await CardQueryService.BuildCardsAsync(_db, ids, ct);
+    }
+
+    public async Task<SearchDefaultResponseDto> SearchDefaultAsync(CancellationToken ct)
+    {
+        // 1. LINQ: Find Popular Products
         var popularIds = await _db.Products
             .AsNoTracking()
             .Where(p => p.Active)
             .Select(p => new
             {
                 p.ProductId,
+                // Calculate Average Rating
                 Avg = _db.Reviews.Where(r => r.ProductId == p.ProductId)
                     .Select(r => (double?)r.Rating)
                     .Average() ?? 0.0,
+                // Calculate Review Count
                 Cnt = _db.Reviews.Count(r => r.ProductId == p.ProductId)
             })
-            .OrderByDescending(x => x.Avg)
-            .ThenByDescending(x => x.Cnt)
+            .OrderByDescending(x => x.Avg) // Sort by Rating
+            .ThenByDescending(x => x.Cnt)  // Then by Count
             .ThenBy(x => x.ProductId)
             .Take(6)
             .Select(x => x.ProductId)
@@ -50,11 +61,6 @@ public class SearchDefaultController : ControllerBase
         var popular = await CardQueryService.BuildCardsAsync(_db, popularIds, ct);
         var recommended = await CardQueryService.BuildCardsAsync(_db, recommendedIds, ct);
 
-        return Ok(new SearchDefaultResponseDto(popular, recommended));
+        return new SearchDefaultResponseDto(popular, recommended);
     }
-    private static Task<List<CardTemplateDto>> BuildCardsAsync(
-        AppDbContext db,
-        IEnumerable<string> productIds,
-        CancellationToken ct = default)
-        => CardQueryService.BuildCardsAsync(db, productIds, ct); 
 }
