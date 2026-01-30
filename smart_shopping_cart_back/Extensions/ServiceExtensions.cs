@@ -45,6 +45,15 @@ public static class ServiceExtensions
     }
 
     /// <summary>
+    /// 검색 관련 서비스 등록
+    /// </summary>
+    public static IServiceCollection AddSearchServices(this IServiceCollection services)
+    {
+        services.AddScoped<ISearchService, SearchService>();
+        return services;
+    }
+
+    /// <summary>
     /// CORS 설정
     /// </summary>
     public static IServiceCollection AddCorsPolicy(this IServiceCollection services)

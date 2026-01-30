@@ -72,11 +72,11 @@ VALUES (
 )
 ON CONFLICT (parent_category_id) DO UPDATE SET fixture_geom = EXCLUDED.fixture_geom, label = EXCLUDED.label;
 
--- Shelf F - pc-frozen (냉동)
+-- Shelf F - pc-frozen (냉동) - WKB 대신 좌표 직접 사용
 INSERT INTO fixtures (fixture_id, parent_category_id, map_id, fixture_geom, label)
 VALUES (
     'shelf-f', 'pc-frozen', '1',
-    ST_GeometryN(ST_GeomFromWKB(decode('0106000020110F00000100000001030000000100000005000000163F29B8FE1040F488E85958760BC094D279B4079F17400C1EC897D19408C038582227F0381B40F4CCFA38E8AF19C0C8295645C073144068020B9AAB201BC016432F29B8FE1040F488E85958760BC0', 'hex'), 3857), 1),
+    ST_GeomFromText('POLYGON((-1.225079 -4.549159, -0.360791 -7.898278, 1.331775 -7.538157, 0.431474 -4.189038, -1.225079 -4.549159))', 3857),
     'Bay F - 냉동'
 )
 ON CONFLICT (parent_category_id) DO UPDATE SET fixture_geom = EXCLUDED.fixture_geom, label = EXCLUDED.label;
