@@ -37,10 +37,12 @@ pipeline {
         
         stage('Stop Previous Container') {
             steps {
-                echo '🛑 이전 컨테이너 정지...'
+                echo '🛑 이전 컨테이너 정지 및 삭제...'
                 sh '''
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm ${CONTAINER_NAME} || true
+                    # 컨테이너가 실행 중이거나 존재하는 경우 강제 삭제
+                    if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
+                        docker rm -f ${CONTAINER_NAME}
+                    fi
                 '''
             }
         }
