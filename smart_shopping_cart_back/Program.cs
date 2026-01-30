@@ -14,6 +14,9 @@ builder.Services.AddDbContext<smart_shopping_cart_back.Data.AppDbContext>(option
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<smart_shopping_cart_back.Repositories.ICartRepository, smart_shopping_cart_back.Repositories.CartRepository>();
 
+// Map Service
+builder.Services.AddSingleton<smart_shopping_cart_back.Services.MapService>();
+
 var app = builder.Build();
 
 // ===== 미들웨어 =====

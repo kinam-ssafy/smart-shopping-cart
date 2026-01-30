@@ -15,6 +15,11 @@ public class AppDbContext : DbContext
     public DbSet<Review> Reviews { get; set; }
     public DbSet<Cart> Carts { get; set; }
     public DbSet<RagChunk> RagChunks { get; set; }
+    
+    // Map entities
+    public DbSet<StoreMap> StoreMaps { get; set; }
+    public DbSet<Fixture> Fixtures { get; set; }
+    public DbSet<ParentCategory> ParentCategories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,9 +1,77 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Text } from '@react-three/drei';
 import * as THREE from 'three';
+
+// QGIS에서 추출한 좌표 데이터 (coords.json)
+const MAP_DATA = {
+    map: [
+        [
+            [
+                [-4.624976595934472, 1.3254630661555717],
+                [4.069352933309467, 3.327446839336742],
+                [4.21235177425098, 2.9556498528888104],
+                [4.584148760698913, 2.9842496210771126],
+                [5.327742733594775, -0.19032464782445757],
+                [5.985537401925733, -0.2761239523893648],
+                [6.357334388373662, -2.363907030135443],
+                [7.329726506775945, -2.1923084210056274],
+                [8.502317002496344, -4.766287557952847],
+                [9.303110511768814, -4.594688948823032],
+                [9.61770796184014, -5.452681994472105],
+                [9.04571259807409, -5.624280603601919],
+                [9.674907498216744, -7.254467390335158],
+                [9.074312366262394, -7.454665767653276],
+                [9.646307730028443, -8.512857190620466],
+                [9.24591097539221, -8.713055567938582],
+                [10.647299616619026, -12.288026591476388],
+                [4.870146442581936, -13.889613610021325],
+                [4.727147601640423, -13.37481778263188],
+                [3.8405547878030486, -13.546416391761692],
+                [3.7261557150498383, -14.061212219151138],
+                [-2.336995140870277, -15.205202946683237],
+                [-2.565793286376697, -14.490208741975675],
+                [-2.8231912000714185, -14.46160897378737],
+                [-2.8231912000714185, -14.833405960235304],
+                [-3.252187722895955, -14.862005728423608],
+                [-3.5667851729672817, -9.771246990905773],
+                [-2.622992822753302, -9.285050931704632],
+                [-3.1377886501427454, -7.311666926711764],
+                [-2.336995140870277, -7.025669244828739],
+                [-2.7373918955065113, -5.16668431258908],
+                [-3.766983550285399, -4.508889644258124],
+                [-4.939574046005799, 0.18147233862347445],
+                [-4.224579841298238, 0.5818690932597081],
+                [-4.281779377674843, 0.896466543331035],
+                [-4.710775900499379, 0.9822658478959423],
+                [-4.682176132311077, 1.3254630661555717],
+                [-4.624976595934472, 1.3254630661555717]
+            ]
+        ]
+    ],
+    shelves: [
+        // Shelf 1
+        [[[-2.017344, 0.096393], [-1.153055, -3.252726], [0.53951, -2.892605], [-0.360791, 0.456514], [-2.017344, 0.096393]]],
+        // Shelf 2
+        [[[1.187727, 0.888658], [2.052015, -2.460461], [3.744581, -2.100341], [2.84428, 1.248778], [1.187727, 0.888658]]],
+        // Shelf 3
+        [[[-0.792935, -9.626855], [0.071354, -12.975974], [1.763919, -12.615854], [0.863618, -9.266735], [-0.792935, -9.626855]]],
+        // Shelf 4
+        [[[2.448148, -8.906614], [3.312437, -12.255733], [5.005002, -11.895613], [4.104701, -8.546494], [2.448148, -8.906614]]],
+        // Shelf 5
+        [[[5.401134, -8.258398], [6.265423, -11.607517], [7.957989, -11.247396], [7.057688, -7.898278], [5.401134, -8.258398]]],
+        // Shelf 6
+        [[[-1.225079, -4.549159], [-0.360791, -7.898278], [1.331775, -7.538157], [0.431474, -4.189038], [-1.225079, -4.549159]]]
+    ]
+};
+
+interface UserPosition {
+    x: number;
+    y: number;
+    theta: number;
+}
 
 interface ProductLocation {
     id: string;
@@ -13,698 +81,341 @@ interface ProductLocation {
     category?: string;
 }
 
-interface StoreLayout {
-    /** 매장 그리드 크기 (행 x 열) */
-    gridSize: { rows: number; cols: number };
-
-    /** 선반 간격 */
-    shelfSpacing: { x: number; z: number };
-
-    /** 섹션 정의 (선택적) */
-    sections?: Array<{
-        name: string;
-        color: string;
-        positions: string[]; // ["A-1", "A-2", ...]
-    }>;
-}
-
 interface StoreMapProps {
-    /** 상품 위치 데이터 */
     locations?: ProductLocation[];
-
-    /** 매장 레이아웃 설정 */
-    layout?: StoreLayout;
-
-    /** 사용자(카트) 현재 위치 */
-    userPosition?: { x: number; y: number; z: number };
-
-    /** 추가 CSS 클래스 */
     className?: string;
 }
 
-// 기본 레이아웃 설정 (실제 마트 형태)
-const DEFAULT_LAYOUT: StoreLayout = {
-    gridSize: { rows: 6, cols: 8 },
-    shelfSpacing: { x: 2.8, z: 2.8 },
-    sections: [
-        // 신선식품 구역 (입구 근처)
-        {
-            name: '🥬 청과/채소',
-            color: '#2E7D32',
-            positions: ['A-1', 'A-2', 'A-3', 'B-1', 'B-2', 'B-3']
-        },
-        {
-            name: '🍎 과일',
-            color: '#66BB6A',
-            positions: ['A-4', 'A-5', 'B-4', 'B-5']
-        },
-        // 정육/수산 (냉장 구역)
-        {
-            name: '🥩 정육',
-            color: '#C62828',
-            positions: ['A-6', 'A-7', 'A-8', 'B-6', 'B-7', 'B-8']
-        },
-        {
-            name: '🐟 수산',
-            color: '#1565C0',
-            positions: ['C-6', 'C-7', 'C-8', 'D-6', 'D-7', 'D-8']
-        },
-        // 유제품/냉동
-        {
-            name: '🧈 유제품',
-            color: '#42A5F5',
-            positions: ['C-1', 'C-2', 'C-3', 'D-1', 'D-2', 'D-3']
-        },
-        {
-            name: '🧊 냉동식품',
-            color: '#7E57C2',
-            positions: ['C-4', 'C-5', 'D-4', 'D-5']
-        },
-        // 가공식품/조미료
-        {
-            name: '🍜 라면/면류',
-            color: '#FF7043',
-            positions: ['E-1', 'E-2', 'E-3']
-        },
-        {
-            name: '🧂 조미료/소스',
-            color: '#8D6E63',
-            positions: ['E-4', 'E-5', 'E-6']
-        },
-        // 음료/과자
-        {
-            name: '🥤 음료',
-            color: '#26A69A',
-            positions: ['F-1', 'F-2', 'F-3', 'F-4']
-        },
-        {
-            name: '🍪 과자/스낵',
-            color: '#FFA726',
-            positions: ['F-5', 'F-6', 'F-7', 'F-8']
-        },
-        // 생활용품
-        {
-            name: '🧴 생활용품',
-            color: '#78909C',
-            positions: ['E-7', 'E-8']
-        }
-    ]
-};
-
-// 목데이터: 실제 매장 상품 위치 (한국 마트 스타일)
+// 목데이터 업데이트 (새 좌표계에 맞춤)
+// 실제 DB 연동시 API에서 받아와야 함. 여기서는 예시로 일부만 수정.
 const MOCK_LOCATIONS: ProductLocation[] = [
-    // 🥬 청과/채소
-    { id: '1', position: 'A-1', coordinates: { x: -9.8, y: 0.5, z: -7 }, productName: '배추', category: '채소' },
-    { id: '2', position: 'A-2', coordinates: { x: -7, y: 0.5, z: -7 }, productName: '시금치', category: '채소' },
-    { id: '3', position: 'A-3', coordinates: { x: -4.2, y: 0.5, z: -7 }, productName: '양파/마늘', category: '채소' },
-    { id: '4', position: 'B-1', coordinates: { x: -9.8, y: 0.5, z: -4.2 }, productName: '감자/고구마', category: '채소' },
-    { id: '5', position: 'B-2', coordinates: { x: -7, y: 0.5, z: -4.2 }, productName: '당근/무', category: '채소' },
-    { id: '6', position: 'B-3', coordinates: { x: -4.2, y: 0.5, z: -4.2 }, productName: '파프리카', category: '채소' },
-
-    // 🍎 과일
-    { id: '7', position: 'A-4', coordinates: { x: -1.4, y: 0.5, z: -7 }, productName: '사과', category: '과일' },
-    { id: '8', position: 'A-5', coordinates: { x: 1.4, y: 0.5, z: -7 }, productName: '바나나', category: '과일' },
-    { id: '9', position: 'B-4', coordinates: { x: -1.4, y: 0.5, z: -4.2 }, productName: '오렌지/귤', category: '과일' },
-    { id: '10', position: 'B-5', coordinates: { x: 1.4, y: 0.5, z: -4.2 }, productName: '딸기/포도', category: '과일' },
-
-    // 🥩 정육
-    { id: '11', position: 'A-6', coordinates: { x: 4.2, y: 0.5, z: -7 }, productName: '소고기', category: '정육' },
-    { id: '12', position: 'A-7', coordinates: { x: 7, y: 0.5, z: -7 }, productName: '돼지고기', category: '정육' },
-    { id: '13', position: 'A-8', coordinates: { x: 9.8, y: 0.5, z: -7 }, productName: '닭고기', category: '정육' },
-    { id: '14', position: 'B-6', coordinates: { x: 4.2, y: 0.5, z: -4.2 }, productName: '양념육', category: '정육' },
-    { id: '15', position: 'B-7', coordinates: { x: 7, y: 0.5, z: -4.2 }, productName: '햄/소시지', category: '정육' },
-    { id: '16', position: 'B-8', coordinates: { x: 9.8, y: 0.5, z: -4.2 }, productName: '베이컨', category: '정육' },
-
-    // 🐟 수산
-    { id: '17', position: 'C-6', coordinates: { x: 4.2, y: 0.5, z: -1.4 }, productName: '생선류', category: '수산' },
-    { id: '18', position: 'C-7', coordinates: { x: 7, y: 0.5, z: -1.4 }, productName: '새우/조개', category: '수산' },
-    { id: '19', position: 'C-8', coordinates: { x: 9.8, y: 0.5, z: -1.4 }, productName: '오징어/문어', category: '수산' },
-    { id: '20', position: 'D-6', coordinates: { x: 4.2, y: 0.5, z: 1.4 }, productName: '회/초밥', category: '수산' },
-    { id: '21', position: 'D-7', coordinates: { x: 7, y: 0.5, z: 1.4 }, productName: '훈제연어', category: '수산' },
-    { id: '22', position: 'D-8', coordinates: { x: 9.8, y: 0.5, z: 1.4 }, productName: '게/랍스터', category: '수산' },
-
-    // 🧈 유제품
-    { id: '23', position: 'C-1', coordinates: { x: -9.8, y: 0.5, z: -1.4 }, productName: '우유', category: '유제품' },
-    { id: '24', position: 'C-2', coordinates: { x: -7, y: 0.5, z: -1.4 }, productName: '요거트', category: '유제품' },
-    { id: '25', position: 'C-3', coordinates: { x: -4.2, y: 0.5, z: -1.4 }, productName: '치즈', category: '유제품' },
-    { id: '26', position: 'D-1', coordinates: { x: -9.8, y: 0.5, z: 1.4 }, productName: '버터/마가린', category: '유제품' },
-    { id: '27', position: 'D-2', coordinates: { x: -7, y: 0.5, z: 1.4 }, productName: '계란', category: '유제품' },
-    { id: '28', position: 'D-3', coordinates: { x: -4.2, y: 0.5, z: 1.4 }, productName: '두부/콩나물', category: '유제품' },
-
-    // 🧊 냉동식품
-    { id: '29', position: 'C-4', coordinates: { x: -1.4, y: 0.5, z: -1.4 }, productName: '냉동만두', category: '냉동' },
-    { id: '30', position: 'C-5', coordinates: { x: 1.4, y: 0.5, z: -1.4 }, productName: '냉동피자', category: '냉동' },
-    { id: '31', position: 'D-4', coordinates: { x: -1.4, y: 0.5, z: 1.4 }, productName: '아이스크림', category: '냉동' },
-    { id: '32', position: 'D-5', coordinates: { x: 1.4, y: 0.5, z: 1.4 }, productName: '냉동밥', category: '냉동' },
-
-    // 🍜 라면/면류
-    { id: '33', position: 'E-1', coordinates: { x: -9.8, y: 0.5, z: 4.2 }, productName: '라면', category: '면류' },
-    { id: '34', position: 'E-2', coordinates: { x: -7, y: 0.5, z: 4.2 }, productName: '우동/소바', category: '면류' },
-    { id: '35', position: 'E-3', coordinates: { x: -4.2, y: 0.5, z: 4.2 }, productName: '스파게티', category: '면류' },
-
-    // 🧂 조미료/소스
-    { id: '36', position: 'E-4', coordinates: { x: -1.4, y: 0.5, z: 4.2 }, productName: '간장/된장', category: '조미료' },
-    { id: '37', position: 'E-5', coordinates: { x: 1.4, y: 0.5, z: 4.2 }, productName: '고추장/쌈장', category: '조미료' },
-    { id: '38', position: 'E-6', coordinates: { x: 4.2, y: 0.5, z: 4.2 }, productName: '식용유/참기름', category: '조미료' },
-
-    // 🧴 생활용품
-    { id: '39', position: 'E-7', coordinates: { x: 7, y: 0.5, z: 4.2 }, productName: '세제/섬유유연제', category: '생활' },
-    { id: '40', position: 'E-8', coordinates: { x: 9.8, y: 0.5, z: 4.2 }, productName: '화장지/물티슈', category: '생활' },
-
-    // 🥤 음료
-    { id: '41', position: 'F-1', coordinates: { x: -9.8, y: 0.5, z: 7 }, productName: '생수', category: '음료' },
-    { id: '42', position: 'F-2', coordinates: { x: -7, y: 0.5, z: 7 }, productName: '탄산음료', category: '음료' },
-    { id: '43', position: 'F-3', coordinates: { x: -4.2, y: 0.5, z: 7 }, productName: '주스', category: '음료' },
-    { id: '44', position: 'F-4', coordinates: { x: -1.4, y: 0.5, z: 7 }, productName: '커피/차', category: '음료' },
-
-    // 🍪 과자/스낵
-    { id: '45', position: 'F-5', coordinates: { x: 1.4, y: 0.5, z: 7 }, productName: '과자', category: '스낵' },
-    { id: '46', position: 'F-6', coordinates: { x: 4.2, y: 0.5, z: 7 }, productName: '초콜릿/사탕', category: '스낵' },
-    { id: '47', position: 'F-7', coordinates: { x: 7, y: 0.5, z: 7 }, productName: '견과류', category: '스낵' },
-    { id: '48', position: 'F-8', coordinates: { x: 9.8, y: 0.5, z: 7 }, productName: '젤리/껌', category: '스낵' },
+    // 예시 위치 (대략 선반 1 근처)
+    { id: '1', position: 'A-1', coordinates: { x: -0.5, y: 1.0, z: -1.5 }, productName: '사과', category: '과일' },
+    // 예시 위치 (대략 선반 6 근처)
+    { id: '2', position: 'F-1', coordinates: { x: 0.0, y: 1.0, z: -6.0 }, productName: '냉동만두', category: '냉동' },
 ];
 
-// 선반 타입 정의
-type ShelfType = 'normal' | 'refrigerator' | 'freezer' | 'end-cap';
+/**
+ * 다각형 데이터를 기반으로 2D Shape 생성
+ */
+function createShapeFromCoordinates(coords: number[][]) {
+    const shape = new THREE.Shape();
+    if (coords.length > 0) {
+        // Z축(위도/y)을 -Z로 매핑하여 3D 좌표계(x, y, z)와 QGIS(x, y) 매칭
+        // Three.js: x=x, z=-y (Top view 기준)
+        const startX = coords[0][0];
+        const startZ = -coords[0][1];
 
-// 일반 선반 컴포넌트 (3단 선반)
-function Shelf({
-    position,
-    color = '#8B7355',
-    shelfType = 'normal',
-    rotation = 0
-}: {
-    position: [number, number, number];
-    color?: string;
-    shelfType?: ShelfType;
-    rotation?: number;
-}) {
-    if (shelfType === 'refrigerator') {
-        return (
-            <group position={position} rotation={[0, rotation, 0]}>
-                {/* 냉장고 본체 */}
-                <mesh position={[0, 1, 0]}>
-                    <boxGeometry args={[2.2, 2.5, 0.8]} />
-                    <meshStandardMaterial color="#E3F2FD" metalness={0.3} roughness={0.4} />
-                </mesh>
-                {/* 냉장고 유리문 */}
-                <mesh position={[0, 1, 0.35]}>
-                    <boxGeometry args={[2, 2.3, 0.05]} />
-                    <meshStandardMaterial color="#90CAF9" opacity={0.6} transparent metalness={0.5} />
-                </mesh>
-                {/* 냉장고 손잡이 */}
-                <mesh position={[0.85, 1, 0.4]}>
-                    <boxGeometry args={[0.05, 0.8, 0.05]} />
-                    <meshStandardMaterial color="#BDBDBD" metalness={0.8} />
-                </mesh>
-                {/* 상단 조명 */}
-                <mesh position={[0, 2.35, 0.2]}>
-                    <boxGeometry args={[1.8, 0.08, 0.3]} />
-                    <meshStandardMaterial color="#BBDEFB" emissive="#64B5F6" emissiveIntensity={0.3} />
-                </mesh>
-            </group>
-        );
+        shape.moveTo(startX, startZ);
+
+        for (let i = 1; i < coords.length; i++) {
+            const x = coords[i][0];
+            const z = -coords[i][1];
+            shape.lineTo(x, z);
+        }
     }
+    return shape;
+}
 
-    if (shelfType === 'freezer') {
-        return (
-            <group position={position} rotation={[0, rotation, 0]}>
-                {/* 냉동고 본체 */}
-                <mesh position={[0, 0.6, 0]}>
-                    <boxGeometry args={[2.2, 1.2, 1]} />
-                    <meshStandardMaterial color="#E1F5FE" metalness={0.2} roughness={0.5} />
-                </mesh>
-                {/* 냉동고 유리 뚜껑 */}
-                <mesh position={[0, 1.15, 0]}>
-                    <boxGeometry args={[2, 0.1, 0.9]} />
-                    <meshStandardMaterial color="#B3E5FC" opacity={0.5} transparent />
-                </mesh>
-                {/* 냉동고 테두리 */}
-                <mesh position={[0, 1.2, 0]}>
-                    <boxGeometry args={[2.2, 0.05, 1]} />
-                    <meshStandardMaterial color="#0288D1" />
-                </mesh>
-            </group>
-        );
-    }
+/**
+ * 매장 바닥/벽면 컴포넌트
+ */
+function MapBoundary() {
+    const shape = useMemo(() => {
+        // MultiPolygon의 첫 번째 Polygon의 첫 번째 Ring(외곽선)만 사용
+        return createShapeFromCoordinates(MAP_DATA.map[0][0]);
+    }, []);
 
-    // 일반 3단 선반
+    const extrudeSettings = {
+        steps: 1,
+        depth: 2.5, // 벽 높이
+        bevelEnabled: false,
+    };
+
     return (
-        <group position={position} rotation={[0, rotation, 0]}>
-            {/* 선반 프레임 (측면) */}
-            <mesh position={[-0.95, 1, 0]}>
-                <boxGeometry args={[0.08, 2.2, 0.6]} />
-                <meshStandardMaterial color="#5D4037" />
-            </mesh>
-            <mesh position={[0.95, 1, 0]}>
-                <boxGeometry args={[0.08, 2.2, 0.6]} />
-                <meshStandardMaterial color="#5D4037" />
+        <group>
+            {/* 바닥 (ShapeGeometry) */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+                <shapeGeometry args={[shape]} />
+                <meshStandardMaterial color="#E0E0E0" side={THREE.DoubleSide} />
             </mesh>
 
-            {/* 3단 선반판 */}
-            {[0.3, 1.0, 1.7].map((y, i) => (
-                <mesh key={i} position={[0, y, 0]}>
-                    <boxGeometry args={[1.9, 0.08, 0.55]} />
-                    <meshStandardMaterial color={color} />
-                </mesh>
-            ))}
+            {/* 벽 (ExtrudeGeometry) - 바닥에서 올라오도록 설정 */}
+            {/* ExtrudeGeometry는 기본적으로 Z축으로 돌출됨. 
+                 우리는 바닥(XZ평면)에 누워있는 쉐이프를 Y축으로 돌출시켜야 함.
+                 따라서 쉐이프를 XY평면에 그리고 회전시킨 뒤 Extrude하거나,
+                 Extrude 후 회전시켜야 함.
+             */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+                <extrudeGeometry args={[shape, extrudeSettings]} />
+                <meshStandardMaterial color="#FAFAFA" transparent opacity={0.3} side={THREE.DoubleSide} />
+                {/* 벽만 보이게 하려면 재질을 조정하거나 엣지만 렌더링 할 수도 있음 */}
+            </mesh>
 
-            {/* 상품 모형 (각 선반에) */}
-            {[0.5, 1.2, 1.9].map((y, i) => (
-                <group key={`products-${i}`}>
-                    <mesh position={[-0.5, y, 0]}>
-                        <boxGeometry args={[0.3, 0.35, 0.25]} />
-                        <meshStandardMaterial color={color} opacity={0.8} transparent />
-                    </mesh>
-                    <mesh position={[0, y, 0]}>
-                        <boxGeometry args={[0.3, 0.35, 0.25]} />
-                        <meshStandardMaterial color={color} opacity={0.8} transparent />
-                    </mesh>
-                    <mesh position={[0.5, y, 0]}>
-                        <boxGeometry args={[0.3, 0.35, 0.25]} />
-                        <meshStandardMaterial color={color} opacity={0.8} transparent />
-                    </mesh>
-                </group>
-            ))}
+            {/* 벽 높이만큼의 와이어프레임 (시각적 구분용) */}
+            <lineSegments position={[0, 2.5, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <edgesGeometry args={[new THREE.ShapeGeometry(shape)]} />
+                <lineBasicMaterial color="#9E9E9E" linewidth={2} />
+            </lineSegments>
+            <lineSegments position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <edgesGeometry args={[new THREE.ShapeGeometry(shape)]} />
+                <lineBasicMaterial color="#424242" linewidth={2} />
+            </lineSegments>
         </group>
     );
 }
 
-// 입구/출구 컴포넌트
-function Entrance({ position, label }: { position: [number, number, number]; label: string }) {
+// 선반 메타데이터 (DB 카테고리 매핑 및 스타일)
+const SHELF_INFO = [
+    { id: 'A', name: '청과/과일', type: 'standard', color: '#8BC34A', products: ['사과', '바나나', '포도'] },     // Index 0
+    { id: 'B', name: '채소/버섯', type: 'standard', color: '#4CAF50', products: ['시금치', '당근', '버섯'] },     // Index 1
+    { id: 'C', name: '정육/유제품', type: 'refrigerator', color: '#2196F3', products: ['우유', '치즈', '소고기'] }, // Index 2
+    { id: 'D', name: '수산/음료', type: 'refrigerator', color: '#03A9F4', products: ['생선', '생수', '주스'] },   // Index 3
+    { id: 'E', name: '과자/커피', type: 'standard', color: '#795548', products: ['과자', '초콜릿', '커피'] },     // Index 4
+    { id: 'F', name: '냉동/생활', type: 'freezer', color: '#673AB7', products: ['만두', '아이스크림', '휴지'] }    // Index 5
+];
+
+/**
+ * 다각형 선반 컴포넌트 (스타일 적용)
+ */
+function PolygonShelf({ coords, index }: { coords: number[][]; index: number }) {
+    const shape = useMemo(() => {
+        return createShapeFromCoordinates(coords);
+    }, [coords]);
+
+    const info = SHELF_INFO[index % SHELF_INFO.length];
+
+    // 중심점 계산 (라벨/아이콘 표시용)
+    const center = useMemo(() => {
+        let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+        coords.forEach(p => {
+            const x = p[0];
+            const z = p[1]; // Fix: Use p[1] directly for Z because Mesh Z = -ShapeY = -(-p[1]) = p[1]
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (z < minZ) minZ = z;
+            if (z > maxZ) maxZ = z;
+        });
+        return [(minX + maxX) / 2, (minZ + maxZ) / 2];
+    }, [coords]);
+
+    // === 스타일별 렌더링 ===
+
+    // 1. 냉동고 (Freezer) - 낮은 평대형
+    if (info.type === 'freezer') {
+        const bodySettings = { steps: 1, depth: 1.0, bevelEnabled: false }; // 높이 1.0
+        return (
+            <group>
+                {/* 본체 */}
+                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} castShadow receiveShadow>
+                    <extrudeGeometry args={[shape, bodySettings]} />
+                    <meshStandardMaterial color="#E1F5FE" />
+                </mesh>
+                {/* 상단 유리 커버 느낌 */}
+                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 1.01, 0]}>
+                    <shapeGeometry args={[shape]} />
+                    <meshStandardMaterial color="#81D4FA" transparent opacity={0.5} side={THREE.DoubleSide} />
+                </mesh>
+                {/* 라벨 */}
+                <ShelfLabel center={center} label={info.name} subLabel={`Bay ${info.id}`} height={1.8} color="#5E35B1" />
+            </group>
+        );
+    }
+
+    // 2. 냉장고 (Refrigerator) - 수직형 오픈 쇼케이스 느낌
+    if (info.type === 'refrigerator') {
+        const bodySettings = { steps: 1, depth: 2.2, bevelEnabled: false };
+        return (
+            <group>
+                {/* 본체 (약간 투명한 느낌의 쿨러) */}
+                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} castShadow>
+                    <extrudeGeometry args={[shape, bodySettings]} />
+                    <meshStandardMaterial color="#E3F2FD" transparent opacity={0.8} />
+                </mesh>
+                {/* 내부 선반들 (가로선 느낌) */}
+                {[0.5, 1.0, 1.5].map((y, i) => (
+                    <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, y, 0]}>
+                        {/* 약간 작게? 복잡하니 그냥 같은 쉐이프 사용 */}
+                        <shapeGeometry args={[shape]} />
+                        <meshStandardMaterial color="#90CAF9" />
+                    </mesh>
+                ))}
+                {/* 상단 헤더 */}
+                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 2.2, 0]}>
+                    <extrudeGeometry args={[shape, { steps: 1, depth: 0.2, bevelEnabled: false }]} />
+                    <meshStandardMaterial color={info.color} />
+                </mesh>
+                <ShelfLabel center={center} label={info.name} subLabel={`Bay ${info.id}`} height={2.8} color={info.color} />
+            </group>
+        );
+    }
+
+    // 3. 일반 선반 (Standard) - 3단 오픈형
+    const tierHeight = 0.1;
+    const tiers = [0.4, 1.1, 1.8]; // 선반 높이들
     return (
-        <group position={position}>
-            {/* 자동문 프레임 */}
-            <mesh position={[0, 1.5, 0]}>
-                <boxGeometry args={[4, 3, 0.2]} />
-                <meshStandardMaterial color="#37474F" />
-            </mesh>
-            {/* 유리문 (좌) */}
-            <mesh position={[-1, 1.3, 0.15]}>
-                <boxGeometry args={[1.8, 2.4, 0.05]} />
-                <meshStandardMaterial color="#81D4FA" opacity={0.4} transparent />
-            </mesh>
-            {/* 유리문 (우) */}
-            <mesh position={[1, 1.3, 0.15]}>
-                <boxGeometry args={[1.8, 2.4, 0.05]} />
-                <meshStandardMaterial color="#81D4FA" opacity={0.4} transparent />
-            </mesh>
-            {/* 상단 간판 */}
-            <mesh position={[0, 3.2, 0]}>
-                <boxGeometry args={[4.5, 0.6, 0.3]} />
-                <meshStandardMaterial color="#1976D2" />
-            </mesh>
-            {/* 입구 텍스트 */}
+        <group>
+            {/* 기둥 (쉐이프의 꼭짓점에 기둥 세우기는 복잡하므로, 전체 쉐이프를 투명한 박스처럼 감싸거나 생략) */}
+
+            {/* 각 층의 선반판 */}
+            {tiers.map((y, i) => (
+                <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, y, 0]} castShadow receiveShadow>
+                    <extrudeGeometry args={[shape, { steps: 1, depth: tierHeight, bevelEnabled: false }]} />
+                    <meshStandardMaterial color="#D7CCC8" /> // 나무 색상
+                </mesh>
+            ))}
+
+            {/* 상품들 (각 층에 박스 형태로 대충 표현) */}
+            {tiers.map((y, i) => (
+                <mesh key={`prod-${i}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, y + tierHeight, 0]}>
+                    <extrudeGeometry args={[shape, { steps: 1, depth: 0.3, bevelEnabled: false }]} />
+                    {/* scale을 조금 줄여서 선반 안쪽에 있는 것처럼 보이게 하면 좋겠지만 복잡함. */}
+                    <meshStandardMaterial color={info.color} />
+                </mesh>
+            ))}
+
+            <ShelfLabel center={center} label={info.name} subLabel={`Bay ${info.id}`} height={2.5} color="#5D4037" />
+        </group>
+    );
+}
+
+function ShelfLabel({ center, label, subLabel, height, color }: any) {
+    return (
+        <group position={[center[0], height, center[1]]}>
             <Text
-                position={[0, 3.2, 0.2]}
-                fontSize={0.35}
+                fontSize={0.4}
                 color="white"
                 anchorX="center"
-                anchorY="middle"
-                fontWeight="bold"
+                anchorY="bottom"
+                outlineWidth={0.04}
+                outlineColor="#000"
             >
                 {label}
             </Text>
+            <Text
+                position={[0, -0.45, 0]}
+                fontSize={0.25}
+                color={color}
+                anchorX="center"
+                anchorY="bottom"
+                outlineWidth={0.02}
+                outlineColor="#FFF"
+            >
+                {subLabel}
+            </Text>
         </group>
     );
 }
 
-// 계산대 컴포넌트
-function Checkout({ position, number }: { position: [number, number, number]; number: number }) {
+// 사용자(카트) 마커
+function UserMarker({ position }: { position: UserPosition }) {
+    // 좌표 변환: 입력받은 2D (x, y) -> Three.js 3D (x, 0, -y)
+    // 회전 변환: theta (도) -> 라디안. 
+    // QGIS/수학적 각도(반시계)를 Three.js(반시계)로 적용. 
+    // 단, Z축이 반전(-y)되었으므로 회전 방향도 고려 필요할 수 있음. 우선 그대로 적용.
+    const threeX = position.x;
+    const threeZ = -position.y;
+    const rotationRad = -position.theta * (Math.PI / 180); // 시계 방향 회전 보정 (필요시 조정)
+
     return (
-        <group position={position}>
-            {/* 계산대 본체 */}
-            <mesh position={[0, 0.5, 0]}>
-                <boxGeometry args={[1.5, 1, 2.5]} />
-                <meshStandardMaterial color="#455A64" />
+        <group position={[threeX, 0, threeZ]} rotation={[0, rotationRad, 0]}>
+            <mesh position={[0, 0.4, 0]}>
+                <sphereGeometry args={[0.3, 16, 16]} />
+                <meshStandardMaterial color="#F44336" emissive="#EF9A9A" emissiveIntensity={0.5} />
             </mesh>
-            {/* 컨베이어 벨트 */}
-            <mesh position={[0, 1.05, 0.3]}>
-                <boxGeometry args={[1.3, 0.1, 1.8]} />
-                <meshStandardMaterial color="#212121" />
+            {/* 화살표로 방향 표시 */}
+            <mesh position={[0, 0.4, -0.4]} rotation={[-Math.PI / 2, 0, 0]}>
+                <coneGeometry args={[0.15, 0.3, 8]} />
+                <meshStandardMaterial color="#F44336" />
             </mesh>
-            {/* 모니터 */}
-            <mesh position={[0, 1.5, -1]}>
-                <boxGeometry args={[0.6, 0.5, 0.08]} />
-                <meshStandardMaterial color="#263238" />
-            </mesh>
-            <mesh position={[0, 1.5, -0.95]}>
-                <boxGeometry args={[0.5, 0.4, 0.02]} />
-                <meshStandardMaterial color="#4FC3F7" emissive="#29B6F6" emissiveIntensity={0.3} />
-            </mesh>
-            {/* 계산대 번호 */}
             <Text
-                position={[0, 1.3, 1.3]}
+                position={[0, 0.9, 0]}
                 fontSize={0.3}
                 color="white"
-                anchorX="center"
-                anchorY="middle"
-                outlineWidth={0.02}
-                outlineColor="#000"
-            >
-                {`${number}번`}
-            </Text>
-        </group>
-    );
-}
-
-// 기둥 컴포넌트
-function Pillar({ position }: { position: [number, number, number] }) {
-    return (
-        <mesh position={position}>
-            <cylinderGeometry args={[0.25, 0.25, 4, 16]} />
-            <meshStandardMaterial color="#ECEFF1" metalness={0.1} roughness={0.8} />
-        </mesh>
-    );
-}
-
-// 천장 조명 컴포넌트
-function CeilingLight({ position }: { position: [number, number, number] }) {
-    return (
-        <group position={position}>
-            <mesh>
-                <boxGeometry args={[2, 0.1, 0.5]} />
-                <meshStandardMaterial
-                    color="#FFFFFF"
-                    emissive="#FFF9C4"
-                    emissiveIntensity={0.8}
-                />
-            </mesh>
-            <pointLight position={[0, -0.2, 0]} intensity={0.3} distance={8} color="#FFF9C4" />
-        </group>
-    );
-}
-
-// 벽면 컴포넌트
-function Wall({
-    position,
-    size,
-    rotation = 0
-}: {
-    position: [number, number, number];
-    size: [number, number, number];
-    rotation?: number;
-}) {
-    return (
-        <mesh position={position} rotation={[0, rotation, 0]}>
-            <boxGeometry args={size} />
-            <meshStandardMaterial color="#FAFAFA" />
-        </mesh>
-    );
-}
-
-// 카트 보관소 컴포넌트
-function CartStorage({ position }: { position: [number, number, number] }) {
-    return (
-        <group position={position}>
-            {/* 카트 여러 대 */}
-            {[0, 0.5, 1, 1.5].map((offset, i) => (
-                <group key={i} position={[offset, 0, 0]}>
-                    {/* 카트 바구니 */}
-                    <mesh position={[0, 0.6, 0]}>
-                        <boxGeometry args={[0.4, 0.35, 0.6]} />
-                        <meshStandardMaterial color="#90A4AE" wireframe />
-                    </mesh>
-                    {/* 카트 손잡이 */}
-                    <mesh position={[0, 1, -0.25]}>
-                        <boxGeometry args={[0.35, 0.05, 0.05]} />
-                        <meshStandardMaterial color="#546E7A" />
-                    </mesh>
-                </group>
-            ))}
-        </group>
-    );
-}
-
-// 위치 마커 컴포넌트
-function LocationMarker({ location }: { location: ProductLocation }) {
-    return (
-        <group position={[location.coordinates.x, location.coordinates.y, location.coordinates.z]}>
-            {/* 마커 핀 */}
-            <mesh position={[0, 0.5, 0]}>
-                <coneGeometry args={[0.2, 0.6, 8]} />
-                <meshStandardMaterial color="#EA352B" emissive="#EA352B" emissiveIntensity={0.3} />
-            </mesh>
-
-            {/* 마커 베이스 */}
-            <mesh position={[0, 0.1, 0]}>
-                <cylinderGeometry args={[0.25, 0.25, 0.1, 16]} />
-                <meshStandardMaterial color="#EA352B" opacity={0.7} transparent />
-            </mesh>
-
-            {/* 위치 텍스트 */}
-            <Text
-                position={[0, 1.3, 0]}
-                fontSize={0.25}
-                color="white"
-                anchorX="center"
-                anchorY="middle"
-                outlineWidth={0.02}
-                outlineColor="#000000"
-            >
-                {location.position}
-            </Text>
-
-            {/* 상품명 텍스트 (작게) */}
-            {location.productName && (
-                <Text
-                    position={[0, 1.0, 0]}
-                    fontSize={0.15}
-                    color="#CCCCCC"
-                    anchorX="center"
-                    anchorY="middle"
-                >
-                    {location.productName}
-                </Text>
-            )}
-        </group>
-    );
-}
-
-// 사용자(카트) 마커 컴포넌트
-function UserMarker({ position }: { position: { x: number; y: number; z: number } }) {
-    return (
-        <group position={[position.x, position.y, position.z]}>
-            {/* 파란색 구체 (사용자 위치) */}
-            <mesh position={[0, 0.4, 0]}>
-                <sphereGeometry args={[0.35, 16, 16]} />
-                <meshStandardMaterial
-                    color="#2196F3"
-                    emissive="#2196F3"
-                    emissiveIntensity={0.5}
-                    metalness={0.3}
-                    roughness={0.4}
-                />
-            </mesh>
-
-            {/* 펄스 효과 링 */}
-            <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <ringGeometry args={[0.4, 0.5, 32]} />
-                <meshBasicMaterial color="#2196F3" opacity={0.4} transparent />
-            </mesh>
-
-            {/* "YOU" 텍스트 */}
-            <Text
-                position={[0, 1.2, 0]}
-                fontSize={0.35}
-                color="white"
-                anchorX="center"
-                anchorY="middle"
                 outlineWidth={0.03}
-                outlineColor="#000000"
-                fontWeight="bold"
+                outlineColor="#000"
+                anchorX="center"
+            // 텍스트는 항상 정면을 보게 하려면 billboard 효과 필요하지만 일단 회전 따라가게 둠
             >
                 YOU
             </Text>
-
-            {/* 방향 화살표 (위쪽) */}
-            <mesh position={[0, 0.8, 0]} rotation={[0, 0, 0]}>
-                <coneGeometry args={[0.15, 0.3, 3]} />
-                <meshStandardMaterial color="#2196F3" />
-            </mesh>
         </group>
     );
 }
 
-// 3D 씬 컴포넌트
-function StoreScene({
-    locations,
-    layout,
-    userPosition
-}: {
-    locations: ProductLocation[];
-    layout: StoreLayout;
-    userPosition?: { x: number; y: number; z: number };
-}) {
-    const { gridSize, shelfSpacing, sections } = layout;
-
-    // 냉장/냉동 섹션 이름 목록
-    const refrigeratorSections = ['🧈 유제품', '🥩 정육', '🐟 수산'];
-    const freezerSections = ['🧊 냉동식품'];
-
-    // 선반 위치 및 타입 계산
-    const shelves: Array<{
-        position: [number, number, number];
-        color: string;
-        shelfType: ShelfType;
-        rotation: number;
-    }> = [];
-    const rows = ['A', 'B', 'C', 'D', 'E', 'F'];
-
-    for (let row = 0; row < gridSize.rows; row++) {
-        for (let col = 0; col < gridSize.cols; col++) {
-            const x = (col - gridSize.cols / 2 + 0.5) * shelfSpacing.x;
-            const z = (row - gridSize.rows / 2 + 0.5) * shelfSpacing.z;
-            const position = `${rows[row]}-${col + 1}`;
-
-            // 섹션 찾기
-            let color = '#8B7355';
-            let shelfType: ShelfType = 'normal';
-            let rotation = 0;
-
-            if (sections) {
-                const section = sections.find(s => s.positions.includes(position));
-                if (section) {
-                    color = section.color;
-
-                    // 섹션별 선반 타입 결정
-                    if (refrigeratorSections.includes(section.name)) {
-                        shelfType = 'refrigerator';
-                    } else if (freezerSections.includes(section.name)) {
-                        shelfType = 'freezer';
-                    }
-                }
-            }
-
-            // 선반 방향 (짝수 행은 180도 회전)
-            rotation = row % 2 === 0 ? 0 : Math.PI;
-
-            shelves.push({ position: [x, 0, z], color, shelfType, rotation });
-        }
-    }
-
+function StoreScene({ locations, userPosition }: { locations: ProductLocation[]; userPosition: UserPosition }) {
     return (
         <>
-            {/* 조명 */}
-            <ambientLight intensity={0.5} />
-            <directionalLight position={[10, 20, 5]} intensity={0.7} castShadow />
-            <directionalLight position={[-10, 20, -5]} intensity={0.4} />
-            <hemisphereLight args={['#ffffff', '#444444', 0.3]} />
+            <ambientLight intensity={0.6} />
+            <directionalLight position={[10, 20, 5]} intensity={0.8} castShadow />
+            <hemisphereLight args={['#ffffff', '#444444', 0.4]} />
 
-            {/* 바닥 (더 마트 느낌의 타일) */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
-                <planeGeometry args={[50, 50]} />
-                <meshStandardMaterial color="#E8E8E8" />
-            </mesh>
+            <MapBoundary />
 
-            {/* 통로 표시 (중앙 통로) */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.48, 0]}>
-                <planeGeometry args={[3, 50]} />
-                <meshStandardMaterial color="#FFF8E1" />
-            </mesh>
-
-            {/* 바닥 그리드 라인 */}
-            <gridHelper args={[50, 50, '#BDBDBD', '#E0E0E0']} position={[0, -0.47, 0]} />
-
-            {/* ========== 벽면 ========== */}
-            {/* 뒷벽 (북쪽) */}
-            <Wall position={[0, 2, -14]} size={[50, 5, 0.3]} />
-            {/* 좌측 벽 */}
-            <Wall position={[-16, 2, 0]} size={[0.3, 5, 30]} />
-            {/* 우측 벽 */}
-            <Wall position={[16, 2, 0]} size={[0.3, 5, 30]} />
-
-            {/* ========== 입구/출구 ========== */}
-            <Entrance position={[-6, 0, 14]} label="입구 ENTRANCE" />
-            <Entrance position={[6, 0, 14]} label="출구 EXIT" />
-
-            {/* ========== 계산대 (출구 앞) ========== */}
-            {[1, 2, 3, 4].map((num, i) => (
-                <Checkout
-                    key={`checkout-${num}`}
-                    position={[3 + i * 2.5, 0, 11.5]}
-                    number={num}
-                />
+            {MAP_DATA.shelves.map((shelfPoly, idx) => (
+                <PolygonShelf key={idx} coords={shelfPoly[0]} index={idx} />
             ))}
 
-            {/* ========== 카트 보관소 (입구 옆) ========== */}
-            <CartStorage position={[-11, 0, 12]} />
-            <CartStorage position={[-11, 0, 13.5]} />
+            <UserMarker position={userPosition} />
 
-            {/* ========== 기둥 ========== */}
-            {[-12, -4, 4, 12].map((x) => (
-                [-10, 0, 10].map((z, i) => (
-                    <Pillar key={`pillar-${x}-${z}`} position={[x, 1.5, z]} />
-                ))
-            ))}
-
-            {/* ========== 천장 조명 ========== */}
-            {[-10, -5, 0, 5, 10].map((x) => (
-                [-8, -2, 4, 10].map((z) => (
-                    <CeilingLight key={`light-${x}-${z}`} position={[x, 4, z]} />
-                ))
-            ))}
-
-            {/* ========== 선반들 ========== */}
-            {shelves.map((shelf, index) => (
-                <Shelf
-                    key={`shelf-${index}`}
-                    position={shelf.position}
-                    color={shelf.color}
-                    shelfType={shelf.shelfType}
-                    rotation={shelf.rotation}
-                />
-            ))}
-
-            {/* 위치 마커들 */}
-            {locations.map((location) => (
-                <LocationMarker key={location.id} location={location} />
-            ))}
-
-            {/* 사용자(카트) 위치 */}
-            {userPosition && <UserMarker position={userPosition} />}
-
-            {/* 카메라 컨트롤 */}
             <OrbitControls
                 enablePan={true}
                 enableZoom={true}
                 enableRotate={true}
-                minDistance={10}
-                maxDistance={40}
-                maxPolarAngle={Math.PI / 2.1}
+                target={[2, 0, -7]}
             />
+            <PerspectiveCamera makeDefault position={[5, 15, 10]} fov={50} />
 
-            {/* 카메라 */}
-            <PerspectiveCamera makeDefault position={[18, 18, 25]} fov={50} />
+            <gridHelper args={[50, 50, '#EEEEEE', '#EEEEEE']} position={[0, -0.1, 0]} />
         </>
     );
 }
 
-/**
- * Three.js 기반 3D 매장 지도 컴포넌트
- * 상품 위치를 3D 환경에서 시각화
- * 
- * @example
- * // 기본 사용 (목데이터)
- * <StoreMap />
- * 
- * @example
- * // 커스텀 레이아웃
- * <StoreMap 
- *   layout={{ gridSize: { rows: 5, cols: 8 }, shelfSpacing: { x: 3, z: 3 } }}
- *   locations={customLocations}
- * />
- */
 export default function StoreMap({
     locations = MOCK_LOCATIONS,
-    layout = DEFAULT_LAYOUT,
-    userPosition = { x: 0, y: 0.5, z: 6 }, // 목데이터: 매장 입구 (남쪽)
     className = ''
 }: StoreMapProps) {
+    // 현위치 목데이터 (x, y, theta) - 초기값
+    const [pos, setPos] = useState<UserPosition>({ x: 0.06, y: 0.11, theta: 18.5 });
+
+    // 실시간 위치 이동 시뮬레이션
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setPos((prev: UserPosition) => {
+                // 간단한 원형 이동 시뮬레이션
+                const time = Date.now() / 1000;
+                const radius = 3;
+                const centerX = 0;
+                const centerY = 3; // 맵 상에서의 Y (Three.js Z로는 -3)
+
+                // 실제 입력 데이터 예시와 유사하게 생성
+                const newX = centerX + Math.cos(time) * radius;
+                const newY = centerY + Math.sin(time) * radius;
+
+                // 진행 방향 (접선)
+                const newTheta = (Math.atan2(Math.cos(time), -Math.sin(time)) * 180 / Math.PI);
+
+                return {
+                    x: Number(newX.toFixed(2)),
+                    y: Number(newY.toFixed(2)),
+                    theta: Number(newTheta.toFixed(1))
+                };
+            });
+        }, 100);
+
+        return () => clearInterval(interval);
+    }, []);
+
     return (
         <div className={`w-full h-full bg-gray-900 rounded-lg overflow-hidden ${className}`}>
+            {/* 디버그 패널 */}
+            <div className="absolute top-4 left-4 z-10 bg-black/50 text-white p-2 rounded text-xs">
+                <p>User Position JSON:</p>
+                <pre>{JSON.stringify(pos, null, 2)}</pre>
+            </div>
+
             <Canvas shadows>
-                <StoreScene locations={locations} layout={layout} userPosition={userPosition} />
+                <StoreScene locations={locations} userPosition={pos} />
             </Canvas>
         </div>
     );
