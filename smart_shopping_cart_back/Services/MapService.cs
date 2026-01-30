@@ -1,5 +1,4 @@
-using Microsoft.EntityFrameworkCore;
-using smart_shopping_cart_back.Data;
+using Npgsql;
 using smart_shopping_cart_back.Models;
 
 namespace smart_shopping_cart_back.Services;
@@ -12,12 +11,12 @@ namespace smart_shopping_cart_back.Services;
 public class MapService
 {
     private readonly ILogger<MapService> _logger;
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IConfiguration _configuration;
 
-    public MapService(ILogger<MapService> logger, IServiceScopeFactory scopeFactory)
+    public MapService(ILogger<MapService> logger, IConfiguration configuration)
     {
         _logger = logger;
-        _scopeFactory = scopeFactory;
+        _configuration = configuration;
     }
 
     /// <summary>
@@ -25,59 +24,67 @@ public class MapService
     /// </summary>
     public async Task<MapDataDto> GetMapDataAsync(string mapId = "1")
     {
-        using var scope = _scopeFactory.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
         var result = new MapDataDto();
+        var connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-        // 1. 매장 경계 조회 (Raw SQL로 ST_AsText 사용)
-        var storeMapQuery = await context.Database
-            .SqlQueryRaw<StoreMapRaw>(@"
-                SELECT 
-                    store_map_id as StoreMapId,
-                    version as Version,
-                    ST_AsText(boundary) as BoundaryWkt,
-                    units as Units
-                FROM store_maps
-                WHERE store_map_id = {0}
-            ", mapId)
-            .FirstOrDefaultAsync();
+        await using var conn = new NpgsqlConnection(connectionString);
+        await conn.OpenAsync();
 
-        if (storeMapQuery != null)
+        // 1. 매장 경계 조회
+        await using (var cmd = new NpgsqlCommand(@"
+            SELECT 
+                store_map_id,
+                version,
+                ST_AsText(boundary) as boundary_wkt,
+                units
+            FROM store_maps
+            WHERE store_map_id = @mapId
+        ", conn))
         {
-            result.StoreMap = new StoreMapDto
+            cmd.Parameters.AddWithValue("mapId", mapId);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
             {
-                Id = storeMapQuery.StoreMapId,
-                Version = storeMapQuery.Version,
-                Boundary = ParsePolygonWkt(storeMapQuery.BoundaryWkt),
-                Units = storeMapQuery.Units
-            };
+                result.StoreMap = new StoreMapDto
+                {
+                    Id = reader.GetString(0),
+                    Version = reader.GetString(1),
+                    Boundary = ParsePolygonWkt(reader.IsDBNull(2) ? null : reader.GetString(2)),
+                    Units = reader.GetString(3)
+                };
+            }
         }
 
         // 2. 선반(fixtures) 조회 with 카테고리 정보
-        var fixturesQuery = await context.Database
-            .SqlQueryRaw<FixtureRaw>(@"
-                SELECT 
-                    f.fixture_id as FixtureId,
-                    f.parent_category_id as ParentCategoryId,
-                    f.label as Label,
-                    ST_AsText(f.fixture_geom) as GeometryWkt,
-                    pc.name as CategoryName
-                FROM fixtures f
-                LEFT JOIN parent_categories pc ON f.parent_category_id = pc.parent_category_id
-                WHERE f.map_id = {0}
-                ORDER BY f.fixture_id
-            ", mapId)
-            .ToListAsync();
-
-        result.Fixtures = fixturesQuery.Select(f => new FixtureDto
+        await using (var cmd = new NpgsqlCommand(@"
+            SELECT 
+                f.fixture_id,
+                f.parent_category_id,
+                f.label,
+                ST_AsText(f.fixture_geom) as geometry_wkt,
+                pc.name as category_name
+            FROM fixtures f
+            LEFT JOIN parent_categories pc ON f.parent_category_id = pc.parent_category_id
+            WHERE f.map_id = @mapId
+            ORDER BY f.fixture_id
+        ", conn))
         {
-            Id = f.FixtureId,
-            Label = f.Label ?? "",
-            ParentCategoryId = f.ParentCategoryId,
-            CategoryName = f.CategoryName ?? "",
-            Geometry = ParsePolygonWkt(f.GeometryWkt)
-        }).ToList();
+            cmd.Parameters.AddWithValue("mapId", mapId);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Fixtures.Add(new FixtureDto
+                {
+                    Id = reader.GetString(0),
+                    ParentCategoryId = reader.GetString(1),
+                    Label = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                    Geometry = ParsePolygonWkt(reader.IsDBNull(3) ? null : reader.GetString(3)),
+                    CategoryName = reader.IsDBNull(4) ? "" : reader.GetString(4)
+                });
+            }
+        }
 
         _logger.LogInformation($"[MapService] 지도 조회 완료: {result.Fixtures.Count}개 선반");
 
@@ -132,20 +139,3 @@ public class MapService
     }
 }
 
-// Raw SQL 결과 매핑용 클래스
-public class StoreMapRaw
-{
-    public string StoreMapId { get; set; } = "";
-    public string Version { get; set; } = "";
-    public string? BoundaryWkt { get; set; }
-    public string Units { get; set; } = "meters";
-}
-
-public class FixtureRaw
-{
-    public string FixtureId { get; set; } = "";
-    public string ParentCategoryId { get; set; } = "";
-    public string? Label { get; set; }
-    public string? GeometryWkt { get; set; }
-    public string? CategoryName { get; set; }
-}
