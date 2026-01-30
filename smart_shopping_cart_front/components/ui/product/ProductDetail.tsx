@@ -24,6 +24,9 @@ interface ProductDetailProps {
 
     /** 추가 CSS 클래스 */
     className?: string;
+
+    /** 하단 액션 버튼 (옵션) */
+    actionButton?: React.ReactNode;
 }
 
 /**
@@ -36,6 +39,7 @@ export default function ProductDetail({
     averageRating,
     reviews,
     className = '',
+    actionButton,
 }: ProductDetailProps) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -142,6 +146,13 @@ export default function ProductDetail({
                             +{reviews.length - 3} more {reviews.length - 3 === 1 ? 'review' : 'reviews'}
                         </p>
                     )}
+                </div>
+            )}
+
+            {/* 하단 액션 버튼 (예: 네비게이션) */}
+            {actionButton && (
+                <div className="border-t border-gray-200 pt-4 flex justify-end">
+                    {actionButton}
                 </div>
             )}
         </div>

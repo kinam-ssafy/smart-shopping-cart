@@ -270,13 +270,13 @@ function CameraRig({
             // 사용자 뒤쪽 계산
             // UserMarker가 회전하는 방식에 맞춤
             // 뒤쪽: rotationRad 반대 방향
-            const dist = 6.0; // 높이 거리
-            const height = 8.0;
+            const dist = 1.0; // 높이 거리
+            const height = 2.0;
 
             // 간단하게: 항상 사용자 뒤쪽에서 바라보도록 함
             // 만약 사용자가 회전하면 카메라도 부드럽게 회전
-            const offsetX = Math.sin(rotationRad) * 4; // 뒤쪽으로 좀 떨어짐
-            const offsetZ = Math.cos(rotationRad) * 4;
+            const offsetX = Math.sin(rotationRad) * 1; // 뒤쪽으로 좀 떨어짐
+            const offsetZ = Math.cos(rotationRad) * 1;
 
             // 카메라 위치 = 타겟 + 오프셋
             // 오프셋을 사용자 뒤쪽으로 설정 (UserMarker의 local Z+가 앞인지 뒤인지에 따라 다름)
