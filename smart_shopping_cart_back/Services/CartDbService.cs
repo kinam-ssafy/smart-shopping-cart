@@ -80,6 +80,41 @@ public class CartDbService
     }
 
     /// <summary>
+    /// 상품 ID로 단일 상품 상세 정보 조회
+    /// </summary>
+    public async Task<ProductDto?> GetProductByIdAsync(long productId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var repository = scope.ServiceProvider.GetRequiredService<ICartRepository>();
+
+        var p = await repository.GetProductByIdAsync(productId);
+        if (p == null) return null;
+
+        return new ProductDto
+        {
+            Id = p.ProductId,
+            Name = p.Name,
+            Price = p.Price,
+            Rating = p.Reviews.Any() ? (decimal)p.Reviews.Average(r => r.Rating) : 0,
+            HasRfid = p.HasRfid,
+            RfidUid = "", // ID 조회 시 RFID UID는 모름
+            Location = !string.IsNullOrEmpty(p.Bay) ? $"{p.Bay}-{p.Level}-{p.PositionIndex}" : null,
+            Images = p.Images.OrderBy(i => i.SortOrder).Select(i => i.ImageUrl).ToList(),
+            Quantity = 1,
+            Detail = new ProductDetailDto
+            {
+                Description = p.Description ?? "",
+                Reviews = p.Reviews.Take(5).Select(r => new ReviewDto
+                {
+                    Rating = r.Rating,
+                    Content = r.Content ?? "",
+                    Images = !string.IsNullOrEmpty(r.ImageUrl) ? new List<string> { r.ImageUrl } : null
+                }).ToList()
+            }
+        };
+    }
+
+    /// <summary>
     /// 카트에 상품 목록 업데이트
     /// </summary>
     public async Task UpdateCartItemsAsync(int cartId, string[] rfidUids)

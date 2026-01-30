@@ -27,6 +27,15 @@ public class CartRepository : ICartRepository
             .ToListAsync();
     }
 
+    public async Task<Product?> GetProductByIdAsync(long productId)
+    {
+        return await _context.Products
+            .AsNoTracking()
+            .Include(p => p.Images)
+            .Include(p => p.Reviews)
+            .FirstOrDefaultAsync(p => p.ProductId == productId);
+    }
+
     public async Task<Cart?> GetCartAsync(int cartId)
     {
         return await _context.Carts.FirstOrDefaultAsync(c => c.CartId == cartId);

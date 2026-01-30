@@ -15,15 +15,18 @@ public class MapController : ControllerBase
 {
     private readonly MapService _mapService;
     private readonly PositionService _positionService;
+    private readonly NavigationService _navigationService;
     private readonly ILogger<MapController> _logger;
 
     public MapController(
         MapService mapService,
         PositionService positionService,
+        NavigationService navigationService,
         ILogger<MapController> logger)
     {
         _mapService = mapService;
         _positionService = positionService;
+        _navigationService = navigationService;
         _logger = logger;
     }
 
@@ -45,6 +48,25 @@ public class MapController : ControllerBase
         {
             _logger.LogError($"[Map] 지도 조회 실패: {ex.Message}");
             return StatusCode(500, new { error = "지도 조회 실패", message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// 길찾기: 현재 위치 → 특정 상품(선반)
+    /// GET /api/map/navigation?productId=123
+    /// </summary>
+    [HttpGet("navigation")]
+    public async Task<IActionResult> GetNavigationPath([FromQuery] long productId)
+    {
+        try
+        {
+            var path = await _navigationService.GetPathToProductAsync(productId);
+            return Ok(new { path });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"[Map] 경로 계산 실패: {ex.Message}");
+            return StatusCode(500, new { error = "경로 계산 실패", message = ex.Message });
         }
     }
 
