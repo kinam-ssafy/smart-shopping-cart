@@ -38,6 +38,20 @@ async def main():
     )
     print("[MQTT] connected")
 
+    # Data 추가
+    position_url = "http://70.12.246.46:8850/api/position"
+    position_topic = "cart/1/position"
+
+    pos_task = asyncio.create_task(
+        poll_position_http(
+            url=settings.position_url,
+            interval_sec=0.1,
+            on_position=lambda pos: publish_position(mqttc, position_topic, pos),
+        )
+    )
+
+
+
     # ========================================
     # 2단계: ESP32 BLE 디바이스 탐색
     # ========================================
@@ -82,6 +96,7 @@ async def main():
         )
     finally:
         # 종료 시 MQTT 연결 정리
+        pos_task.cancel()
         mqttc.loop_stop()
         mqttc.disconnect()
         print("[INFO] Exit")

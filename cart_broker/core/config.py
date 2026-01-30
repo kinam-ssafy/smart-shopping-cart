@@ -70,6 +70,20 @@ class Settings:
     mqtt_id: str = os.getenv("MQTT_ID", "")
     mqtt_pw: str = os.getenv("MQTT_PW", "")
 
+    # ========================================
+    # Position HTTP → MQTT 설정
+    # ========================================
+    # 위치 서버 HTTP API (GET)
+    position_url: str = os.getenv(
+        "POSITION_URL",
+        ""
+    )
+
+    # 위치 정보를 발행할 MQTT 토픽
+    position_topic: str = os.getenv(
+        "POSITION_TOPIC",
+        ""
+    )
 
 # 전역 설정 인스턴스
 # 다른 모듈에서 from core.config import settings로 사용

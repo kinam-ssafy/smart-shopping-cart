@@ -84,3 +84,33 @@ def publish_uid_list(client, topic: str, active_uids: list[str]):
         qos=1, 
         retain=True
     )
+
+def now_str():
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+def publish_position(client, topic: str, pos: dict):
+    """
+    위치 정보를 MQTT로 발행
+
+    Args:
+        client: MQTT 클라이언트
+        topic: 예: cart/1/position
+        pos: HTTP에서 받아온 위치 JSON (x,y,theta,...)
+    """
+    payload = {
+        "x": pos.get("x"),
+        "y": pos.get("y"),
+        "theta": pos.get("theta"),
+        "theta_rad": pos.get("theta_rad"),
+        "uncertainty": pos.get("uncertainty", {"x": 0.0, "y": 0.0}),
+        "timestamp": pos.get("timestamp"),     # 서버/센서 타임
+        "updated_at": pos.get("updated_at"),   # 서버가 찍은 ISO
+        "time": now_str(),                     # 브로커 발행 시각(로컬)
+    }
+
+    client.publish(
+        topic,
+        json.dumps(payload, ensure_ascii=False),
+        qos=1,
+        retain=True,
+    )
