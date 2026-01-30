@@ -40,7 +40,8 @@ public class MqttService
 
         var broker = _config["Mqtt:Broker"] ?? "localhost";
         var port = int.Parse(_config["Mqtt:Port"] ?? "1883");
-        var topic = _config["Mqtt:Topic"] ?? "cart/1";
+        var cartTopic = _config["Mqtt:Topic"] ?? "cart/1";
+        var positionTopic = _config["Mqtt:PositionTopic"] ?? "cart/1/position";
         var username = _config["Mqtt:Username"];
         var password = _config["Mqtt:Password"];
 
@@ -76,13 +77,14 @@ public class MqttService
         await _client.ConnectAsync(options);
         _logger.LogInformation($"[MQTT] 브로커 연결됨: {broker}:{port}");
 
-        // 토픽 구독
+        // 토픽 구독 (장바구니 + 위치)
         var subscribeOptions = new MqttClientSubscribeOptionsBuilder()
-            .WithTopicFilter(topic)
+            .WithTopicFilter(cartTopic)
+            .WithTopicFilter(positionTopic)
             .Build();
 
         await _client.SubscribeAsync(subscribeOptions);
-        _logger.LogInformation($"[MQTT] 토픽 구독: {topic}");
+        _logger.LogInformation($"[MQTT] 토픽 구독: {cartTopic}, {positionTopic}");
     }
 
     /// <summary>

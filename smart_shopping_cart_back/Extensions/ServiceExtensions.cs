@@ -21,6 +21,9 @@ public static class ServiceExtensions
         // MqttService: MQTT 브로커 통신 (Singleton)
         services.AddSingleton<MqttService>();
 
+        // PositionService: 위치 데이터 처리 (Singleton)
+        services.AddSingleton<PositionService>();
+
         // CartMessageHandler: MQTT 메시지 처리 (Singleton)
         services.AddSingleton<CartMessageHandler>();
 
