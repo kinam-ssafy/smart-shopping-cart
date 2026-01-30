@@ -113,6 +113,11 @@ interface ExpandedDetailProps {
  * 그리드의 전체 너비를 차지하며, 행 단위로 렌더링됨
  */
 export function ExpandedDetail({ detail, location, onNavigate, detailRef, hasRfid = true }: ExpandedDetailProps) {
+    // Navigation Button
+    const navigationButton = location && onNavigate && hasRfid ? (
+        <NavigationButton onClick={onNavigate} />
+    ) : null;
+
     return (
         <div
             ref={detailRef}
@@ -124,13 +129,8 @@ export function ExpandedDetail({ detail, location, onNavigate, detailRef, hasRfi
                     description={detail.description}
                     averageRating={detail.averageRating}
                     reviews={detail.reviews}
+                    actionButton={navigationButton}
                 />
-                {/* RFID가 있는 상품만 네비게이션 버튼 표시 */}
-                {location && onNavigate && hasRfid && (
-                    <div className="flex justify-end mt-2 px-4">
-                        <NavigationButton onClick={onNavigate} />
-                    </div>
-                )}
             </div>
         </div>
     );

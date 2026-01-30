@@ -183,7 +183,7 @@ export default function SearchPage() {
                                             location={product.location}
                                             isExpanded={expandedCardId === product.id}
                                             onToggle={() => setExpandedCardId(expandedCardId === product.id ? null : product.id)}
-                                            hasRfid={product.hasRfid}
+                                            hasRfid={true} // Forced true as requested
                                         />
                                     ))}
 
@@ -200,7 +200,7 @@ export default function SearchPage() {
                                                 reviews: expandedProductInRow.detail.reviews
                                             }}
                                             detailRef={expandedDetailRef}
-                                            hasRfid={expandedProductInRow.hasRfid}
+                                            hasRfid={true} // Forced true as requested
                                             location={expandedProductInRow.location}
                                             onNavigate={() => {
                                                 console.log('Navigate to:', expandedProductInRow.location);
