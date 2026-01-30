@@ -22,9 +22,9 @@ public class CartDbService
     /// <summary>
     /// RFID UID 배열로 상품 상세 정보 조회 (프론트엔드 DTO 형식)
     /// </summary>
-    public async Task<List<CartProductDto>> GetProductsByRfidUidsAsync(string[] rfidUids)
+    public async Task<List<ProductDto>> GetProductsByRfidUidsAsync(string[] rfidUids)
     {
-        var products = new List<CartProductDto>();
+        var products = new List<ProductDto>();
 
         if (rfidUids.Length == 0)
             return products;
@@ -39,9 +39,7 @@ public class CartDbService
             var p = pr.Product;
             if (p == null) continue;
 
-            var firstImage = p.Images.OrderBy(i => i.SortOrder).FirstOrDefault()?.ImageUrl;
-            
-            var dto = new CartProductDto
+            var dto = new ProductDto
             {
                 Id = p.ProductId,
                 Name = p.Name,
@@ -49,13 +47,12 @@ public class CartDbService
                 Rating = p.Reviews.Any() ? (decimal)p.Reviews.Average(r => r.Rating) : 0,
                 HasRfid = p.HasRfid,
                 RfidUid = pr.RfidUid,
-                Location = !string.IsNullOrEmpty(p.Bay) ? $"{p.Bay}-{p.Level}" : null,
-                Image = firstImage,
-                Detail = new CartProductDetailDto
+                Location = !string.IsNullOrEmpty(p.Bay) ? $"{p.Bay}-{p.Level}-{p.PositionIndex}" : null,
+                Images = p.Images.OrderBy(i => i.SortOrder).Select(i => i.ImageUrl).ToList(),
+                Quantity = 1,
+                Detail = new ProductDetailDto
                 {
                     Description = p.Description ?? "",
-                    AverageRating = p.Reviews.Any() ? (decimal)p.Reviews.Average(r => r.Rating) : 0,
-                    Images = p.Images.OrderBy(i => i.SortOrder).Select(i => i.ImageUrl).ToList(),
                     Reviews = p.Reviews.Take(5).Select(r => new ReviewDto
                     {
                         Rating = r.Rating,
@@ -109,7 +106,7 @@ public class CartDbService
     /// <summary>
     /// 카트 상품 상세 정보 조회 (프론트엔드용)
     /// </summary>
-    public async Task<List<CartProductDto>> GetCartProductsAsync(int cartId)
+    public async Task<List<ProductDto>> GetCartProductsAsync(int cartId)
     {
         var rfidUids = await GetCartItemsAsync(cartId);
         return await GetProductsByRfidUidsAsync(rfidUids);

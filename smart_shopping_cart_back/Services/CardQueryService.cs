@@ -7,7 +7,7 @@ namespace smart_shopping_cart_back.Services;
 
 public static class CardQueryService
 {
-    public static async Task<List<CardTemplateDto>> BuildCardsAsync(
+    public static async Task<List<ProductDto>> BuildCardsAsync(
         AppDbContext db,
         IEnumerable<long> productIds,
         CancellationToken ct = default)
@@ -24,13 +24,14 @@ public static class CardQueryService
             .Where(p => ids.Contains(p.ProductId))
             .Select(p => new
             {
-                p.ProductId, p.Name, p.Price, p.Bay, p.Level, p.PositionIndex,
-                p.Stock, p.Active,
-                LocationText = (string?)null
+                p.ProductId, p.Name, p.Price,
+                p.Bay, p.Level, p.PositionIndex,
+                p.Stock, p.Active, p.HasRfid,
+                p.Description
             })
             .ToListAsync(ct);
 
-        // 2) Images (optionally cap per product in memory)
+        // 2) Images
         var images = await db.ProductImages
             .AsNoTracking()
             .Where(i => ids.Contains(i.ProductId))
@@ -39,9 +40,7 @@ public static class CardQueryService
             .Select(i => new
             {
                 i.ProductId,
-                Dto = new ProductImageForCardDto(
-                    i.ProductImageId, i.ImageUrl, i.ImageAltText, i.SortOrder
-                )
+                i.ImageUrl
             })
             .ToListAsync(ct);
 
@@ -49,10 +48,10 @@ public static class CardQueryService
             .GroupBy(x => x.ProductId)
             .ToDictionary(
                 g => g.Key,
-                g => g.Select(x => x.Dto).ToList()
+                g => g.Select(x => x.ImageUrl).ToList()
             );
 
-        // 3) Avg rating + count in DB (small result)
+        // 3) Avg rating
         var ratingStats = await db.Reviews
             .AsNoTracking()
             .Where(r => ids.Contains(r.ProductId))
@@ -60,14 +59,13 @@ public static class CardQueryService
             .Select(g => new
             {
                 ProductId = g.Key,
-                Avg = g.Average(x => (double)x.Rating),
-                Count = g.Count()
+                Avg = g.Average(x => (double)x.Rating)
             })
             .ToListAsync(ct);
 
         var avgByProduct = ratingStats.ToDictionary(x => x.ProductId, x => x.Avg);
 
-        // 4) Latest reviews (cap per product in memory)
+        // 4) Latest reviews
         var reviews = await db.Reviews
             .AsNoTracking()
             .Where(r => ids.Contains(r.ProductId))
@@ -75,13 +73,16 @@ public static class CardQueryService
             .Select(r => new
             {
                 r.ProductId,
-                Dto = new ReviewForCardDto(
-                    r.ReviewId, r.ImageUrl, r.ImageAltText, r.Rating, r.Content, r.CreatedAt
-                )
+                Dto = new ReviewDto
+                {
+                    Rating = r.Rating,
+                    Content = r.Content ?? "",
+                    Images = string.IsNullOrEmpty(r.ImageUrl) ? new List<string>() : new List<string> { r.ImageUrl }
+                }
             })
             .ToListAsync(ct);
 
-        // Cap to 3 per product (feed-friendly)
+        // Cap to 3 per product
         var reviewsByProduct = reviews
             .GroupBy(x => x.ProductId)
             .ToDictionary(
@@ -92,13 +93,23 @@ public static class CardQueryService
         // Assemble
         return products
             .OrderBy(p => orderIndex.TryGetValue(p.ProductId, out var idx) ? idx : int.MaxValue)
-            .Select(p => new CardTemplateDto(
-                p.ProductId, p.Name, p.Price, p.LocationText,
-                p.Bay, p.Level, p.PositionIndex, p.Stock, p.Active,
-                avgByProduct.TryGetValue(p.ProductId, out var avg) ? avg : 0.0,
-                imagesByProduct.TryGetValue(p.ProductId, out var imgs) ? imgs : new(),
-                reviewsByProduct.TryGetValue(p.ProductId, out var revs) ? revs : new()
-            ))
+            .Select(p => new ProductDto
+            {
+                Id = p.ProductId,
+                Name = p.Name,
+                Price = p.Price,
+                Images = imagesByProduct.TryGetValue(p.ProductId, out var imgs) ? imgs : new(),
+                Quantity = 1,
+                Rating = (decimal)(avgByProduct.TryGetValue(p.ProductId, out var avg) ? avg : 0.0),
+                Location = $"{p.Bay}-{p.Level}-{p.PositionIndex}",
+                HasRfid = p.HasRfid,
+                RfidUid = null,
+                Detail = new ProductDetailDto
+                {
+                    Description = p.Description ?? "",
+                    Reviews = reviewsByProduct.TryGetValue(p.ProductId, out var revs) ? revs : new()
+                }
+            })
             .ToList();
     }
 }

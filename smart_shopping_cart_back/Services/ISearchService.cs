@@ -8,5 +8,5 @@ namespace smart_shopping_cart_back.Services;
 public interface ISearchService
 {
     Task<SearchDefaultResponseDto> SearchDefaultAsync(CancellationToken ct);
-    Task<List<CardTemplateDto>> SearchByNameAsync(string query, CancellationToken ct);
+    Task<List<ProductDto>> SearchByNameAsync(string query, CancellationToken ct);
 }
