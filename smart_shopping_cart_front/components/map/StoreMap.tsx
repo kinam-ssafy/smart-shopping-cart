@@ -294,8 +294,41 @@ export default function StoreMap({ className = '' }: StoreMapProps) {
         fetchMapData();
     }, []);
 
-    // TODO: 실시간 위치는 MQTT/SSE로 수신하여 setPos() 호출
-    // 현재는 기본값 고정 (x: 0.06, y: 0.11, theta: 18.5)
+    // 실시간 위치 SSE 스트림 구독
+    useEffect(() => {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8123';
+        const url = `${apiUrl}/api/map/position/stream`;
+
+        console.log('[StoreMap] 위치 SSE 연결 시도:', url);
+
+        const eventSource = new EventSource(url);
+
+        eventSource.onopen = () => {
+            console.log('[StoreMap] 위치 SSE 연결됨');
+        };
+
+        eventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                setPos({
+                    x: data.x,
+                    y: data.y,
+                    theta: data.theta
+                });
+            } catch (err) {
+                console.error('[StoreMap] 위치 데이터 파싱 실패:', err);
+            }
+        };
+
+        eventSource.onerror = (err) => {
+            console.error('[StoreMap] 위치 SSE 오류:', err);
+        };
+
+        return () => {
+            console.log('[StoreMap] 위치 SSE 연결 해제');
+            eventSource.close();
+        };
+    }, []);
 
     // 로딩 화면
     if (loading) {

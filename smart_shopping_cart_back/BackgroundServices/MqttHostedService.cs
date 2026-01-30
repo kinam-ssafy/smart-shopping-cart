@@ -13,8 +13,10 @@ public class MqttHostedService : BackgroundService
 {
     private readonly MqttService _mqtt;
     private readonly SseService _sse;
+    private readonly PositionService _position;
     private readonly CartMessageHandler _handler;
     private readonly ILogger<MqttHostedService> _logger;
+    private readonly IConfiguration _config;
 
     // 재연결 대기 시간 (5초)
     private readonly TimeSpan _reconnectDelay = TimeSpan.FromSeconds(5);
@@ -22,12 +24,16 @@ public class MqttHostedService : BackgroundService
     public MqttHostedService(
         MqttService mqtt,
         SseService sse,
+        PositionService position,
         CartMessageHandler handler,
+        IConfiguration config,
         ILogger<MqttHostedService> logger)
     {
         _mqtt = mqtt;
         _sse = sse;
+        _position = position;
         _handler = handler;
+        _config = config;
         _logger = logger;
     }
 
@@ -36,9 +42,19 @@ public class MqttHostedService : BackgroundService
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var positionTopic = _config["Mqtt:PositionTopic"] ?? "cart/1/position";
+
         // MQTT 메시지 수신 핸들러 등록
         _mqtt.OnMessageReceived += async (topic, payload) =>
         {
+            // 위치 토픽 처리
+            if (topic == positionTopic)
+            {
+                _position.HandlePositionMessage(payload);
+                return;
+            }
+
+            // 장바구니 토픽 처리
             await _handler.HandleAsync(topic, payload, _sse);
         };
 
