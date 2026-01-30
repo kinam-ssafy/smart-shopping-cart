@@ -45,21 +45,30 @@ public class NavigationService
         var currentPos = _positionService.CurrentPosition;
         if (currentPos == null)
         {
-            _logger.LogWarning("[Navigation] 현재 위치 불명");
-            return new List<double[]>();
+            _logger.LogWarning("[Navigation] 현재 위치 불명 (MQTT 데이터 없음). 테스트를 위해 기본 위치(Entrance) 사용.");
+            // 임시 테스트용 기본 위치 (매장 입구 부근)
+            currentPos = new CartPositionDto { X = 1.0, Y = 1.0, Theta = 0 };
         }
+        _logger.LogInformation($"[Navigation] 시작 위치: ({currentPos.X}, {currentPos.Y})");
 
         // 2. 상품 정보 조회
         var product = await _cartDbService.GetProductByIdAsync(productId);
-        if (product == null || string.IsNullOrEmpty(product.Location))
+        if (product == null)
         {
-             _logger.LogWarning($"[Navigation] 상품 정보를 찾을 수 없음: {productId}");
+             _logger.LogError($"[Navigation] 상품 ID {productId} 조회 실패");
+             return new List<double[]>();
+        }
+        
+        if (string.IsNullOrEmpty(product.Location))
+        {
+             _logger.LogWarning($"[Navigation] 상품 {productId} ({product.Name})에 위치 정보(Location)가 없음");
              return new List<double[]>();
         }
 
         // Location 포맷: "A-1-2" (Bay-Level-Index)
         var parts = product.Location.Split('-');
         var targetBay = parts.Length > 0 ? parts[0] : ""; // 예: "A"
+        _logger.LogInformation($"[Navigation] 목표: 상품 '{product.Name}', Bay: '{targetBay}' (Raw: {product.Location})");
 
         // 3. 지도 및 장애물 가져오기
         var mapData = await _mapService.GetMapDataAsync();
@@ -74,10 +83,14 @@ public class NavigationService
 
         if (targetFixture == null)
         {
-            _logger.LogWarning($"[Navigation] 목표 선반을 찾을 수 없음: Bay {targetBay}");
-            // 실패 시 그냥 빈 경로 (또는 임시 위치)
+            _logger.LogError($"[Navigation] 목표 선반을 찾을 수 없음. TargetBay: {targetBay}, 검색된 선반 수: {obstacles.Count}");
+            // 로깅을 위해 선반 목록 일부 출력
+            var labels = string.Join(", ", obstacles.Take(5).Select(f => f.Label));
+            _logger.LogDebug($"[Navigation] 사용 가능한 선반 라벨(일부): {labels} ...");
             return new List<double[]>();
         }
+        
+         _logger.LogInformation($"[Navigation] 목표 선반 발견: {targetFixture.Label} ({targetFixture.Id})");
 
         // 목표 지점: 선반의 중심점
         // 하지만 선반 내부로 들어가면 안 되므로, 선반 주변 접근점(Access Point)을 찾아야 함.
