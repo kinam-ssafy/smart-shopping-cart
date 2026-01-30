@@ -17,6 +17,7 @@ from core.mqtt_client import mqtt_connect, publish_uid_list
 from core.ble_scanner import find_addr_by_service_uuid
 from core.uid_tracker import UIDTracker
 from core.ble_session import run_ble_session
+from core.position_http import poll_position_http
 
 
 async def main():
