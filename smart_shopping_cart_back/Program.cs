@@ -20,6 +20,7 @@ builder.Services.AddScoped<smart_shopping_cart_back.Repositories.ICartRepository
 
 // Map Service
 builder.Services.AddSingleton<MapService>();
+builder.Services.AddSingleton<NavigationService>();
 
 var app = builder.Build();
 
