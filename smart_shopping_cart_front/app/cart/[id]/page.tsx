@@ -6,13 +6,13 @@ import { SearchButton } from '@/components/ui/buttons/Button';
 import StoreMap from '@/components/map/StoreMap';
 import ExpandableProductCard from '@/components/ui/product/ExpandableProductCard';
 import CartFooter from '@/components/layout/CartFooter';
-import { CartProduct, CartSseMessage } from '@/types/cart';
+import { Product, CartSseMessage } from '@/types/cart';
 
 // 백엔드 API URL (환경변수로 설정 가능)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function CartPage({ params }: { params: Promise<{ id: string }> }) {
-    const [cartItems, setCartItems] = useState<CartProduct[]>([]);
+    const [cartItems, setCartItems] = useState<Product[]>([]);
     const [isConnected, setIsConnected] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -130,14 +130,14 @@ export default function CartPage({ params }: { params: Promise<{ id: string }> }
                                     id={String(item.id)}
                                     name={item.name}
                                     price={item.price}
-                                    image={item.image || 'https://via.placeholder.com/200'}
+                                    image={item.images?.[0] || 'https://via.placeholder.com/200'}
                                     quantity={item.quantity}
                                     rating={item.rating}
                                     location={item.location}
                                     detail={item.detail ? {
-                                        images: item.detail.images,
+                                        images: item.images, // Use main images or detail images? usually Detail should have images but backend ProductDto separated them. Backend ProductDto has Images on root. ProductDetailDto has no Images. Wait.
                                         description: item.detail.description,
-                                        averageRating: item.detail.averageRating,
+                                        averageRating: item.rating, // ProductDto rating is average
                                         reviews: item.detail.reviews.map(r => ({
                                             rating: r.rating,
                                             content: r.content,
