@@ -87,5 +87,20 @@ public class AppDbContext : DbContext
             e.Property(x => x.CreatedAt).HasColumnName("created_at");
             e.Property(x => x.UpdatedAt).HasColumnName("updated_at");
         });
+
+        // RagChunk entity configuration - Vector 타입 처리
+        modelBuilder.Entity<RagChunk>(e =>
+        {
+            e.ToTable("rag_chunks");
+            e.HasKey(x => x.ChunkId);
+            e.Property(x => x.ChunkId).HasColumnName("chunk_id");
+            e.Property(x => x.ProductId).HasColumnName("product_id");
+            e.Property(x => x.SourceType).HasColumnName("source_type");
+            e.Property(x => x.ChunkIndex).HasColumnName("chunk_index");
+            e.Property(x => x.ChunkText).HasColumnName("chunk_text");
+            e.Property(x => x.Embedding).HasColumnName("embedding").HasColumnType("vector(1536)");
+            e.Property(x => x.Metadata).HasColumnName("metadata").HasColumnType("jsonb");
+            e.Property(x => x.CreatedAt).HasColumnName("created_at");
+        });
     }
 }
