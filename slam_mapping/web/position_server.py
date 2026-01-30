@@ -44,6 +44,104 @@ MAP_INFO = {
 SPECIFIED_MAP_NAME = None
 
 
+def parse_yaml_file(yaml_path):
+    """YAML 파일 파싱 (멀티라인 origin 지원)"""
+    result = {
+        'resolution': None,
+        'origin': None,
+        'image': None
+    }
+
+    try:
+        with open(yaml_path, 'r') as f:
+            content = f.read()
+
+        lines = content.split('\n')
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+
+            if line.startswith('resolution:'):
+                result['resolution'] = float(line.split(':')[1].strip())
+
+            elif line.startswith('image:'):
+                result['image'] = line.split(':')[1].strip()
+
+            elif line.startswith('origin:'):
+                # origin 값 확인
+                origin_value = line.split(':', 1)[1].strip()
+
+                if origin_value.startswith('['):
+                    # 한 줄 형식: origin: [-7.61, -24.7, 0]
+                    origin_str = origin_value.strip('[]')
+                    result['origin'] = [float(x.strip()) for x in origin_str.split(',')]
+                elif origin_value == '' or origin_value is None:
+                    # 멀티라인 형식:
+                    # origin:
+                    # - -7.61
+                    # - -24.7
+                    # - 0
+                    origin_values = []
+                    i += 1
+                    while i < len(lines) and lines[i].strip().startswith('-'):
+                        val_str = lines[i].strip()[1:].strip()  # '-' 제거
+                        origin_values.append(float(val_str))
+                        i += 1
+                    result['origin'] = origin_values
+                    continue  # i가 이미 증가됨
+
+            i += 1
+
+    except Exception as e:
+        print(f"[WARNING] YAML parse error: {e}")
+
+    return result
+
+
+def load_map_info_on_startup(maps_dir, map_name):
+    """서버 시작 시 맵 정보를 미리 로드"""
+    global MAP_INFO
+
+    yaml_path = None
+    pgm_filename = None
+
+    # 지정된 맵 파일 사용
+    if map_name:
+        specified_yaml = os.path.join(maps_dir, f"{map_name}.yaml")
+        if os.path.exists(specified_yaml):
+            yaml_path = specified_yaml
+            pgm_filename = f"{map_name}.pgm"
+            print(f"[STARTUP] Loading map info from: {specified_yaml}")
+
+    # 지정된 맵이 없으면 가장 최근 파일 사용
+    if not yaml_path and os.path.exists(maps_dir):
+        pgm_files = [f for f in os.listdir(maps_dir) if f.endswith('.pgm')]
+        if pgm_files:
+            pgm_files.sort(key=lambda x: os.path.getmtime(os.path.join(maps_dir, x)), reverse=True)
+            pgm_filename = pgm_files[0]
+            yaml_file = pgm_filename.replace('.pgm', '.yaml')
+            yaml_path = os.path.join(maps_dir, yaml_file)
+            if os.path.exists(yaml_path):
+                print(f"[STARTUP] Loading map info from latest: {yaml_path}")
+            else:
+                yaml_path = None
+
+    # YAML 파싱
+    if yaml_path and os.path.exists(yaml_path):
+        parsed = parse_yaml_file(yaml_path)
+
+        if parsed['resolution']:
+            MAP_INFO['resolution'] = parsed['resolution']
+        if parsed['origin']:
+            MAP_INFO['origin'] = parsed['origin']
+        if pgm_filename:
+            MAP_INFO['image'] = pgm_filename
+
+        print(f"[STARTUP] MAP_INFO loaded: resolution={MAP_INFO['resolution']}, origin={MAP_INFO['origin']}")
+    else:
+        print(f"[WARNING] No yaml file found, using default MAP_INFO")
+
+
 def get_handler_class(maps_dir, map_name):
     """맵 디렉토리와 맵 이름을 포함하는 핸들러 클래스 생성"""
 
@@ -176,18 +274,12 @@ def get_handler_class(maps_dir, map_name):
             """YAML 파일에서 맵 정보 읽기"""
             global MAP_INFO
             try:
-                with open(yaml_path, 'r') as f:
-                    content = f.read()
+                parsed = parse_yaml_file(yaml_path)
 
-                for line in content.split('\n'):
-                    line = line.strip()
-                    if line.startswith('resolution:'):
-                        MAP_INFO['resolution'] = float(line.split(':')[1].strip())
-                    elif line.startswith('origin:'):
-                        origin_str = line.split(':')[1].strip()
-                        origin_str = origin_str.strip('[]')
-                        parts = [float(x.strip()) for x in origin_str.split(',')]
-                        MAP_INFO['origin'] = parts
+                if parsed['resolution']:
+                    MAP_INFO['resolution'] = parsed['resolution']
+                if parsed['origin']:
+                    MAP_INFO['origin'] = parsed['origin']
 
                 MAP_INFO['image'] = pgm_filename
                 print(f"[MAP INFO] resolution={MAP_INFO['resolution']}, origin={MAP_INFO['origin']}")
@@ -241,6 +333,9 @@ def main():
         else:
             print(f"[WARNING] Map file not found: {pgm_path}")
             print(f"[INFO] Will try to use latest map from {maps_dir}")
+
+    # 서버 시작 전에 맵 정보 미리 로드
+    load_map_info_on_startup(maps_dir, map_name)
 
     handler_class = get_handler_class(maps_dir, map_name)
 
