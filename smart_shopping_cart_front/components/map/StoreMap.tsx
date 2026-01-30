@@ -267,26 +267,14 @@ function CameraRig({
             // 사용자 theta를 라디안으로 변환 (UserMarker 참조: -theta * PI/180)
             const rotationRad = -userPosition.theta * (Math.PI / 180);
 
-            // 사용자 뒤쪽 계산
-            // UserMarker가 회전하는 방식에 맞춤
-            // 뒤쪽: rotationRad 반대 방향
-            const dist = 1.0; // 높이 거리
-            const height = 2.0;
-
-            // 간단하게: 항상 사용자 뒤쪽에서 바라보도록 함
-            // 만약 사용자가 회전하면 카메라도 부드럽게 회전
-            const offsetX = Math.sin(rotationRad) * 1; // 뒤쪽으로 좀 떨어짐
-            const offsetZ = Math.cos(rotationRad) * 1;
-
-            // 카메라 위치 = 타겟 + 오프셋
-            // 오프셋을 사용자 뒤쪽으로 설정 (UserMarker의 local Z+가 앞인지 뒤인지에 따라 다름)
-            // 보통 Z-가 앞이면 Z+가 뒤.
-            // threeX + Math.sin(theta)*dist... 복잡하므로
-            // 일단은 간단한 오프셋 적용. theta 반영하려면 아래와 같이:
+            // 1인칭 시점 (약간 뒤에서 본인 마커가 보이도록)
+            // 사용자 키높이/카트 높이 고려 (1.4m), 뒤쪽 거리 (0.8m)
+            const height = 1.4;
+            const dist = 0.8;
 
             // 3인칭 쿼터뷰 (Top-down 약간 뒤)
             // 사용자 뒤(0,0,1) * 회전
-            const backVector = new THREE.Vector3(0, height, 5).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationRad);
+            const backVector = new THREE.Vector3(0, height, dist).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationRad);
 
             // 부드러운 이동 (Lerp)
             const targetPos = new THREE.Vector3(threeX, 0, threeZ).add(backVector);
