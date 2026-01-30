@@ -14,7 +14,8 @@ builder.Services.AddSearchServices();  // 검색 서비스
 
 // DB & Repository
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
+        o => o.UseVector()));
 builder.Services.AddScoped<smart_shopping_cart_back.Repositories.ICartRepository, smart_shopping_cart_back.Repositories.CartRepository>();
 
 // Map Service
