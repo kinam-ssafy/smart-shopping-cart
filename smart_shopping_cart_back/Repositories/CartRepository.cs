@@ -66,4 +66,29 @@ public class CartRepository : ICartRepository
 
         await _context.SaveChangesAsync();
     }
+    public async Task<Cart?> GetActiveCartAsync(CancellationToken ct)
+    {
+        return await _context.Carts
+            .AsNoTracking()
+            .Where(c => c.Status == "active")
+            .OrderByDescending(c => c.UpdatedAt)
+            // Use ct for async cancellation
+            .FirstOrDefaultAsync(ct);
+    }
+
+    public async Task<List<long>> GetProductIdsAsync(long cartId, CancellationToken ct)
+    {
+        var shoppingList = await _context.Carts
+            .AsNoTracking()
+            .Where(c => c.CartId == cartId && c.Status == "active")
+            .Select(c => c.ShoppingList)
+            .FirstOrDefaultAsync(ct);
+
+        if (shoppingList == null || shoppingList.Length == 0)
+            return new List<long>();
+
+        return shoppingList
+            .Select(x => long.Parse(x))
+            .ToList();
+    }
 }

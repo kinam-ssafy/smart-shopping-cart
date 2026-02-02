@@ -8,4 +8,6 @@ public interface ICartRepository
     Task<Product?> GetProductByIdAsync(long productId);
     Task<Cart?> GetCartAsync(int cartId);
     Task UpdateCartAsync(int cartId, string[] rfidUids);
+    Task<Cart?> GetActiveCartAsync(CancellationToken ct);
+    Task<List<long>> GetProductIdsAsync(long cartId, CancellationToken ct);
 }
