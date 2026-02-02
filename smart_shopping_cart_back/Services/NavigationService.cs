@@ -104,12 +104,13 @@ public class NavigationService
             }
         }
 
-        // 2. 직선 경로가 장애물과 충돌하는지 확인
+        // 2. 직선 경로가 장애물과 충돌하는지 확인 (목표 선반 제외)
         bool isBlocked = false;
         await using (var cmd = new NpgsqlCommand(@"
             SELECT EXISTS(
                 SELECT 1 FROM fixtures
-                WHERE ST_Intersects(
+                WHERE fixture_id != @targetFixtureId  -- 목표 선반 제외
+                AND ST_Intersects(
                     fixture_geom,
                     ST_SetSRID(ST_MakeLine(
                         ST_Point(@startX, @startY),
@@ -119,13 +120,14 @@ public class NavigationService
             )
         ", conn))
         {
+            cmd.Parameters.AddWithValue("targetFixtureId", fixtureId);
             cmd.Parameters.AddWithValue("startX", startX);
             cmd.Parameters.AddWithValue("startY", startY);
             cmd.Parameters.AddWithValue("endX", targetX);
             cmd.Parameters.AddWithValue("endY", targetY);
             
             isBlocked = (bool)(await cmd.ExecuteScalarAsync() ?? false);
-            _logger.LogInformation($"[Navigation] 직선 경로 차단 여부: {isBlocked}");
+            _logger.LogInformation($"[Navigation] 직선 경로 차단 여부: {isBlocked} (목표 선반 {fixtureId} 제외)");
         }
 
         // 시작점 추가
@@ -140,7 +142,7 @@ public class NavigationService
         {
             // 3b. 장애물 회피 경로 계산
             // 간단한 방식: 선반 외곽의 가장 가까운 점을 waypoint로 사용
-            var waypoints = await GetWaypointsAroundObstacles(conn, startX, startY, targetX, targetY);
+            var waypoints = await GetWaypointsAroundObstacles(conn, startX, startY, targetX, targetY, fixtureId);
             path.AddRange(waypoints);
             path.Add(new double[] { targetX, targetY });
         }
@@ -153,7 +155,7 @@ public class NavigationService
     /// - 충돌하는 선반의 외곽을 우회하는 점 생성
     /// </summary>
     private async Task<List<double[]>> GetWaypointsAroundObstacles(
-        NpgsqlConnection conn, double startX, double startY, double endX, double endY)
+        NpgsqlConnection conn, double startX, double startY, double endX, double endY, string targetFixtureId)
     {
         var waypoints = new List<double[]>();
 
@@ -187,8 +189,8 @@ public class NavigationService
 
         foreach (var (wx, wy) in candidates.Distinct())
         {
-            bool segment1Clear = await IsPathClear(conn, startX, startY, wx, wy);
-            bool segment2Clear = await IsPathClear(conn, wx, wy, endX, endY);
+            bool segment1Clear = await IsPathClear(conn, startX, startY, wx, wy, targetFixtureId);
+            bool segment2Clear = await IsPathClear(conn, wx, wy, endX, endY, targetFixtureId);
 
             if (segment1Clear && segment2Clear)
             {
@@ -218,14 +220,15 @@ public class NavigationService
     }
 
     /// <summary>
-    /// 두 점 사이의 경로가 장애물과 충돌하지 않는지 확인
+    /// 두 점 사이의 경로가 장애물과 충돌하지 않는지 확인 (목표 선반 제외)
     /// </summary>
-    private async Task<bool> IsPathClear(NpgsqlConnection conn, double x1, double y1, double x2, double y2)
+    private async Task<bool> IsPathClear(NpgsqlConnection conn, double x1, double y1, double x2, double y2, string targetFixtureId)
     {
         await using var cmd = new NpgsqlCommand(@"
             SELECT NOT EXISTS(
                 SELECT 1 FROM fixtures
-                WHERE ST_Intersects(
+                WHERE fixture_id != @targetFixtureId
+                AND ST_Intersects(
                     fixture_geom,
                     ST_SetSRID(ST_MakeLine(
                         ST_Point(@x1, @y1),
@@ -235,6 +238,7 @@ public class NavigationService
             )
         ", conn);
 
+        cmd.Parameters.AddWithValue("targetFixtureId", targetFixtureId);
         cmd.Parameters.AddWithValue("x1", x1);
         cmd.Parameters.AddWithValue("y1", y1);
         cmd.Parameters.AddWithValue("x2", x2);
