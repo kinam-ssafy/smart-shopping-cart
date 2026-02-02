@@ -15,10 +15,7 @@ public class EmbeddingService : IEmbeddingService
     public EmbeddingService(HttpClient http, IConfiguration config)
     {
         _http = http;
-        // Using GMS_KEY from config (or environment variable mapped to it)
-        // User snippet used "OpenAI:ApiKey", we'll check that. 
-        // Assuming user will set GMS_KEY in environment or appsettings "OpenAI:ApiKey"
-        _apiKey = config["GMS_KEY"] ?? config["OpenAI:ApiKey"] ?? throw new InvalidOperationException("GMS_KEY or OpenAI:ApiKey missing");
+        _apiKey = config["GMS_KEY"] ?? throw new InvalidOperationException("GMS_KEY missing");
         _model = config["OpenAI:Model"] ?? "text-embedding-3-small";
     }
 

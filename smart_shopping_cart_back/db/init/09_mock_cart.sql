@@ -1,0 +1,2 @@
+INSERT INTO cart (cart_id, status, shopping_list, created_at, updated_at) VALUES
+(1, 'ACTIVE', '{1, 2, 3}', '2026-02-02 16:03:37', '2026-02-02 16:03:37');
