@@ -71,27 +71,35 @@ public class NavigationService
         await conn.OpenAsync();
 
         // 1. 목표 선반 중심점 조회
+        // fixture_id는 'shelf-a', 'shelf-b' 형태, Bay는 'A', 'B' 형태
         double targetX = 0, targetY = 0;
+        string fixtureId = $"shelf-{targetBay.ToLower()}";
+        _logger.LogInformation($"[Navigation] 찾는 fixture_id: {fixtureId}");
+        
         await using (var cmd = new NpgsqlCommand(@"
             SELECT 
+                fixture_id,
+                label,
                 ST_X(ST_Centroid(fixture_geom)) as center_x,
                 ST_Y(ST_Centroid(fixture_geom)) as center_y
             FROM fixtures
-            WHERE label ILIKE '%' || @bay || '%'
+            WHERE fixture_id = @fixtureId
             LIMIT 1
         ", conn))
         {
-            cmd.Parameters.AddWithValue("bay", targetBay);
+            cmd.Parameters.AddWithValue("fixtureId", fixtureId);
             await using var reader = await cmd.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                targetX = reader.GetDouble(0);
-                targetY = reader.GetDouble(1);
-                _logger.LogInformation($"[Navigation] 목표 선반 중심: ({targetX:F2}, {targetY:F2})");
+                var foundId = reader.GetString(0);
+                var foundLabel = reader.GetString(1);
+                targetX = reader.GetDouble(2);
+                targetY = reader.GetDouble(3);
+                _logger.LogInformation($"[Navigation] 목표 선반: id={foundId}, label={foundLabel}, 중심=({targetX:F2}, {targetY:F2})");
             }
             else
             {
-                _logger.LogWarning($"[Navigation] 선반 '{targetBay}' 찾을 수 없음");
+                _logger.LogWarning($"[Navigation] fixture_id '{fixtureId}' 찾을 수 없음. DB의 fixtures 목록 확인 필요");
                 return path;
             }
         }
