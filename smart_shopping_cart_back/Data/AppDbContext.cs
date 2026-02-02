@@ -102,5 +102,8 @@ public class AppDbContext : DbContext
             e.Property(x => x.Metadata).HasColumnName("metadata").HasColumnType("jsonb");
             e.Property(x => x.CreatedAt).HasColumnName("created_at");
         });
+        // scalar 저장용
+        modelBuilder.Entity<ScalarLong>().HasNoKey();
     }
+
 }

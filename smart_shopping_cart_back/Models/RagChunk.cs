@@ -27,7 +27,7 @@ public class RagChunk
     public string ChunkText { get; set; }
 
     [Column("embedding", TypeName = "vector(1536)")]
-    public Vector Embedding { get; set; }
+    public Vector Embedding { get; set; } = default!;
 
     [Column("metadata", TypeName = "jsonb")]
     public string Metadata { get; set; } = "{}";
