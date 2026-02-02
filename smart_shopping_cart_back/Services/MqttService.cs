@@ -98,4 +98,25 @@ public class MqttService
             _logger.LogInformation("[MQTT] 연결 해제됨");
         }
     }
+
+    /// <summary>
+    /// MQTT 메시지 발행
+    /// </summary>
+    public async Task PublishAsync(string topic, string payload)
+    {
+        if (_client == null || !_client.IsConnected)
+        {
+            _logger.LogWarning($"[MQTT] 발행 실패 - 연결 안됨. Topic: {topic}");
+            return;
+        }
+
+        var message = new MqttApplicationMessageBuilder()
+            .WithTopic(topic)
+            .WithPayload(payload)
+            .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce)
+            .Build();
+
+        await _client.PublishAsync(message);
+        _logger.LogInformation($"[MQTT] 발행: {topic} → {payload}");
+    }
 }

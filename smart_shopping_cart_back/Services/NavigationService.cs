@@ -1,5 +1,6 @@
 using Npgsql;
 using smart_shopping_cart_back.Models;
+using System.Text.Json;
 
 namespace smart_shopping_cart_back.Services;
 
@@ -13,17 +14,20 @@ public class NavigationService
     private readonly IConfiguration _configuration;
     private readonly PositionService _positionService;
     private readonly CartDbService _cartDbService;
+    private readonly MqttService _mqttService;
     private readonly ILogger<NavigationService> _logger;
 
     public NavigationService(
         IConfiguration configuration,
         PositionService positionService,
         CartDbService cartDbService,
+        MqttService mqttService,
         ILogger<NavigationService> logger)
     {
         _configuration = configuration;
         _positionService = positionService;
         _cartDbService = cartDbService;
+        _mqttService = mqttService;
         _logger = logger;
     }
 
@@ -96,6 +100,15 @@ public class NavigationService
                 targetX = reader.GetDouble(2);
                 targetY = reader.GetDouble(3);
                 _logger.LogInformation($"[Navigation] 찾은 선반: id='{foundId}', label='{foundLabel}', 중심=({targetX:F3}, {targetY:F3})");
+
+                // MQTT로 목표 좌표 발행 (cart/1/navigate)
+                var navigatePayload = JsonSerializer.Serialize(new
+                {
+                    x = targetX,
+                    y = targetY,
+                    timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                });
+                await _mqttService.PublishAsync("cart/1/navigate", navigatePayload);
             }
             else
             {
