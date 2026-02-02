@@ -103,7 +103,10 @@ public class NavigationService
                 SELECT 1 FROM fixtures
                 WHERE ST_Intersects(
                     fixture_geom,
-                    ST_MakeLine(ST_Point(@startX, @startY), ST_Point(@endX, @endY))
+                    ST_SetSRID(ST_MakeLine(
+                        ST_Point(@startX, @startY),
+                        ST_Point(@endX, @endY)
+                    ), 3857)
                 )
             )
         ", conn))
@@ -154,7 +157,10 @@ public class NavigationService
                 FROM fixtures
                 WHERE ST_Intersects(
                     fixture_geom,
-                    ST_MakeLine(ST_Point(@startX, @startY), ST_Point(@endX, @endY))
+                    ST_SetSRID(ST_MakeLine(
+                        ST_Point(@startX, @startY),
+                        ST_Point(@endX, @endY)
+                    ), 3857)
                 )
             ),
             waypoint_candidates AS (
@@ -167,8 +173,14 @@ public class NavigationService
             SELECT wx, wy 
             FROM waypoint_candidates
             ORDER BY 
-                ST_Distance(ST_Point(wx, wy), ST_Point(@startX, @startY)) +
-                ST_Distance(ST_Point(wx, wy), ST_Point(@endX, @endY))
+                ST_Distance(
+                    ST_SetSRID(ST_Point(wx, wy), 3857),
+                    ST_SetSRID(ST_Point(@startX, @startY), 3857)
+                ) +
+                ST_Distance(
+                    ST_SetSRID(ST_Point(wx, wy), 3857),
+                    ST_SetSRID(ST_Point(@endX, @endY), 3857)
+                )
             LIMIT 2
         ", conn);
 
