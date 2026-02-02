@@ -15,6 +15,7 @@ export default function CartPage({ params }: { params: Promise<{ id: string }> }
     const [cartItems, setCartItems] = useState<Product[]>([]);
     const [isConnected, setIsConnected] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [navigationPath, setNavigationPath] = useState<number[][] | null>(null);
 
     // params를 unwrap (Next.js 15 이상)
     const { id: cartId } = use(params);
@@ -26,6 +27,22 @@ export default function CartPage({ params }: { params: Promise<{ id: string }> }
     if (!isValidId) {
         notFound();
     }
+
+    // 1. sessionStorage에서 경로 데이터 읽기
+    useEffect(() => {
+        const storedPath = sessionStorage.getItem('navigationPath');
+        if (storedPath) {
+            try {
+                const path = JSON.parse(storedPath);
+                setNavigationPath(path);
+                console.log('[Cart] 경로 로드됨:', path.length, '개 waypoint');
+                // 한 번 읽은 후 삭제 (일회성)
+                sessionStorage.removeItem('navigationPath');
+            } catch (e) {
+                console.error('[Cart] 경로 파싱 오류:', e);
+            }
+        }
+    }, []);
 
     // SSE 연결
     useEffect(() => {
@@ -77,6 +94,9 @@ export default function CartPage({ params }: { params: Promise<{ id: string }> }
         0
     );
 
+    // 경로 초기화 핸들러
+    const clearNavigationPath = () => setNavigationPath(null);
+
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
             {/* 메인 콘텐츠 영역 */}
@@ -89,10 +109,21 @@ export default function CartPage({ params }: { params: Promise<{ id: string }> }
                             {isConnected ? '실시간 연결' : '연결 끊김'}
                         </span>
                     </div>
-                    <SearchButton
-                        size="medium"
-                        onClick={() => window.location.href = '/search'}
-                    />
+                    <div className="flex items-center gap-2">
+                        {/* 경로 표시 중일 때 닫기 버튼 */}
+                        {navigationPath && (
+                            <button
+                                onClick={clearNavigationPath}
+                                className="px-3 py-1.5 text-sm bg-orange-500 text-white rounded-lg"
+                            >
+                                경로 닫기
+                            </button>
+                        )}
+                        <SearchButton
+                            size="medium"
+                            onClick={() => window.location.href = '/search'}
+                        />
+                    </div>
                 </div>
 
                 {/* 에러 메시지 */}
@@ -104,7 +135,10 @@ export default function CartPage({ params }: { params: Promise<{ id: string }> }
 
                 {/* 지도 (정사각형, 축소) */}
                 <div className="mb-6 max-w-sm mx-auto">
-                    <StoreMap className="w-full aspect-square rounded-2xl" />
+                    <StoreMap
+                        className="w-full aspect-square rounded-2xl"
+                        navigationPath={navigationPath}
+                    />
                 </div>
 
                 {/* 장바구니 상품 리스트 */}

@@ -202,9 +202,28 @@ export default function SearchPage() {
                                             detailRef={expandedDetailRef}
                                             hasRfid={true} // Forced true as requested
                                             location={expandedProductInRow.location}
-                                            onNavigate={() => {
+                                            onNavigate={async () => {
                                                 console.log('Navigate to:', expandedProductInRow.location);
-                                                // TODO: Implement navigation
+                                                try {
+                                                    // Navigation API 호출
+                                                    const res = await fetch(
+                                                        `${API_BASE_URL}/api/map/navigation?productId=${expandedProductInRow.id}`
+                                                    );
+                                                    if (!res.ok) throw new Error('Navigation API failed');
+
+                                                    const data = await res.json();
+
+                                                    // 경로 데이터를 sessionStorage에 저장
+                                                    if (data.path && data.path.length > 0) {
+                                                        sessionStorage.setItem('navigationPath', JSON.stringify(data.path));
+                                                    }
+
+                                                    // cart/1 페이지로 이동
+                                                    window.location.href = '/cart/1';
+                                                } catch (error) {
+                                                    console.error('Navigation error:', error);
+                                                    alert('경로를 불러오는데 실패했습니다.');
+                                                }
                                             }}
                                         />
                                     )}
