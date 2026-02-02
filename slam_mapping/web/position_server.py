@@ -31,6 +31,18 @@ latest_position = {
 position_history = []
 MAX_HISTORY = 100
 
+# 내비게이션 상태
+nav_status = {
+    "state": "idle",  # idle, navigating, succeeded, failed, canceled
+    "goal": None,
+    "distance_remaining": 0.0,
+    "path": [],
+    "feedback_time": None
+}
+
+# Goal Bridge 서버 URL
+GOAL_BRIDGE_URL = "http://localhost:8851"
+
 # 맵 정보 (동적으로 업데이트됨)
 MAP_INFO = {
     "resolution": 0.05,  # 미터/픽셀
@@ -152,7 +164,7 @@ def get_handler_class(maps_dir, map_name):
             super().__init__(*args, directory=os.path.dirname(__file__), **kwargs)
 
         def do_POST(self):
-            global latest_position, position_history
+            global latest_position, position_history, nav_status
 
             if self.path == '/api/position':
                 content_length = int(self.headers['Content-Length'])
@@ -186,12 +198,121 @@ def get_handler_class(maps_dir, map_name):
                     self.send_header('Content-type', 'application/json')
                     self.end_headers()
                     self.wfile.write(json.dumps({"error": str(e)}).encode())
+
+            elif self.path == '/api/goal':
+                # 목표 지점 수신 -> Goal Bridge로 전달
+                content_length = int(self.headers['Content-Length'])
+                post_data = self.rfile.read(content_length)
+
+                try:
+                    data = json.loads(post_data.decode('utf-8'))
+                    x = data.get('x', 0)
+                    y = data.get('y', 0)
+                    theta = data.get('theta', 0)
+
+                    print(f"[Goal] Received: x={x:.2f}m, y={y:.2f}m, theta={theta:.1f}°")
+
+                    # Goal Bridge로 전달
+                    try:
+                        import urllib.request
+                        goal_data = json.dumps({'x': x, 'y': y, 'theta': theta}).encode('utf-8')
+                        req = urllib.request.Request(
+                            f'{GOAL_BRIDGE_URL}/goal',
+                            data=goal_data,
+                            headers={'Content-Type': 'application/json'},
+                            method='POST'
+                        )
+                        with urllib.request.urlopen(req, timeout=5.0) as response:
+                            result = json.loads(response.read().decode('utf-8'))
+                            print(f"[Goal] Sent to goal_bridge: {result}")
+
+                        # 상태 업데이트
+                        nav_status['state'] = 'navigating'
+                        nav_status['goal'] = {'x': x, 'y': y, 'theta': theta}
+
+                        self.send_response(200)
+                        self.send_header('Content-type', 'application/json')
+                        self.send_header('Access-Control-Allow-Origin', '*')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({"status": "goal_sent"}).encode())
+
+                    except Exception as e:
+                        print(f"[ERROR] Failed to send goal to bridge: {e}")
+                        self.send_response(503)
+                        self.send_header('Content-type', 'application/json')
+                        self.send_header('Access-Control-Allow-Origin', '*')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({"error": f"Goal bridge unavailable: {e}"}).encode())
+
+                except json.JSONDecodeError as e:
+                    print(f"[ERROR] JSON decode error: {e}")
+                    self.send_response(400)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"error": str(e)}).encode())
+
+            elif self.path == '/api/nav_status':
+                # Goal Bridge로부터 상태 업데이트 수신
+                content_length = int(self.headers['Content-Length'])
+                post_data = self.rfile.read(content_length)
+
+                try:
+                    data = json.loads(post_data.decode('utf-8'))
+                    nav_status.update(data)
+
+                    # 상태 변경 로그
+                    if data.get('state') != nav_status.get('_last_logged_state'):
+                        print(f"[Nav] State: {data.get('state')}, Distance: {data.get('distance_remaining', 0):.2f}m")
+                        nav_status['_last_logged_state'] = data.get('state')
+
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "ok"}).encode())
+
+                except json.JSONDecodeError as e:
+                    self.send_response(400)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"error": str(e)}).encode())
+
+            elif self.path == '/api/cancel':
+                # 목표 취소 -> Goal Bridge로 전달
+                try:
+                    import urllib.request
+                    req = urllib.request.Request(
+                        f'{GOAL_BRIDGE_URL}/cancel',
+                        data=b'{}',
+                        headers={'Content-Type': 'application/json'},
+                        method='POST'
+                    )
+                    with urllib.request.urlopen(req, timeout=5.0) as response:
+                        result = json.loads(response.read().decode('utf-8'))
+                        print(f"[Goal] Canceled: {result}")
+
+                    nav_status['state'] = 'canceled'
+
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "canceled"}).encode())
+
+                except Exception as e:
+                    print(f"[ERROR] Failed to cancel goal: {e}")
+                    self.send_response(503)
+                    self.send_header('Content-type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"error": str(e)}).encode())
+
             else:
                 self.send_response(404)
                 self.end_headers()
 
         def do_GET(self):
-            global latest_position, position_history, MAP_INFO
+            global latest_position, position_history, MAP_INFO, nav_status
 
             parsed = urlparse(self.path)
 
@@ -213,6 +334,24 @@ def get_handler_class(maps_dir, map_name):
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
                 self.wfile.write(json.dumps(position_history).encode())
+
+            elif parsed.path == '/api/nav_status':
+                # 내비게이션 상태 반환
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                # _last_logged_state는 내부용이므로 제외
+                status_copy = {k: v for k, v in nav_status.items() if not k.startswith('_')}
+                self.wfile.write(json.dumps(status_copy).encode())
+
+            elif parsed.path == '/api/path':
+                # 현재 경로 반환
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps(nav_status.get('path', [])).encode())
 
             elif parsed.path == '/api/map_info':
                 self.send_response(200)
