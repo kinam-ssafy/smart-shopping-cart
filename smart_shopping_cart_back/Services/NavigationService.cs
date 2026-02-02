@@ -32,11 +32,11 @@ public class NavigationService
     /// </summary>
     public async Task<List<double[]>> GetPathToProductAsync(long productId)
     {
-        // 1. 현재 위치 가져오기
+        // 1. 현재 위치 가져오기 (stale 체크 포함)
         var currentPos = _positionService.CurrentPosition;
-        if (currentPos == null)
+        if (currentPos == null || _positionService.IsPositionStale)
         {
-            _logger.LogWarning("[Navigation] 현재 위치 불명. 기본 위치(1, 1) 사용");
+            _logger.LogWarning("[Navigation] 위치 없음 or 오래됨. 기본 위치(1, 1) 사용");
             currentPos = new CartPositionDto { X = 1.0, Y = 1.0, Theta = 0 };
         }
 
