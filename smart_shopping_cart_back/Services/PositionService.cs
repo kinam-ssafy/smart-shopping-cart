@@ -18,6 +18,10 @@ public class PositionService
     // 쓰로틀링 설정 (150ms = 약 6-7 FPS)
     private DateTime _lastBroadcast = DateTime.MinValue;
     private readonly TimeSpan _throttleInterval = TimeSpan.FromMilliseconds(150);
+    
+    // 위치 유효성 검사용 (30초 이상 업데이트 없으면 stale)
+    private DateTime _lastUpdate = DateTime.MinValue;
+    private readonly TimeSpan _staleThreshold = TimeSpan.FromSeconds(30);
 
     /// <summary>
     /// 위치 업데이트 이벤트 (쓰로틀링 적용됨)
@@ -30,6 +34,16 @@ public class PositionService
     public CartPositionDto? CurrentPosition
     {
         get { lock (_lock) return _currentPosition; }
+    }
+    
+    /// <summary>
+    /// 위치가 오래된(stale) 상태인지 확인
+    /// - 마지막 업데이트로부터 30초 이상 경과하면 stale로 간주
+    /// - MQTT retain 메시지로 인한 오래된 위치 필터링용
+    /// </summary>
+    public bool IsPositionStale
+    {
+        get { lock (_lock) return (DateTime.UtcNow - _lastUpdate) > _staleThreshold; }
     }
 
     public PositionService(ILogger<PositionService> logger)
@@ -54,10 +68,11 @@ public class PositionService
 
             if (position != null)
             {
-                // 항상 최신 위치 저장
+                // 항상 최신 위치 저장 + 타임스탬프 업데이트
                 lock (_lock)
                 {
                     _currentPosition = position;
+                    _lastUpdate = DateTime.UtcNow;
                 }
 
                 // 쓰로틀링: 일정 간격으로만 브로드캐스트
