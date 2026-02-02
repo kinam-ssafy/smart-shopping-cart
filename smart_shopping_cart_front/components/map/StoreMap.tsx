@@ -324,10 +324,10 @@ function CameraRig({
             // 사용자 theta를 라디안으로 변환 (UserMarker 참조: -theta * PI/180)
             const rotationRad = -userPosition.theta * (Math.PI / 180);
 
-            // 3인칭 숄더뷰 (TPS 느낌: 적당히 뒤에서 내려다보기)
-            // 너비/높이를 좀 더 확보하여 주변 상황 파악 용이
-            const height = 2.5;
-            const dist = 2.0;
+            // 3인칭 숄더뷰 (TPS 느낌: 비스듬하게 내려다보기)
+            // 높이와 거리를 늘려 더 넓은 시야 확보
+            const height = 8;   // 높이 증가 (2.5 → 8)
+            const dist = 6;     // 거리 증가 (2.0 → 6)
 
             // 3인칭 쿼터뷰 (Top-down 약간 뒤)
             // 사용자 뒤(0,0,1) * 회전
