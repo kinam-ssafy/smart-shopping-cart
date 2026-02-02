@@ -1,10 +1,44 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Text } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, Text, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
+
+// ============================================================
+// 경로 표시 컴포넌트
+// ============================================================
+function NavigationPath({ path }: { path: number[][] | null }) {
+    const points = useMemo(() => {
+        if (!path || path.length < 2) return [];
+        return path.map(p => new THREE.Vector3(p[0], 0.15, -p[1]));
+    }, [path]);
+
+    if (points.length < 2) return null;
+
+    return (
+        <group>
+            {/* 메인 경로 라인 (drei Line 컴포넌트 사용) */}
+            <Line
+                points={points}
+                color="#FF5722"
+                lineWidth={3}
+            />
+            {/* 웨이포인트 마커 */}
+            {points.map((point, i) => (
+                <mesh key={i} position={point}>
+                    <sphereGeometry args={[0.15, 16, 16]} />
+                    <meshStandardMaterial
+                        color={i === 0 ? '#4CAF50' : i === points.length - 1 ? '#F44336' : '#FFC107'}
+                        emissive={i === points.length - 1 ? '#F44336' : '#000'}
+                        emissiveIntensity={0.3}
+                    />
+                </mesh>
+            ))}
+        </group>
+    );
+}
 
 // ============================================================
 // API 응답 타입 정의
@@ -35,6 +69,8 @@ interface UserPosition {
 
 interface StoreMapProps {
     className?: string;
+    /** 내비게이션 경로 [[x, y], ...] */
+    navigationPath?: number[][] | null;
 }
 
 // 선반 타입 매핑 (parentCategoryId → 스타일)
@@ -305,12 +341,14 @@ function StoreScene({
     mapData,
     userPosition,
     isFollowing,
-    setIsFollowing
+    setIsFollowing,
+    navigationPath
 }: {
     mapData: MapDataResponse;
     userPosition: UserPosition;
     isFollowing: boolean;
     setIsFollowing: (v: boolean) => void;
+    navigationPath?: number[][] | null;
 }) {
     return (
         <>
@@ -325,6 +363,9 @@ function StoreScene({
             ))}
 
             <UserMarker position={userPosition} />
+
+            {/* 내비게이션 경로 */}
+            <NavigationPath path={navigationPath || null} />
 
             {/* 카메라 리그 */}
             <CameraRig
@@ -341,7 +382,7 @@ function StoreScene({
 // ============================================================
 // 메인 컴포넌트
 // ============================================================
-export default function StoreMap({ className = '' }: StoreMapProps) {
+export default function StoreMap({ className = '', navigationPath }: StoreMapProps) {
     const [mapData, setMapData] = useState<MapDataResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -443,6 +484,7 @@ export default function StoreMap({ className = '' }: StoreMapProps) {
                     userPosition={pos}
                     isFollowing={isFollowing}
                     setIsFollowing={setIsFollowing}
+                    navigationPath={navigationPath}
                 />
             </Canvas>
         </div>
