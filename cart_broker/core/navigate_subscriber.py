@@ -10,6 +10,7 @@ import json
 from typing import Optional, Tuple
 
 from core.navigate_http import send_navigate_http
+from core.position_http import fetch_position_http
 
 
 def parse_navigate_payload(payload: str) -> Optional[Tuple[float, float]]:
@@ -38,6 +39,7 @@ def parse_navigate_payload(payload: str) -> Optional[Tuple[float, float]]:
 def make_navigate_handler(
     loop: asyncio.AbstractEventLoop,
     navigate_url: str,
+    position_url: str,
     min_interval_sec: float,
 ):
     """
@@ -67,10 +69,19 @@ def make_navigate_handler(
             return
         last_sent_at = now
 
-        fut = asyncio.run_coroutine_threadsafe(
-            send_navigate_http(navigate_url, x, y, theta=0.0),
-            loop,
-        )
+        async def _send_with_theta():
+            theta = None
+            if position_url:
+                try:
+                    pos = await fetch_position_http(position_url)
+                    pos_theta = pos.get("theta")
+                    if isinstance(pos_theta, (int, float)):
+                        theta = float(pos_theta)
+                except Exception as e:
+                    print("[NAV] position fetch error:", e)
+            await send_navigate_http(navigate_url, x, y, theta=theta)
+
+        fut = asyncio.run_coroutine_threadsafe(_send_with_theta(), loop)
 
         def _done_cb(f):
             try:

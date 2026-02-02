@@ -54,6 +54,7 @@ async def main():
         make_navigate_handler(
             loop,
             navigate_url,
+            settings.position_url,
             settings.navigate_min_interval_sec,
         ),
         qos=0,
