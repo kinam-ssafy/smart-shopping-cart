@@ -285,8 +285,9 @@ function ShelfLabel({ center, label, subLabel, height, color }: { center: number
 // 컴포넌트: 사용자 마커
 // ============================================================
 function UserMarker({ position }: { position: UserPosition }) {
+    // 선반/경로와 동일한 좌표계 사용: Z = Y
     const threeX = position.x;
-    const threeZ = -position.y;
+    const threeZ = position.y;  // Z = Y (선반 렌더링과 일치)
     const rotationRad = -position.theta * (Math.PI / 180);
 
     return (
@@ -323,8 +324,9 @@ function CameraRig({
 
     useFrame(() => {
         if (isFollowing && controlsRef.current) {
+            // 선반/경로/UserMarker와 동일한 좌표계: Z = Y
             const threeX = userPosition.x;
-            const threeZ = -userPosition.y;
+            const threeZ = userPosition.y;  // Z = Y
 
             // 카메라 타겟 업데이트 (사용자 위치)
             controlsRef.current.target.set(threeX, 0, threeZ);
