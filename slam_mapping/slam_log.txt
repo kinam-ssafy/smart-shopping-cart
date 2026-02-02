@@ -1,0 +1,93 @@
+============================================
+   YDLidar Cartographer SLAM - 맵 생성
+   - TF 간소화: base_link -> laser (static)
+   - Cartographer가 odom TF 관리
+   - 해상도: 2.5cm/pixel
+============================================
+LiDAR port: /dev/ttyUSB0
+crw-rw-rw- 1 root dialout 188, 0  1월 28 20:07 /dev/ttyUSB0
+Building ROS2 workspace...
+Starting >>> slam_mapping2
+Finished <<< slam_mapping2 [0.55s]
+
+Summary: 1 package finished [0.69s]
+ROS2 workspace sourced successfully
+
+Starting nodes...
+
+[1/4] Starting YDLidar Simple node...
+1769598553.028736 [0] python3.10: config: //CycloneDDS/Domain/General: 'NetworkInterfaceAddress': deprecated element (file:///home/seonil/cyclonedds/config.xml line 6)
+[INFO] [1769598553.064500618] [ydlidar_simple_node]: Static TF: base_link -> laser
+[INFO] [1769598553.065149858] [ydlidar_simple_node]: Found: /dev/ttyS9
+[INFO] [1769598553.065283215] [ydlidar_simple_node]: Found: /dev/ttyUSB0
+[INFO] [1769598553.065406269] [ydlidar_simple_node]: Using port: /dev/ttyUSB0
+[2026-01-28 20:09:13][info] SDK initializing
+[2026-01-28 20:09:13][info] SDK has been initialized
+[2026-01-28 20:09:13][info] SDK Version: 1.2.19
+[2026-01-28 20:09:13][info] Connect elapsed time 1 ms
+[2026-01-28 20:09:13][info] Lidar successfully connected [/dev/ttyUSB0:128000]
+[2026-01-28 20:09:13][info] Lidar running correctly! The health status good
+[0;31m[2026-01-28 20:09:13][error] Fail to get baseplate device information!
+[0m[2026-01-28 20:09:13][info] Check status, Elapsed time 0 ms
+[2026-01-28 20:09:13][info] Lidar init success, Elapsed time [1]ms
+[2026-01-28 20:09:13][info] Start to getting intensity flag
+[2026-01-28 20:09:13][info] Auto set intensity 0
+[2026-01-28 20:09:13][info] [YDLIDAR] End to getting intensity flag
+[2026-01-28 20:09:13][info] [YDLIDAR] Create thread 0xFFFFF640
+[2026-01-28 20:09:14][info] Successed to start scan mode, Elapsed time 1374 ms
+[2026-01-28 20:09:14][info] Module device info
+Firmware version: 3.1
+Hardware version: 3
+Model: S2PRO
+Serial: 2021100600031036
+[2026-01-28 20:09:14][info] Scan Frequency: 10.00Hz
+[2026-01-28 20:09:14][info] Fixed Size: 720
+[2026-01-28 20:09:14][info] Sample Rate: 6.00K
+[2026-01-28 20:09:14][info] Scan Frequency: 10.00Hz
+[2026-01-28 20:09:14][info] Fixed Size: 720
+[2026-01-28 20:09:14][info] Sample Rate: 6.00K
+Waiting for LiDAR data...
+WARNING: topic [/scan] does not appear to be published yet
+Waiting...
+WARNING: topic [/tf_static] does not appear to be published yet
+TF waiting...
+[2026-01-28 20:09:16][info] Single Fixed Size: 1190
+[2026-01-28 20:09:16][info] Sample Rate: 5.00K
+[2026-01-28 20:09:16][info] Successed to check the lidar, Elapsed time 2137 ms
+[2026-01-28 20:09:16][info] Now lidar is scanning...
+[INFO] [1769598556.578952978] [ydlidar_simple_node]: YDLidar ready on /dev/ttyUSB0
+[2/4] Starting Cartographer...
+1769598558.409232 [0] cartograph: config: //CycloneDDS/Domain/General: 'NetworkInterfaceAddress': deprecated element (file:///home/seonil/cyclonedds/config.xml line 6)
+[INFO] [1769598558.430749740] [cartographer logger]: I0128 20:09:18.000000 102014 configuration_file_resolver.cc:41] Found '/home/seonil/S14P11A401/slam_mapping/config/ydlidar_2d.lua' for 'ydlidar_2d.lua'.
+[INFO] [1769598558.430958693] [cartographer logger]: I0128 20:09:18.000000 102014 configuration_file_resolver.cc:41] Found '/opt/ros/humble/share/cartographer/configuration_files/map_builder.lua' for 'map_builder.lua'.
+[INFO] [1769598558.430968797] [cartographer logger]: I0128 20:09:18.000000 102014 configuration_file_resolver.cc:41] Found '/opt/ros/humble/share/cartographer/configuration_files/map_builder.lua' for 'map_builder.lua'.
+[INFO] [1769598558.430983218] [cartographer logger]: I0128 20:09:18.000000 102014 configuration_file_resolver.cc:41] Found '/opt/ros/humble/share/cartographer/configuration_files/pose_graph.lua' for 'pose_graph.lua'.
+[INFO] [1769598558.430990032] [cartographer logger]: I0128 20:09:18.000000 102014 configuration_file_resolver.cc:41] Found '/opt/ros/humble/share/cartographer/configuration_files/pose_graph.lua' for 'pose_graph.lua'.
+[INFO] [1769598558.431063570] [cartographer logger]: I0128 20:09:18.000000 102014 configuration_file_resolver.cc:41] Found '/opt/ros/humble/share/cartographer/configuration_files/trajectory_builder.lua' for 'trajectory_builder.lua'.
+[INFO] [1769598558.431072137] [cartographer logger]: I0128 20:09:18.000000 102014 configuration_file_resolver.cc:41] Found '/opt/ros/humble/share/cartographer/configuration_files/trajectory_builder.lua' for 'trajectory_builder.lua'.
+[INFO] [1769598558.431088061] [cartographer logger]: I0128 20:09:18.000000 102014 configuration_file_resolver.cc:41] Found '/opt/ros/humble/share/cartographer/configuration_files/trajectory_builder_2d.lua' for 'trajectory_builder_2d.lua'.
+[INFO] [1769598558.431093919] [cartographer logger]: I0128 20:09:18.000000 102014 configuration_file_resolver.cc:41] Found '/opt/ros/humble/share/cartographer/configuration_files/trajectory_builder_2d.lua' for 'trajectory_builder_2d.lua'.
+[INFO] [1769598558.431142721] [cartographer logger]: I0128 20:09:18.000000 102014 configuration_file_resolver.cc:41] Found '/opt/ros/humble/share/cartographer/configuration_files/trajectory_builder_3d.lua' for 'trajectory_builder_3d.lua'.
+[INFO] [1769598558.431149652] [cartographer logger]: I0128 20:09:18.000000 102014 configuration_file_resolver.cc:41] Found '/opt/ros/humble/share/cartographer/configuration_files/trajectory_builder_3d.lua' for 'trajectory_builder_3d.lua'.
+[INFO] [1769598558.438298898] [cartographer logger]: I0128 20:09:18.000000 102014 map_builder_bridge.cpp:136] Added trajectory with ID '0'.
+[3/4] Starting Occupancy Grid (resolution: 0.05)...
+1769598563.404794 [0] cartograph: config: //CycloneDDS/Domain/General: 'NetworkInterfaceAddress': deprecated element (file:///home/seonil/cyclonedds/config.xml line 6)
+[4/4] Starting RViz...
+
+============================================
+  All nodes started!
+
+  TF Tree (Cartographer manages):
+    map -> odom -> base_link -> laser
+
+  Map Resolution: 2.5cm per pixel
+
+  Move LiDAR slowly for detailed mapping
+  Press Ctrl+C to stop
+============================================
+Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use QT_QPA_PLATFORM=wayland to run on Wayland anyway.
+1769598564.388175 [0]      rviz2: config: //CycloneDDS/Domain/General: 'NetworkInterfaceAddress': deprecated element (file:///home/seonil/cyclonedds/config.xml line 6)
+[INFO] [1769598564.523006283] [rviz2]: Stereo is NOT SUPPORTED
+[INFO] [1769598564.523071986] [rviz2]: OpenGl version: 4.6 (GLSL 4.6)
+[INFO] [1769598564.537899819] [rviz2]: Stereo is NOT SUPPORTED
+[INFO] [1769598580.462070815] [ydlidar_simple_node]: Scans: 100, Points: 1190
