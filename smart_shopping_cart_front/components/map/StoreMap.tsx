@@ -408,7 +408,7 @@ export default function StoreMap({ className = '', navigationPath }: StoreMapPro
     const [mapData, setMapData] = useState<MapDataResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [pos, setPos] = useState<UserPosition>({ x: 0.06, y: 0.11, theta: 18.5 });
+    const [pos, setPos] = useState<UserPosition>({ x: 1.0, y: 1.0, theta: 0 });  // 백엔드 기본값과 동일
     const [isFollowing, setIsFollowing] = useState(true); // 팔로우 모드 상태
 
     // API에서 지도 데이터 가져오기
