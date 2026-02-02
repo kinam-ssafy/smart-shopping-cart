@@ -476,10 +476,18 @@
 
             const worldCoords = pixelToWorld(canvasX, canvasY);
 
-            console.log(`Clicked: pixel(${canvasX.toFixed(0)}, ${canvasY.toFixed(0)}) -> world(${worldCoords.x.toFixed(2)}, ${worldCoords.y.toFixed(2)})`);
+            // 현재 로봇 방향으로 목표 도착 시 방향 설정
+            let goalTheta = 0;
+            if (positionHistory.length > 0) {
+                const currentPos = positionHistory[positionHistory.length - 1];
+                // 현재 위치에서 목표까지의 방향으로 도착 방향 설정
+                goalTheta = Math.atan2(worldCoords.y - currentPos.y, worldCoords.x - currentPos.x) * 180 / Math.PI;
+            }
 
-            // 목표 전송
-            await sendGoal(worldCoords.x, worldCoords.y, 0);
+            console.log(`Clicked: pixel(${canvasX.toFixed(0)}, ${canvasY.toFixed(0)}) -> world(${worldCoords.x.toFixed(2)}, ${worldCoords.y.toFixed(2)}), goalTheta=${goalTheta.toFixed(1)}°`);
+
+            // 목표 전송 (목표 방향 포함)
+            await sendGoal(worldCoords.x, worldCoords.y, goalTheta);
         });
 
         // 목표 전송
@@ -614,10 +622,10 @@
                 ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 방향 화살표
+                // 방향 화살표 (ROS theta 그대로 사용)
                 const arrowLength = 25;
-                const arrowX = pos.x + Math.cos(-theta + Math.PI/2) * arrowLength;
-                const arrowY = pos.y + Math.sin(-theta + Math.PI/2) * arrowLength;
+                const arrowX = pos.x + Math.cos(theta) * arrowLength;
+                const arrowY = pos.y - Math.sin(theta) * arrowLength;
 
                 ctx.beginPath();
                 ctx.strokeStyle = '#ff6b6b';
