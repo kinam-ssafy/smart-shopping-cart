@@ -12,10 +12,26 @@ import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 function NavigationPath({ path }: { path: number[][] | null }) {
     const points = useMemo(() => {
         if (!path || path.length < 2) return [];
-        return path.map(p => new THREE.Vector3(p[0], 0.15, -p[1]));
+
+        // 디버그 로그: 원본 경로 좌표
+        console.log('[NavigationPath] 원본 경로:', path);
+
+        // Three.js 좌표 변환: (x, y) → (x, height, -y)
+        // Y축을 Z축으로 변환하고 방향 반전
+        const converted = path.map((p, i) => {
+            const vec = new THREE.Vector3(p[0], 0.15, -p[1]);
+            console.log(`[NavigationPath] Point ${i}: (${p[0].toFixed(2)}, ${p[1].toFixed(2)}) → Three.js (${vec.x.toFixed(2)}, ${vec.y.toFixed(2)}, ${vec.z.toFixed(2)})`);
+            return vec;
+        });
+
+        return converted;
     }, [path]);
 
     if (points.length < 2) return null;
+
+    // 디버그: 마지막 점(목표 지점) 강조 표시
+    const endPoint = points[points.length - 1];
+    console.log('[NavigationPath] 목표 지점 (Three.js):', endPoint);
 
     return (
         <group>
@@ -23,19 +39,24 @@ function NavigationPath({ path }: { path: number[][] | null }) {
             <Line
                 points={points}
                 color="#FF5722"
-                lineWidth={3}
+                lineWidth={4}
             />
             {/* 웨이포인트 마커 */}
             {points.map((point, i) => (
                 <mesh key={i} position={point}>
-                    <sphereGeometry args={[0.15, 16, 16]} />
+                    <sphereGeometry args={[0.2, 16, 16]} />
                     <meshStandardMaterial
                         color={i === 0 ? '#4CAF50' : i === points.length - 1 ? '#F44336' : '#FFC107'}
                         emissive={i === points.length - 1 ? '#F44336' : '#000'}
-                        emissiveIntensity={0.3}
+                        emissiveIntensity={0.5}
                     />
                 </mesh>
             ))}
+            {/* 디버그: 목표 지점에 큰 원기둥 표시 */}
+            <mesh position={[endPoint.x, 1, endPoint.z]}>
+                <cylinderGeometry args={[0.3, 0.3, 2, 16]} />
+                <meshStandardMaterial color="#F44336" transparent opacity={0.6} />
+            </mesh>
         </group>
     );
 }
