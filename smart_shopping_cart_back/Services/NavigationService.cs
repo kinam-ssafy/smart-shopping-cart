@@ -157,33 +157,16 @@ public class NavigationService
     {
         var waypoints = new List<double[]>();
 
-        // 1. 모든 후보 waypoint 수집 (blocking fixture 박스 코너들)
+        // 1. 모든 후보 waypoint 수집 (모든 fixture 박스 코너들)
         var candidates = new List<(double x, double y)>();
         
         await using (var cmd = new NpgsqlCommand(@"
-            WITH blocking_fixtures AS (
-                SELECT fixture_geom, 
-                       ST_Expand(ST_Envelope(fixture_geom), 0.5) as expanded_box
-                FROM fixtures
-                WHERE ST_Intersects(
-                    fixture_geom,
-                    ST_SetSRID(ST_MakeLine(
-                        ST_Point(@startX, @startY),
-                        ST_Point(@endX, @endY)
-                    ), 3857)
-                )
-            )
             SELECT 
-                ST_X(ST_PointN(ST_ExteriorRing(expanded_box), n)) as wx,
-                ST_Y(ST_PointN(ST_ExteriorRing(expanded_box), n)) as wy
-            FROM blocking_fixtures, generate_series(1, 4) as n
+                ST_X(ST_PointN(ST_ExteriorRing(ST_Expand(ST_Envelope(fixture_geom), 0.5)), n)) as wx,
+                ST_Y(ST_PointN(ST_ExteriorRing(ST_Expand(ST_Envelope(fixture_geom), 0.5)), n)) as wy
+            FROM fixtures, generate_series(1, 4) as n
         ", conn))
         {
-            cmd.Parameters.AddWithValue("startX", startX);
-            cmd.Parameters.AddWithValue("startY", startY);
-            cmd.Parameters.AddWithValue("endX", endX);
-            cmd.Parameters.AddWithValue("endY", endY);
-
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -193,52 +176,71 @@ public class NavigationService
 
         if (candidates.Count == 0)
         {
-            // 후보가 없으면 우회점 하나 추가
             double midX = (startX + endX) / 2;
             double midY = Math.Max(startY, endY) + 1.0;
             waypoints.Add(new double[] { midX, midY });
             return waypoints;
         }
 
-        // 2. 각 후보로 1-waypoint 경로 시도, 가장 짧은 것 선택
-        double bestSingleDist = double.MaxValue;
-        (double x, double y)? bestSingle = null;
+        // 2. 각 후보에 대해: 시작→후보, 후보→목표 경로가 충돌하지 않는지 검증
+        var validCandidates = new List<(double x, double y, double dist)>();
 
-        foreach (var (wx, wy) in candidates)
+        foreach (var (wx, wy) in candidates.Distinct())
         {
-            double dist = Distance(startX, startY, wx, wy) + Distance(wx, wy, endX, endY);
-            if (dist < bestSingleDist)
+            bool segment1Clear = await IsPathClear(conn, startX, startY, wx, wy);
+            bool segment2Clear = await IsPathClear(conn, wx, wy, endX, endY);
+
+            if (segment1Clear && segment2Clear)
             {
-                bestSingleDist = dist;
-                bestSingle = (wx, wy);
+                double dist = Distance(startX, startY, wx, wy) + Distance(wx, wy, endX, endY);
+                validCandidates.Add((wx, wy, dist));
+                _logger.LogDebug($"[Navigation] 유효한 waypoint: ({wx:F2}, {wy:F2}), 거리: {dist:F2}");
             }
         }
 
-        // 3. 직선 거리와 비교 - 1-waypoint가 직선보다 1.5배 이상 길면 더 스마트하게
-        double directDist = Distance(startX, startY, endX, endY);
-        
-        if (bestSingle.HasValue && bestSingleDist < directDist * 2.0)
+        // 3. 유효한 후보 중 가장 짧은 경로 선택
+        if (validCandidates.Count > 0)
         {
-            // 1-waypoint 경로가 합리적이면 사용
-            waypoints.Add(new double[] { bestSingle.Value.x, bestSingle.Value.y });
-            _logger.LogDebug($"[Navigation] 1-waypoint 선택: ({bestSingle.Value.x:F2}, {bestSingle.Value.y:F2}), 거리: {bestSingleDist:F2}");
+            var best = validCandidates.OrderBy(c => c.dist).First();
+            waypoints.Add(new double[] { best.x, best.y });
+            _logger.LogInformation($"[Navigation] 최적 waypoint 선택: ({best.x:F2}, {best.y:F2})");
         }
         else
         {
-            // 2-waypoint 필요 - 가장 가까운 2개 선택
-            var sorted = candidates
-                .OrderBy(c => Distance(startX, startY, c.x, c.y) + Distance(c.x, c.y, endX, endY))
-                .Take(2)
-                .ToList();
-
-            foreach (var (wx, wy) in sorted)
-            {
-                waypoints.Add(new double[] { wx, wy });
-                _logger.LogDebug($"[Navigation] 2-waypoint 추가: ({wx:F2}, {wy:F2})");
-            }
+            // 유효한 1-waypoint가 없으면, 단순 우회점 사용
+            _logger.LogWarning("[Navigation] 유효한 waypoint 없음, 단순 우회점 사용");
+            double midX = (startX + endX) / 2;
+            double offsetY = (startY + endY) / 2 + 2.0; // 중간점에서 약간 오프셋
+            waypoints.Add(new double[] { midX, offsetY });
         }
 
         return waypoints;
+    }
+
+    /// <summary>
+    /// 두 점 사이의 경로가 장애물과 충돌하지 않는지 확인
+    /// </summary>
+    private async Task<bool> IsPathClear(NpgsqlConnection conn, double x1, double y1, double x2, double y2)
+    {
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT NOT EXISTS(
+                SELECT 1 FROM fixtures
+                WHERE ST_Intersects(
+                    fixture_geom,
+                    ST_SetSRID(ST_MakeLine(
+                        ST_Point(@x1, @y1),
+                        ST_Point(@x2, @y2)
+                    ), 3857)
+                )
+            )
+        ", conn);
+
+        cmd.Parameters.AddWithValue("x1", x1);
+        cmd.Parameters.AddWithValue("y1", y1);
+        cmd.Parameters.AddWithValue("x2", x2);
+        cmd.Parameters.AddWithValue("y2", y2);
+
+        return (bool)(await cmd.ExecuteScalarAsync() ?? false);
     }
 
     /// <summary>
