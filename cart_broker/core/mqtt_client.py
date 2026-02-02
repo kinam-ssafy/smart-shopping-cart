@@ -114,3 +114,24 @@ def publish_position(client, topic: str, pos: dict):
         qos=1,
         retain=True,
     )
+
+
+def subscribe_topic(client, topic: str, on_message, qos: int = 0):
+    """
+    MQTT 토픽을 구독하고 메시지 콜백을 등록
+
+    Args:
+        client: MQTT 클라이언트
+        topic: 구독 토픽
+        on_message: (topic, payload) 콜백
+        qos: QoS 레벨
+    """
+    def _on_message(client, userdata, msg):
+        try:
+            payload = msg.payload.decode("utf-8", errors="ignore")
+        except Exception:
+            payload = repr(msg.payload)
+        on_message(msg.topic, payload)
+
+    client.on_message = _on_message
+    client.subscribe(topic, qos=qos)

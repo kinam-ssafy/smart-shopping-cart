@@ -85,6 +85,20 @@ class Settings:
         ""
     )
 
+    # ========================================
+    # MQTT SUB 설정
+    # ========================================
+    # 외부 MQTT에서 구독할 토픽
+    mqtt_sub_topic: str = os.getenv("MQTT_SUB_TOPIC", "")
+
+    # navigate 명령 수신 후 전송할 HTTP 엔드포인트
+    navigate_url: str = os.getenv("NAVIGATE_URL", "")
+
+    # navigate HTTP 전송 최소 간격(초)
+    navigate_min_interval_sec: float = float(
+        os.getenv("NAVIGATE_MIN_INTERVAL_SEC", "0.2")
+    )
+
 # 전역 설정 인스턴스
 # 다른 모듈에서 from core.config import settings로 사용
 settings = Settings()
