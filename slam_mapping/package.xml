@@ -22,8 +22,17 @@
   <!-- SLAM -->
   <depend>cartographer_ros</depend>
 
-  <!-- Map -->
+  <!-- Navigation -->
+  <depend>nav2_bringup</depend>
   <depend>nav2_map_server</depend>
+  <depend>nav2_msgs</depend>
+  <depend>nav2_bt_navigator</depend>
+  <depend>nav2_planner</depend>
+  <depend>nav2_controller</depend>
+  <depend>nav2_costmap_2d</depend>
+  <depend>nav2_behaviors</depend>
+  <depend>nav2_lifecycle_manager</depend>
+  <depend>action_msgs</depend>
 
   <!-- Visualization -->
   <depend>rviz2</depend>

@@ -31,6 +31,8 @@ setup(
             'ydlidar_node = slam_mapping2.ydlidar_node:main',
             'odom_publisher = slam_mapping2.odom_publisher:main',
             'tf_to_web = slam_mapping2.tf_to_web:main',
+            'goal_bridge = slam_mapping2.goal_bridge:main',
+            'cmd_vel_bridge = slam_mapping2.cmd_vel_bridge:main',
         ],
     },
 )
