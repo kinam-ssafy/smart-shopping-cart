@@ -85,11 +85,22 @@ public class MapController : ControllerBase
 
         _logger.LogInformation("[Position SSE] 클라이언트 연결");
 
-        // 초기 위치 전송 (있으면)
+        // 초기 위치 전송 (stale 체크 적용)
         var currentPosition = _positionService.CurrentPosition;
-        if (currentPosition != null)
+        if (_positionService.IsPositionStale)
+        {
+            // 오래된 위치면 기본값 전송
+            _logger.LogInformation("[Position SSE] 위치 stale - 기본 위치 전송");
+            await SendPositionEventAsync(new Models.CartPositionDto { X = 1.0, Y = 1.0, Theta = 0 });
+        }
+        else if (currentPosition != null)
         {
             await SendPositionEventAsync(currentPosition);
+        }
+        else
+        {
+            // 위치 없으면 기본값 전송
+            await SendPositionEventAsync(new Models.CartPositionDto { X = 1.0, Y = 1.0, Theta = 0 });
         }
 
         // 위치 업데이트 이벤트 핸들러
