@@ -9,23 +9,35 @@ import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 // ============================================================
 // 경로 표시 컴포넌트
 // ============================================================
-function NavigationPath({ path }: { path: number[][] | null }) {
+interface NavigationPathProps {
+    path: number[][] | null;
+    userPosition?: { x: number; y: number };
+}
+
+function NavigationPath({ path, userPosition }: NavigationPathProps) {
     const points = useMemo(() => {
         if (!path || path.length < 2) return [];
 
-        // 디버그 로그: 원본 경로 좌표
-        console.log('[NavigationPath] 원본 경로:', path);
+        // 경로 복사 후 시작점을 현재 사용자 위치로 덮어쓰기
+        const adjustedPath = [...path];
+        if (userPosition) {
+            adjustedPath[0] = [userPosition.x, userPosition.y];
+        }
 
-        // Three.js 좌표 변환: (x, y) → (x, height, -y)
-        // Y축을 Z축으로 변환하고 방향 반전
-        const converted = path.map((p, i) => {
-            const vec = new THREE.Vector3(p[0], 0.15, -p[1]);
+        // 디버그 로그: 조정된 경로 좌표
+        console.log('[NavigationPath] 조정된 경로:', adjustedPath);
+
+        // Three.js 좌표 변환: (x, y) → (x, height, y)
+        // 선반 렌더링과 동일한 좌표계 사용 (ShapeGeometry + rotation 결과와 일치)
+        // ShapeGeometry는 shapeY = -Y, rotation 후 Z = -shapeY = Y
+        const converted = adjustedPath.map((p, i) => {
+            const vec = new THREE.Vector3(p[0], 0.15, p[1]);  // Z = Y
             console.log(`[NavigationPath] Point ${i}: (${p[0].toFixed(2)}, ${p[1].toFixed(2)}) → Three.js (${vec.x.toFixed(2)}, ${vec.y.toFixed(2)}, ${vec.z.toFixed(2)})`);
             return vec;
         });
 
         return converted;
-    }, [path]);
+    }, [path, userPosition]);
 
     if (points.length < 2) return null;
 
@@ -273,8 +285,9 @@ function ShelfLabel({ center, label, subLabel, height, color }: { center: number
 // 컴포넌트: 사용자 마커
 // ============================================================
 function UserMarker({ position }: { position: UserPosition }) {
+    // 선반/경로와 동일한 좌표계 사용: Z = Y
     const threeX = position.x;
-    const threeZ = -position.y;
+    const threeZ = position.y;  // Z = Y (선반 렌더링과 일치)
     const rotationRad = -position.theta * (Math.PI / 180);
 
     return (
@@ -311,8 +324,9 @@ function CameraRig({
 
     useFrame(() => {
         if (isFollowing && controlsRef.current) {
+            // 선반/경로/UserMarker와 동일한 좌표계: Z = Y
             const threeX = userPosition.x;
-            const threeZ = -userPosition.y;
+            const threeZ = userPosition.y;  // Z = Y
 
             // 카메라 타겟 업데이트 (사용자 위치)
             controlsRef.current.target.set(threeX, 0, threeZ);
@@ -386,7 +400,7 @@ function StoreScene({
             <UserMarker position={userPosition} />
 
             {/* 내비게이션 경로 */}
-            <NavigationPath path={navigationPath || null} />
+            <NavigationPath path={navigationPath || null} userPosition={userPosition} />
 
             {/* 카메라 리그 */}
             <CameraRig
@@ -407,7 +421,7 @@ export default function StoreMap({ className = '', navigationPath }: StoreMapPro
     const [mapData, setMapData] = useState<MapDataResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [pos, setPos] = useState<UserPosition>({ x: 0.06, y: 0.11, theta: 18.5 });
+    const [pos, setPos] = useState<UserPosition>({ x: 1.0, y: 1.0, theta: 0 });  // 백엔드 기본값과 동일
     const [isFollowing, setIsFollowing] = useState(true); // 팔로우 모드 상태
 
     // API에서 지도 데이터 가져오기
