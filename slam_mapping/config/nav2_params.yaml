@@ -244,10 +244,35 @@ planner_server:
     use_sim_time: false
     planner_plugins: ["GridBased"]
     GridBased:
-      plugin: "nav2_navfn_planner/NavfnPlanner"
-      tolerance: 0.5
-      use_astar: false
-      allow_unknown: true
+      # Smac Hybrid-A* Planner - 차량형 로봇 (제자리 회전 불가)에 적합
+      plugin: "nav2_smac_planner/SmacPlannerHybrid"
+      tolerance: 0.25                    # 목표 허용 오차 (m)
+      downsample_costmap: false          # costmap 다운샘플링
+      downsampling_factor: 1
+      allow_unknown: true                # 미탐색 영역 통과 허용
+      max_iterations: 1000000            # 최대 탐색 반복 횟수
+      max_on_approach_iterations: 1000   # 목표 접근 시 최대 반복
+      max_planning_time: 5.0             # 최대 계획 시간 (초)
+      motion_model_for_search: "REEDS_SHEPP"  # 차량 운동 모델 (전진+후진)
+      angle_quantization_bins: 72        # 방향 분할 (72 = 5도 간격)
+      analytic_expansion_ratio: 3.5
+      analytic_expansion_max_length: 3.0
+      minimum_turning_radius: 0.40       # 최소 회전 반경 (m) - RC카에 맞게 조정
+      reverse_penalty: 2.0               # 후진 패널티 (후진 경로 억제)
+      change_penalty: 0.0                # 방향 전환 패널티
+      non_straight_penalty: 1.2          # 직진 아닌 경로 패널티
+      cost_penalty: 2.0                  # 장애물 근처 패널티
+      retrospective_penalty: 0.015
+      lookup_table_size: 20.0
+      cache_obstacle_heuristic: false
+      smooth_path: true                  # 경로 스무딩
+      smoother:
+        max_iterations: 1000
+        w_smooth: 0.3
+        w_data: 0.2
+        tolerance: 1.0e-10
+        do_refinement: true
+        refinement_num: 2
 
 smoother_server:
   ros__parameters:
