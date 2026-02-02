@@ -69,41 +69,43 @@ async def main():
 
 
 
-    # ========================================
-    # 2단계: ESP32 BLE 디바이스 탐색
-    # ========================================
-    # service_uuid를 기준으로 ESP32 디바이스를 스캔하여 MAC 주소 획득
-    addr = await find_addr_by_service_uuid(settings.service_uuid)
-    
-    if not addr:
-        # ESP32를 찾지 못한 경우 종료
-        print("[ERR] ESP32 not found")
-        mqttc.loop_stop()
-        mqttc.disconnect()
-        return
-
-    # ========================================
-    # 3단계: UID 추적기 초기화
-    # ========================================
-    # TTL(Time-To-Live) 기반으로 활성 UID를 추적
-    # uid_ttl_sec 시간 동안 감지되지 않으면 자동 만료
-    tracker = UIDTracker(ttl_sec=settings.uid_ttl_sec)
-
-    def on_active_changed(active_uids: list[str]):
-        """
-        활성 UID 목록이 변경될 때 호출되는 콜백
-        
-        UID가 추가되거나 만료될 때마다 MQTT로 현재 UID 목록을 발행합니다.
-        
-        Args:
-            active_uids: 현재 활성 상태인 UID 목록 (정렬됨)
-        """
-        publish_uid_list(mqttc, settings.mqtt_topic, active_uids)
-
-    # ========================================
-    # 4단계: BLE 세션 실행
-    # ========================================
     try:
+        if settings.skip_esp32_check:
+            print("[INFO] ESP32 check skipped (SKIP_ESP32_CHECK=1)")
+            await asyncio.Event().wait()
+
+        # ========================================
+        # 2단계: ESP32 BLE 디바이스 탐색
+        # ========================================
+        # service_uuid를 기준으로 ESP32 디바이스를 스캔하여 MAC 주소 획득
+        addr = await find_addr_by_service_uuid(settings.service_uuid)
+        
+        if not addr:
+            # ESP32를 찾지 못한 경우 종료
+            print("[ERR] ESP32 not found")
+            return
+
+        # ========================================
+        # 3단계: UID 추적기 초기화
+        # ========================================
+        # TTL(Time-To-Live) 기반으로 활성 UID를 추적
+        # uid_ttl_sec 시간 동안 감지되지 않으면 자동 만료
+        tracker = UIDTracker(ttl_sec=settings.uid_ttl_sec)
+
+        def on_active_changed(active_uids: list[str]):
+            """
+            활성 UID 목록이 변경될 때 호출되는 콜백
+            
+            UID가 추가되거나 만료될 때마다 MQTT로 현재 UID 목록을 발행합니다.
+            
+            Args:
+                active_uids: 현재 활성 상태인 UID 목록 (정렬됨)
+            """
+            publish_uid_list(mqttc, settings.mqtt_topic, active_uids)
+
+        # ========================================
+        # 4단계: BLE 세션 실행
+        # ========================================
         await run_ble_session(
             addr=addr,                              # ESP32 MAC 주소
             char_uuid=settings.char_uuid,           # RFID 데이터 특성 UUID

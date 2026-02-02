@@ -12,6 +12,13 @@ from dotenv import load_dotenv
 load_dotenv("./.env")
 
 
+def _env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
 @dataclass(frozen=True)
 class Settings:
     """
@@ -42,6 +49,9 @@ class Settings:
     # RFID 태그 데이터를 수신하는 특성(Characteristic) UUID
     # 이 특성에서 Notify를 구독하여 태그 데이터를 받습니다
     char_uuid: str = "7b1c4b60-2c2d-4d7f-8f2d-9b0b2f2d0a02"
+
+    # ESP32 연결/스캔을 생략할지 여부 (테스트 시 사용)
+    skip_esp32_check: bool = _env_bool("SKIP_ESP32_CHECK", False)
 
     # ========================================
     # UID 추적 설정

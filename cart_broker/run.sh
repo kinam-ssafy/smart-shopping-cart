@@ -7,6 +7,7 @@ set -euo pipefail
 ENTRYPOINT="app.py"
 VENV_DIR=".venv"
 PYTHON_BIN="python3"
+SKIP_ESP32_CHECK="${SKIP_ESP32_CHECK:-0}"
 
 # =====================================
 # 경로 설정
@@ -15,6 +16,16 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
 echo "[INFO] project dir: $PROJECT_DIR"
+
+# =====================================
+# 옵션 처리
+# =====================================
+if [[ "${1:-}" == "--skip-esp32" || "${1:-}" == "--no-esp32" ]]; then
+  SKIP_ESP32_CHECK=1
+  shift
+fi
+
+export SKIP_ESP32_CHECK
 
 # =====================================
 # venv 준비
