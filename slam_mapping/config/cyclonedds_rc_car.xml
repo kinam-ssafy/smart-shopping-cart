@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CycloneDDS 설정 - RC카 (Jetson Nano) 용 -->
+<!-- RC카 IP: 70.12.247.62 -->
+<!-- 원격 PC IP: 70.12.246.46 -->
+<CycloneDDS>
+  <Domain>
+    <Id>0</Id>
+    <General>
+      <!-- 멀티캐스트 비활성화 (유니캐스트만 사용) -->
+      <AllowMulticast>false</AllowMulticast>
+
+      <!-- RC카 네트워크 인터페이스 IP -->
+      <NetworkInterfaceAddress>70.12.247.62</NetworkInterfaceAddress>
+    </General>
+
+    <Discovery>
+      <ParticipantIndex>auto</ParticipantIndex>
+      <MaxAutoParticipantIndex>100</MaxAutoParticipantIndex>
+
+      <!-- 통신할 피어 목록 -->
+      <Peers>
+        <!-- 원격 PC -->
+        <Peer address="70.12.246.46"/>
+        <!-- 로컬 통신 지원 -->
+        <Peer address="localhost"/>
+      </Peers>
+    </Discovery>
+
+    <!-- 내부 설정 -->
+    <Internal>
+      <!-- 최대 메시지 크기 (65KB) -->
+      <MaxMessageSize>65500</MaxMessageSize>
+
+      <!-- 수신/송신 버퍼 크기 -->
+      <SocketReceiveBufferSize>10MB</SocketReceiveBufferSize>
+      <SocketSendBufferSize>10MB</SocketSendBufferSize>
+    </Internal>
+
+    <!-- 로그 레벨 (warning, info, debug) -->
+    <Tracing>
+      <Verbosity>warning</Verbosity>
+    </Tracing>
+  </Domain>
+</CycloneDDS>

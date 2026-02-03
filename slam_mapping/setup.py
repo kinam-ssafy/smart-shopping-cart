@@ -2,7 +2,7 @@ from setuptools import setup
 import os
 from glob import glob
 
-package_name = 'slam_mapping2'
+package_name = 'rccar_nodes'
 
 setup(
     name=package_name,
@@ -17,7 +17,7 @@ setup(
         (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
         (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
         (os.path.join('share', package_name, 'urdf'), glob('urdf/*.urdf')),
-        (os.path.join('share', package_name, 'maps'), glob('maps/*')),
+        # maps/ 디렉토리는 런타임에 생성되므로 패키지에 포함하지 않음
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -28,8 +28,11 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'ydlidar_node = slam_mapping2.ydlidar_node:main',
-            'odom_publisher = slam_mapping2.odom_publisher:main',
+            'ydlidar_node = rccar_nodes.ydlidar_node:main',
+            'odom_publisher = rccar_nodes.odom_publisher:main',
+            'tf_to_web = rccar_nodes.tf_to_web:main',
+            'goal_bridge = rccar_nodes.goal_bridge:main',
+            'cmd_vel_bridge = rccar_nodes.cmd_vel_bridge:main',
         ],
     },
 )

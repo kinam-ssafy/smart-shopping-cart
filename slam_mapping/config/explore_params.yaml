@@ -1,0 +1,28 @@
+explore:
+  ros__parameters:
+    # 로봇 기본 프레임
+    robot_base_frame: base_link
+
+    # Costmap 토픽 (Nav2의 global costmap 사용)
+    costmap_topic: global_costmap/costmap
+    costmap_updates_topic: global_costmap/costmap_updates
+
+    # 탐색 전략
+    planner_frequency: 1.0              # 새 목표 계획 빈도 (Hz)
+    progress_timeout: 30.0              # 목표 도달 타임아웃 (초)
+    visualize: true                     # RViz 시각화
+
+    # Frontier 파라미터
+    potential_scale: 1e-3               # Frontier 잠재력 스케일
+    orientation_scale: 0.0              # 방향 비용 (0=무시)
+    gain_scale: 1.0                     # 정보 이득 스케일
+
+    # Frontier 필터링
+    min_frontier_size: 0.35             # 최소 frontier 크기 (m)
+
+    # 탐색 범위 제한 (RC카 배터리/시간 고려)
+    use_boundary: true                  # 경계 사용
+    boundary_x_min: -10.0               # X 최소값 (m)
+    boundary_x_max: 10.0                # X 최대값 (m)
+    boundary_y_min: -10.0               # Y 최소값 (m)
+    boundary_y_max: 10.0                # Y 최대값 (m)
