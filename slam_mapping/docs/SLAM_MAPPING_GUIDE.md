@@ -150,8 +150,8 @@ cd /home/seonil/slam_mapping
 
 **정상 로그:**
 ```
-[INFO] [ydlidar_simple_node]: YDLidar ready on /dev/ttyUSB0
-[INFO] [ydlidar_simple_node]: Scans: 100, Points: 1191
+[INFO] [ydlidar_node]: YDLidar ready on /dev/ttyUSB0
+[INFO] [ydlidar_node]: Scans: 100, Points: 1191
 [INFO] [cartographer logger]: Added trajectory with ID '0'
 ```
 
@@ -308,7 +308,7 @@ ros2 topic echo /map --once
 ros2 node list
 
 # 특정 노드 정보
-ros2 node info /ydlidar_simple_node
+ros2 node info /ydlidar_node
 ros2 node info /cartographer_node
 ```
 
@@ -351,7 +351,7 @@ ros2 topic list
 **증상:**
 ```
 [error] Error, cannot bind to the specified [serial port:/dev/ttyUSB0]
-[ERROR] [ydlidar_simple_node]: Failed to init YDLidar
+[ERROR] [ydlidar_node]: Failed to init YDLidar
 ```
 
 **원인:** 포트 권한 문제
@@ -464,9 +464,9 @@ slam_mapping/
 ├── scripts/
 │   ├── create_slam_map.sh      # SLAM 실행 스크립트
 │   └── save_map.sh             # 맵 저장 스크립트
-├── slam_mapping2/              # ROS2 패키지
+├── rccar_nodes/              # ROS2 패키지
 │   ├── __init__.py
-│   └── ydlidar_simple_node.py  # YDLidar 노드
+│   └── ydlidar_node.py  # YDLidar 노드
 ├── urdf/
 │   └── robot.urdf              # 로봇 모델 (사용 안 함)
 ├── package.xml                  # ROS2 패키지 정의

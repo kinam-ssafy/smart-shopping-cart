@@ -170,7 +170,7 @@ pip3 install pyserial
 ```bash
 cd ~/S14P11A401/slam_mapping
 source /opt/ros/humble/setup.bash
-colcon build --packages-select slam_mapping2 --symlink-install
+colcon build --packages-select rccar_nodes --symlink-install
 source install/setup.bash
 ```
 
@@ -393,7 +393,7 @@ ls -la /dev/ttyUSB*
 sudo chmod 666 /dev/ttyUSB0
 
 # LiDAR 테스트
-ros2 run slam_mapping2 ydlidar_node --ros-args -p port:=/dev/ttyUSB0
+ros2 run rccar_nodes ydlidar_node --ros-args -p port:=/dev/ttyUSB0
 ```
 
 ### Nav2 노드 활성화 실패
@@ -458,7 +458,7 @@ slam_mapping/
 │   ├── start_full_navigation.sh  # 전체 내비게이션 시작
 │   ├── start_slam_web.sh         # SLAM 매핑 시작
 │   └── save_map.sh               # 맵 저장
-├── slam_mapping2/
+├── rccar_nodes/
 │   ├── ydlidar_node.py           # LiDAR 드라이버
 │   ├── tf_to_web.py              # TF → 웹 서버 전송
 │   ├── goal_bridge.py            # 웹 → Nav2 브릿지

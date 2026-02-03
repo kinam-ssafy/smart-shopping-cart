@@ -263,8 +263,8 @@ python3 control_car.py
 
 **출력 확인:**
 ```
-[INFO] [ydlidar_simple_node]: YDLidar ready on /dev/ttyUSB0
-[INFO] [ydlidar_simple_node]: Scans: 100, Points: 1191
+[INFO] [ydlidar_node]: YDLidar ready on /dev/ttyUSB0
+[INFO] [ydlidar_node]: Scans: 100, Points: 1191
 [INFO] [cartographer logger]: Added trajectory with ID '0'
 [4/4] RViz disabled (use remote RViz from laptop)
 ```
@@ -492,7 +492,7 @@ iperf3 -c 70.12.247.62 -t 10
 ```
 
 #### 해결 3: 스캔 데이터 다운샘플링
-`slam_mapping2/ydlidar_simple_node.py`에서:
+`rccar_nodes/ydlidar_node.py`에서:
 ```python
 # 현재: max_points = 720
 max_points = 360  # 절반으로 줄이기
