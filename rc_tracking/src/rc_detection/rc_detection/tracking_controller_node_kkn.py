@@ -68,8 +68,7 @@ class TrackingControllerNodeKKN(Node):
         self.declare_parameter('max_speed', 80)
         self.declare_parameter('min_speed', 40)
         self.declare_parameter('stop_deadzone', 0.15)
-        self.declare_parameter('emergency_stop_dist', 0.7)
-        self.declare_parameter('safety_stop_dist', 0.4)  # ✅ 전방 장애물 안전 거리
+        self.declare_parameter('emergency_stop_dist', 0.6)
         self.declare_parameter('watchdog_timeout', 1.5)
         self.declare_parameter('target_real_height', TARGET_REAL_HEIGHT)
 
@@ -105,16 +104,13 @@ class TrackingControllerNodeKKN(Node):
         # ✅ [핵심] 유예 기간 중 속도 유지용
         self.last_speed_z = 0              # 마지막으로 발행한 속도
         self.last_steer_val = 0            # 마지막으로 발행한 조향각
-        # ✅ Distance Jump Filter (급격한 거리 변화 방지)
-        self.prev_distance = None
-        self.DISTANCE_JUMP_THRESHOLD = 0.5  # 50% 이상 변화 무시
         
-        # ✅ 전방 안전 거리 (장애물 충돌 방지)
-        self.forward_min_dist = None
-        self.safety_stop_dist = self.get_parameter('safety_stop_dist').value
+        # ✅ [핵심] 거리 급변 필터용
+        self.last_valid_distance = None    # 마지막으로 유효했던 거리
+        self.DISTANCE_JUMP_THRESHOLD = 0.5 # 50% 이상 급변 무시
 
         # ============================================================
-        #  PID/PD 상태
+        # � PID/PD 상태
         # ============================================================
         self.prev_error_dist = 0.0
         self.integral_dist = 0.0
@@ -131,7 +127,7 @@ class TrackingControllerNodeKKN(Node):
         # ✅ [핵심] 락온 유예 기간 - Detection 플리커링 방지
         # YOLO가 8Hz인데 Controller가 50Hz라서 Detection이 끊길 수 있음
         # 바로 락온 해제하지 않고 유예 기간 동안 대기
-        self.lock_lost_counter = 8     # 연속 Detection 놓친 횟수
+        self.lock_lost_counter = 0     # 연속 Detection 놓친 횟수
         self.LOCK_LOST_GRACE = 2      
 
         # ============================================================
@@ -167,7 +163,7 @@ class TrackingControllerNodeKKN(Node):
         # ============================================================
         self.is_braking = False        # 브레이크 작동 중 여부
         self.brake_start_time = 0.0    # 브레이크 시작 시간
-        self.BRAKE_DURATION = 0.15     # 후진 지속 시간 (초) - 조절 가능
+        self.BRAKE_DURATION = 0.2     # 후진 지속 시간 (초) - 조절 가능
         self.BRAKE_POWER = 40          # 후진 파워 (r값, 0~100) - 조절 가능
         # 
         # 🔧 튜닝 가이드:
@@ -194,10 +190,6 @@ class TrackingControllerNodeKKN(Node):
         
         self.distance_sub = self.create_subscription(
             Float32, '/distance', self.distance_callback, 10)
-        
-        # ✅ 전방 안전 거리 구독 (충돌 방지)
-        self.forward_dist_sub = self.create_subscription(
-            Float32, '/scan_min_dist', self.forward_dist_callback, 10)
 
         # ============================================================
         # 📡 ROS Publishers
@@ -247,8 +239,8 @@ class TrackingControllerNodeKKN(Node):
         new_dist = msg.data
         
         # ✅ 거리 급변 필터: 이전 값 대비 50% 이상 변화하면 무시
-        if self.prev_distance is not None and self.prev_distance > 0:
-            ratio = new_dist / self.prev_distance
+        if self.last_valid_distance is not None and self.last_valid_distance > 0:
+            ratio = new_dist / self.last_valid_distance
             # 0.5 ~ 2.0 범위 밖이면 급변으로 판단 → 무시
             if ratio < self.DISTANCE_JUMP_THRESHOLD or ratio > (1 / self.DISTANCE_JUMP_THRESHOLD):
                 # 급변 무시, 이전 값 유지
@@ -256,12 +248,8 @@ class TrackingControllerNodeKKN(Node):
         
         # 유효한 거리 업데이트
         self.latest_distance = new_dist
-        self.prev_distance = new_dist
+        self.last_valid_distance = new_dist
         self.last_distance_time = time.time()
-
-    def forward_dist_callback(self, msg):
-        """전방 최소 거리 콜백 (장애물 충돌 방지용)"""
-        self.forward_min_dist = msg.data
 
     # ================================================================
     # 🎯 타겟 선택 로직
@@ -502,26 +490,6 @@ class TrackingControllerNodeKKN(Node):
             self.emergency_stop()
             self.status_pub.publish(Int32(data=0))
             return
-
-        # ============================================================
-        # [1.5단계] 🛡️ 전방 안전 브레이크 - 장애물 충돌 방지
-        # ============================================================
-        if self.forward_min_dist is not None and self.forward_min_dist > 0:
-            if self.forward_min_dist < self.safety_stop_dist:
-                # 전방에 뭔가 너무 가깝다! → 무조건 브레이크
-                if not self.is_braking:
-                    self.is_braking = True
-                    self.brake_start_time = current_time
-                    self.send_brake_command(0, self.BRAKE_POWER)
-                    self.get_logger().warn(f'🛡️ 전방 장애물! 안전 브레이크 (거리: {self.forward_min_dist:.2f}m)')
-                else:
-                    elapsed = current_time - self.brake_start_time
-                    if elapsed < self.BRAKE_DURATION:
-                        self.send_brake_command(0, self.BRAKE_POWER)
-                    else:
-                        self.stop_brake()
-                        self.send_motor_command(0, 0)
-                return  # 안전 브레이크 중에는 다른 로직 무시
 
         # ============================================================
         # [2단계] 타겟 감지 및 거리 획득

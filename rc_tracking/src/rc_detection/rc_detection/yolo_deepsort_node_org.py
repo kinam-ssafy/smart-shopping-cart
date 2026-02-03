@@ -8,7 +8,6 @@ YOLO + DeepSORT + Web Server 통합 노드
 4. 중앙 집중식 락온(Lock-on) 및 타겟 재탐색(Re-ID) 로직 포함
 """
 
-import os
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
@@ -102,10 +101,7 @@ class YOLODeepSORTNode(Node):
         # ----------------------------------
         # 1. 파라미터 설정 (launch 파일에서 변경 가능)
         # ----------------------------------
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        default_model_path = os.path.join(current_dir, 'yolo26s.engine')
-
-        self.declare_parameter('model_path', default_model_path)
+        self.declare_parameter('model_path', 'yolo26s.engine')
         self.declare_parameter('confidence_threshold', 0.6)
         # self.declare_parameter('target_class', 'person')
         self.declare_parameter('target_class', 'teddy bear')
@@ -113,7 +109,7 @@ class YOLODeepSORTNode(Node):
         # 락온/추적 관련 튜닝 파라미터
         self.declare_parameter('lock_frame_count', 45)       # 중앙에 몇 프레임 머물러야 락온할지
         self.declare_parameter('similarity_threshold', 0.7)  # 히스토그램 유사도 기준 (0~1)
-        self.declare_parameter('track_max_age', 30)          # ✅ 15→30: 더 오래 기억
+        self.declare_parameter('track_max_age', 15)          # 화면에서 사라져도 몇 프레임까지 기억할지
         self.declare_parameter('track_n_init', 3)            # 몇 프레임 연속 탐지되어야 진짜로 인정할지
 
         # 파라미터 가져오기
@@ -136,12 +132,11 @@ class YOLODeepSORTNode(Node):
             max_age=track_max_age,
             n_init=track_n_init,
             nms_max_overlap=1.0,
-            max_cosine_distance=0.4,  # ✅ 0.3→0.4: 더 관대한 매칭 (ID 유지력 향상)
-            nn_budget=100,            # ✅ 특징 벡터 캐싱 (최대 100개 저장)
+            max_cosine_distance=0.3, # 임베딩 벡터 거리 기준
             embedder="torchreid",
-            embedder_model_name="osnet_x1_0",
-            half=True,
-            embedder_gpu=True
+            embedder_model_name="osnet_x1_0", # 사람 재식별에 좋은 경량 모델
+            half=True,           # FP16 사용 (속도 향상)
+            embedder_gpu=True    # GPU 사용
         )
 
         # ----------------------------------
