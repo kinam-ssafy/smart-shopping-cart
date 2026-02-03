@@ -147,9 +147,9 @@ WEB_PID=$!
 sleep 2
 cd "$PROJECT_DIR"
 
-# 2. YDLidar 노드 (Static TF: base_link -> laser)
+# 2. YDLidar 노드 (ROS2 노드로 실행)
 echo "[2/4] Starting YDLidar node..."
-/usr/bin/python3.10 "$PROJECT_DIR/slam_mapping2/ydlidar_simple_node.py" --port "$LIDAR_PORT" &
+ros2 run rccar_nodes ydlidar_node --ros-args -p port:="$LIDAR_PORT" &
 LIDAR_PID=$!
 sleep 3
 
@@ -177,7 +177,7 @@ sleep 1
 
 # 4. TF to Web 노드
 echo "[4/4] Starting TF to Web node..."
-ros2 run slam_mapping2 tf_to_web &
+ros2 run rccar_nodes tf_to_web &
 TF_WEB_PID=$!
 sleep 1
 

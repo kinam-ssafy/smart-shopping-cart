@@ -2,7 +2,7 @@ from setuptools import setup
 import os
 from glob import glob
 
-package_name = 'slam_mapping2'
+package_name = 'rccar_nodes'
 
 setup(
     name=package_name,
@@ -28,11 +28,11 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'ydlidar_node = slam_mapping2.ydlidar_node:main',
-            'odom_publisher = slam_mapping2.odom_publisher:main',
-            'tf_to_web = slam_mapping2.tf_to_web:main',
-            'goal_bridge = slam_mapping2.goal_bridge:main',
-            'cmd_vel_bridge = slam_mapping2.cmd_vel_bridge:main',
+            'ydlidar_node = rccar_nodes.ydlidar_node:main',
+            'odom_publisher = rccar_nodes.odom_publisher:main',
+            'tf_to_web = rccar_nodes.tf_to_web:main',
+            'goal_bridge = rccar_nodes.goal_bridge:main',
+            'cmd_vel_bridge = rccar_nodes.cmd_vel_bridge:main',
         ],
     },
 )

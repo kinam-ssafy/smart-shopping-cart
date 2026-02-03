@@ -51,7 +51,7 @@ cleanup() {
     done
 
     # ROS2 노드들 정리
-    pkill -f "ydlidar_simple_node" 2>/dev/null || true
+    pkill -f "ydlidar_node" 2>/dev/null || true
     pkill -f "cartographer_node" 2>/dev/null || true
     pkill -f "tf_to_web" 2>/dev/null || true
     pkill -f "goal_bridge" 2>/dev/null || true
@@ -120,7 +120,7 @@ if [ -f "$WORKSPACE_DIR/install/setup.bash" ]; then
 else
     echo -e "${YELLOW}[WARN] Workspace not built. Building now...${NC}"
     cd "$WORKSPACE_DIR"
-    colcon build --packages-select slam_mapping2 --symlink-install
+    colcon build --packages-select rccar_nodes --symlink-install
     source "$WORKSPACE_DIR/install/setup.bash"
 fi
 
@@ -140,7 +140,7 @@ echo -e "${GREEN}[OK] Web server started on port 8850${NC}"
 
 # 2. YDLidar 노드 시작
 echo -e "${BLUE}[3/7] Starting YDLidar node...${NC}"
-ros2 run slam_mapping2 ydlidar_node --ros-args \
+ros2 run rccar_nodes ydlidar_node --ros-args \
     -p port:="$LIDAR_PORT" \
     -p baudrate:=128000 \
     -p frame_id:=laser \
@@ -170,7 +170,7 @@ echo -e "${GREEN}[OK] Cartographer started${NC}"
 
 # 4. TF to Web 노드 시작
 echo -e "${BLUE}[5/7] Starting TF to Web bridge...${NC}"
-ros2 run slam_mapping2 tf_to_web --ros-args \
+ros2 run rccar_nodes tf_to_web --ros-args \
     -p web_url:="http://localhost:8850/api/position" \
     -p publish_rate:=5.0 &
 PIDS+=($!)
@@ -250,14 +250,14 @@ echo -e "${GREEN}[OK] Nav2 stack started${NC}"
 
 # 6. Goal Bridge 시작
 echo -e "${BLUE}[7/7] Starting Goal Bridge and Cmd Vel Bridge...${NC}"
-ros2 run slam_mapping2 goal_bridge --ros-args \
+ros2 run rccar_nodes goal_bridge --ros-args \
     -p bridge_port:=8851 \
     -p web_server_url:="http://localhost:8850" &
 PIDS+=($!)
 sleep 1
 
 # Cmd Vel Bridge
-ros2 run slam_mapping2 cmd_vel_bridge --ros-args \
+ros2 run rccar_nodes cmd_vel_bridge --ros-args \
     -p simulation:="$SIMULATION" \
     -p serial_port:="$STM32_PORT" \
     -p publish_odom:=true \

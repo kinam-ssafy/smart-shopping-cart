@@ -26,7 +26,7 @@ def generate_launch_description():
 
     # YDLidar Node (TF도 직접 퍼블리시)
     ydlidar_node = Node(
-        package='slam_mapping2',
+        package='rccar_nodes',
         executable='ydlidar_node',
         name='ydlidar_node',
         parameters=[{

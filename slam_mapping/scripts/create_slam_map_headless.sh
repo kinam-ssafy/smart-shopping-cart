@@ -71,9 +71,9 @@ echo ""
 echo "Starting nodes..."
 echo ""
 
-# 1. YDLidar Simple Node (Static TF만 퍼블리시)
-echo "[1/3] Starting YDLidar Simple node..."
-/usr/bin/python3.10 "$PROJECT_DIR/slam_mapping2/ydlidar_simple_node.py" --port "$LIDAR_PORT" &
+# 1. YDLidar Node (ROS2 노드로 실행)
+echo "[1/3] Starting YDLidar node..."
+ros2 run rccar_nodes ydlidar_node --ros-args -p port:="$LIDAR_PORT" &
 LIDAR_PID=$!
 sleep 3
 

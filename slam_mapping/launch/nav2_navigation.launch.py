@@ -4,7 +4,7 @@ Nav2 Navigation Launch File
 Nav2 스택과 goal_bridge를 함께 실행하는 런치 파일
 
 사용법:
-    ros2 launch slam_mapping2 nav2_navigation.launch.py map:=s4_map
+    ros2 launch rccar_nodes nav2_navigation.launch.py map:=s4_map
 """
 
 import os
@@ -20,7 +20,7 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     # 패키지 경로
-    pkg_share = get_package_share_directory('slam_mapping2')
+    pkg_share = get_package_share_directory('rccar_nodes')
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
 
     # Launch arguments
@@ -149,7 +149,7 @@ def generate_launch_description():
 
     # Goal Bridge (웹 API <-> Nav2 브릿지)
     goal_bridge_node = Node(
-        package='slam_mapping2',
+        package='rccar_nodes',
         executable='goal_bridge',
         name='goal_bridge',
         output='screen',
@@ -162,7 +162,7 @@ def generate_launch_description():
 
     # Cmd Vel Bridge (모터 드라이버 또는 시뮬레이션)
     cmd_vel_bridge_node = Node(
-        package='slam_mapping2',
+        package='rccar_nodes',
         executable='cmd_vel_bridge',
         name='cmd_vel_bridge',
         output='screen',
