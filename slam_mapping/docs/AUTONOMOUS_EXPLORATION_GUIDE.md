@@ -2,6 +2,89 @@
 
 로봇 청소기처럼 RC카가 자율적으로 주변을 탐색하며 맵을 생성합니다.
 
+## 설치 방법
+
+### 1. 사전 요구사항
+
+```bash
+# ROS2 Humble 설치 확인
+ros2 --version
+
+# Nav2 패키지 설치
+sudo apt update
+sudo apt install -y ros-humble-nav2-bringup \
+                    ros-humble-nav2-controller \
+                    ros-humble-nav2-planner \
+                    ros-humble-nav2-bt-navigator \
+                    ros-humble-nav2-map-server \
+                    ros-humble-nav2-costmap-2d \
+                    ros-humble-nav2-smac-planner
+
+# Cartographer 설치
+sudo apt install -y ros-humble-cartographer \
+                    ros-humble-cartographer-ros
+
+# CycloneDDS (권장)
+sudo apt install -y ros-humble-rmw-cyclonedds-cpp
+```
+
+### 2. m-explore-ros2 설치 (자율 탐색 패키지)
+
+```bash
+cd ~/S14P11A401/slam_mapping
+
+# m-explore-ros2 클론
+git clone https://github.com/robo-friends/m-explore-ros2.git src/explore
+
+# 빌드
+colcon build --packages-select explore_lite
+
+# 환경 소싱
+source install/setup.bash
+```
+
+### 3. rccar_nodes 패키지 빌드
+
+```bash
+cd ~/S14P11A401/slam_mapping
+
+# 전체 패키지 빌드
+colcon build --symlink-install
+
+# 환경 소싱
+source install/setup.bash
+```
+
+### 4. CycloneDDS 설정 (선택사항, 권장)
+
+```bash
+# 설정 디렉토리 생성
+mkdir -p ~/cyclonedds
+
+# 설정 파일 생성
+cat > ~/cyclonedds/config.xml << 'EOF'
+<?xml version="1.0" encoding="UTF-8" ?>
+<CycloneDDS xmlns="https://cdds.io/config">
+    <Domain>
+        <General>
+            <NetworkInterfaceAddress>lo</NetworkInterfaceAddress>
+        </General>
+    </Domain>
+</CycloneDDS>
+EOF
+```
+
+### 5. 설치 확인
+
+```bash
+# 패키지 확인
+ros2 pkg list | grep -E "explore_lite|rccar_nodes|nav2"
+
+# 노드 실행 확인
+ros2 run rccar_nodes ydlidar_node --help
+ros2 run explore_lite explore --help
+```
+
 ## 시스템 개요
 
 ```
@@ -181,8 +264,8 @@ pkill -9 -f "cmd_vel_bridge"
 
 웹 UI로 실시간 모니터링:
 ```bash
-# 브라우저에서 접속
-http://localhost:8850
+# 브라우저에서 접속 (자율 탐색은 8849 포트 사용)
+http://localhost:8849
 ```
 
 - 현재 위치 (녹색 원)

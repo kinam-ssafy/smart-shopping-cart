@@ -75,14 +75,14 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 echo "[1/8] Starting YDLidar node..."
-ros2 run slam_mapping2 ydlidar_node \
+ros2 run rccar_nodes ydlidar_node \
     --ros-args -p port:=$LIDAR_PORT &
 YDLIDAR_PID=$!
 sleep 3
 echo "[OK] YDLidar started (PID: $YDLIDAR_PID)"
 
 echo "[2/8] Starting Cartographer SLAM..."
-ros2 launch slam_mapping2 cartographer.launch.py \
+ros2 launch rccar_nodes cartographer.launch.py \
     use_sim_time:=false \
     configuration_directory:=$WORKSPACE_DIR/config \
     configuration_basename:=ydlidar_2d.lua &
@@ -90,14 +90,22 @@ CARTO_PID=$!
 sleep 3
 echo "[OK] Cartographer started (PID: $CARTO_PID)"
 
-echo "[3/8] Starting TF to Web bridge (optional)..."
-ros2 run slam_mapping2 tf_to_web \
-    --ros-args -p enable_logging:=false &
+echo "[3/9] Starting Web Server (port 8849)..."
+python3 $WORKSPACE_DIR/web/position_server.py --port 8849 &
+WEB_PID=$!
+sleep 2
+echo "[OK] Web server started on port 8849 (PID: $WEB_PID)"
+
+echo "[4/9] Starting TF to Web bridge (port 8849)..."
+ros2 run rccar_nodes tf_to_web \
+    --ros-args \
+    -p enable_logging:=false \
+    -p web_url:="http://localhost:8849/api/position" &
 TF_WEB_PID=$!
 sleep 1
-echo "[OK] TF bridge started (PID: $TF_WEB_PID)"
+echo "[OK] TF bridge started on port 8849 (PID: $TF_WEB_PID)"
 
-echo "[4/8] Starting Nav2 controller and planner..."
+echo "[5/9] Starting Nav2 controller and planner..."
 ros2 run nav2_controller controller_server \
     --ros-args \
     --params-file $WORKSPACE_DIR/config/nav2_explore_params.yaml &
@@ -110,19 +118,19 @@ ros2 run nav2_planner planner_server \
 PLANNER_PID=$!
 sleep 2
 
-echo "[5/8] Starting Nav2 bt_navigator..."
+echo "[6/9] Starting Nav2 bt_navigator..."
 ros2 run nav2_bt_navigator bt_navigator \
     --ros-args \
     --params-file $WORKSPACE_DIR/config/nav2_explore_params.yaml &
 BT_NAV_PID=$!
 sleep 2
 
-echo "[6/8] Starting cmd_vel bridge..."
+echo "[7/9] Starting cmd_vel bridge..."
 if [ "$SIMULATION" = "true" ]; then
-    ros2 run slam_mapping2 cmd_vel_bridge \
+    ros2 run rccar_nodes cmd_vel_bridge \
         --ros-args -p simulation:=true &
 else
-    ros2 run slam_mapping2 cmd_vel_bridge \
+    ros2 run rccar_nodes cmd_vel_bridge \
         --ros-args \
         -p simulation:=false \
         -p serial_port:=$STM32_PORT &
@@ -131,7 +139,7 @@ CMD_VEL_PID=$!
 sleep 2
 echo "[OK] cmd_vel bridge started (PID: $CMD_VEL_PID)"
 
-echo "[7/8] Activating Nav2 lifecycle nodes..."
+echo "[8/9] Activating Nav2 lifecycle nodes..."
 sleep 3
 
 # Configure and activate controller_server
@@ -154,7 +162,7 @@ sleep 1
 
 echo "[OK] Nav2 nodes activated"
 
-echo "[8/8] Starting autonomous exploration..."
+echo "[9/9] Starting autonomous exploration..."
 ros2 run explore_lite explore \
     --ros-args \
     --params-file $WORKSPACE_DIR/config/explore_params.yaml &
@@ -167,7 +175,7 @@ echo "========================================================"
 echo "  🤖 Autonomous Exploration Active!"
 echo "========================================================"
 echo "  The robot will explore for $EXPLORATION_TIME seconds"
-echo "  Watch progress: http://localhost:8850"
+echo "  Watch progress: http://localhost:8849"
 echo "  Press Ctrl+C to stop and save map"
 echo "========================================================"
 echo ""
