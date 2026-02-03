@@ -46,6 +46,8 @@ services:
       - MQTT__Password=${MQTT_PASSWORD}
       # DB 연결 정보
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${DB_NAME:-smart_cart};Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-password}
+      # GMS API Key
+      - GMS_KEY=${GMS_KEY}
     depends_on:
       db:
         condition: service_healthy
