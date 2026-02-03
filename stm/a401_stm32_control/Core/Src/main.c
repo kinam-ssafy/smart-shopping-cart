@@ -169,18 +169,15 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 /* USER CODE BEGIN 4 */
+/* USER CODE BEGIN 4 */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
-	/* USER CODE BEGIN 4 */
-	void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
-	{
-	  if (huart->Instance != USART2) return;
+  if (huart->Instance != USART2) return;
 
-	  comm_uart_line_on_rx(Size);
-	}
-	/* USER CODE END 4 */
-
+  comm_uart_line_on_rx(Size);
 }
+/* USER CODE END 4 */
+
 /* USER CODE END 4 */
 /* USER CODE END 4 */
 
