@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using smart_shopping_cart_back.Models;
+using smart_shopping_cart_back.Repositories;
 
 namespace smart_shopping_cart_back.Data;
 
@@ -14,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<Review> Reviews { get; set; }
     public DbSet<Cart> Carts { get; set; }
     public DbSet<RagChunk> RagChunks { get; set; }
+    public DbSet<SeasonalContext> SeasonalContexts { get; set; }
 
     // Map entities
     public DbSet<StoreMap> StoreMaps { get; set; }
@@ -102,8 +104,22 @@ public class AppDbContext : DbContext
             e.Property(x => x.Metadata).HasColumnName("metadata").HasColumnType("jsonb");
             e.Property(x => x.CreatedAt).HasColumnName("created_at");
         });
+
+        // SeasonalContext entity configuration - Vector 타입 처리
+        modelBuilder.Entity<SeasonalContext>(e =>
+        {
+            e.ToTable("seasonal_contexts");
+            e.HasKey(x => x.Season);
+            e.Property(x => x.Season).HasColumnName("season");
+            e.Property(x => x.ContextText).HasColumnName("context_text");
+            e.Property(x => x.Embedding).HasColumnName("embedding").HasColumnType("vector(1536)");
+            e.Property(x => x.CreatedAt).HasColumnName("created_at");
+            e.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+        });
+
         // scalar 저장용
         modelBuilder.Entity<ScalarLong>().HasNoKey();
+        modelBuilder.Entity<ScalarVector>().HasNoKey();
     }
 
 }

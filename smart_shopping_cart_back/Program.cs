@@ -1,4 +1,5 @@
 using smart_shopping_cart_back.Extensions;
+using smart_shopping_cart_back.Repositories;
 using smart_shopping_cart_back.Services;
 using smart_shopping_cart_back.Data;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,7 @@ builder.Services.AddHttpClient(); // general purpose
 
 builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
 builder.Services.AddScoped<IRecommendationRepository, RecommendationRepository>();
+builder.Services.AddScoped<ISeasonalContextRepository, SeasonalContextRepository>();
 
 
 // DB & Repository
