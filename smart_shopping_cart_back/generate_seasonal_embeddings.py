@@ -13,20 +13,41 @@ except ImportError:
 GMS_EMBEDDING_URL = "https://gms.ssafy.io/gmsapi/api.openai.com/v1/embeddings"
 OUTPUT_FILE = "db/init/10_seasonal_contexts.sql"
 
-# Seasonal context definitions (from SearchService.GetSeasonalContext())
+# Seasonal context definitions
 SEASONAL_CONTEXTS = {
     "winter": "winter warm beverages hot chocolate tea soup comfort food cozy snacks",
     "spring": "spring fresh vegetables strawberries salad light meals produce",
     "summer": "summer cold drinks icecream watermelon refreshing fruits berries",
-    "autumn": "autumn pumpkin apple cinnamon warm spices cozy snacks harvest"
+    "autumn": "autumn pumpkin apple cinnamon warm spices cozy snacks harvest",
+    
+    # Major Korean Holidays
+    "newyear": "new year celebration fresh start party snacks champagne countdown festive decorations resolution",
+    "seollal": "korean lunar new year traditional food hanbok rice cake tteokguk gift sets bowing ceremony ancestral rites family gathering",
+    "valentines": "valentines day chocolate gifts candy hearts romance couples desserts sweet treats",
+    "childrens": "childrens day kids snacks toys gifts candy fun treats family outing celebration",
+    "christmas": "christmas holiday season gifts cookies cake turkey chicken party decorations santa festive treats family gathering celebration",
+    "chuseok": "korean thanksgiving harvest moon songpyeon rice cake fruit gift sets traditional food family gathering ancestral rites hanbok"
 }
 
 def get_gms_key():
+    # Try environment variable first
     key = os.getenv("GMS_KEY")
-    if not key:
-        print("Error: GMS_KEY not found in .env")
-        sys.exit(1)
-    return key
+    if key:
+        return key
+    
+    # If not in env, try reading from .env file directly
+    env_path = os.path.join(os.path.dirname(__file__), '.env')
+    if os.path.exists(env_path):
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip() and not line.startswith('#'):
+                    if '=' in line:
+                        k, v = line.strip().split('=', 1)
+                        if k == 'GMS_KEY':
+                            return v
+    
+    print("Error: GMS_KEY not found in environment or .env file")
+    sys.exit(1)
 
 def get_embedding(text, api_key):
     print(f"  Generating embedding for: {text[:60]}...")

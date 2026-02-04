@@ -14,6 +14,16 @@ public class SearchService : ISearchService
     private readonly IRecommendationRepository _recommendationRepository;
     private readonly ISeasonalContextRepository _seasonalContextRepository;
 
+    private static readonly Dictionary<string, (DateTime Start, DateTime End)> HolidayRanges = new()
+    {
+        { "newyear", (new DateTime(2026, 1, 1), new DateTime(2026, 1, 14)) },
+        { "seollal", (new DateTime(2026, 2, 14), new DateTime(2026, 2, 20)) },
+        { "valentines", (new DateTime(2026, 2, 10), new DateTime(2026, 2, 14)) },
+        { "childrens", (new DateTime(2026, 5, 3), new DateTime(2026, 5, 5)) },
+        { "chuseok", (new DateTime(2026, 9, 11), new DateTime(2026, 9, 25)) },
+        { "christmas", (new DateTime(2026, 12, 20), new DateTime(2026, 12, 27)) }
+    };
+
     public SearchService(
         AppDbContext db,
         ICartRepository cartRepository,
@@ -135,6 +145,15 @@ public class SearchService : ISearchService
 
     private string GetCurrentSeason()
     {
+        var today = DateTime.Now.Date;
+
+        foreach (var (holiday, (start, end)) in HolidayRanges)
+        {
+            if (today >= start && today <= end)
+            {
+                return holiday;
+            }
+        }
         var currentMonth = DateTime.Now.Month;
         
         return currentMonth switch
