@@ -49,6 +49,13 @@ static byte     last_uid_len[4] = {0,0,0,0};
 static byte     last_uid[4][10];
 
 // =====================================================
+// BLE 광고 watchdog (연결 안 되었을 때 광고 재시작용)
+// =====================================================
+static uint32_t last_adv_kick_ms = 0;
+static const uint32_t ADV_KICK_PERIOD_MS = 2000; // 2초마다 한 번만 광고 킥
+
+
+// =====================================================
 // 콜백
 // =====================================================
 class ServerCallbacks : public NimBLEServerCallbacks {
@@ -226,6 +233,20 @@ void setup() {
 }
 
 void loop() {
+  uint32_t now = millis();
+
+  if (!g_connected) {
+    if (now - last_adv_kick_ms > ADV_KICK_PERIOD_MS) {
+      last_adv_kick_ms = now;
+
+      auto adv = NimBLEDevice::getAdvertising();
+      if (!adv->isAdvertising()) {
+        adv->start();
+        Serial.println("[BLE] adv restarted");
+      }
+    }
+  }
+
   for (int i = 0; i < 4; i++) scan_one(i);
   delay(20);
 }
