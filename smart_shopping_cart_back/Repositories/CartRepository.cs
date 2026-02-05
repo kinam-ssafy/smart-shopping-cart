@@ -87,8 +87,10 @@ public class CartRepository : ICartRepository
         if (shoppingList == null || shoppingList.Length == 0)
             return new List<long>();
 
-        return shoppingList
-            .Select(x => long.Parse(x))
-            .ToList();
+        return await _context.ProductRfids
+            .AsNoTracking()
+            .Where(pr => shoppingList.Contains(pr.RfidUid))
+            .Select(pr => pr.ProductId)
+            .ToListAsync(ct);
     }
 }
