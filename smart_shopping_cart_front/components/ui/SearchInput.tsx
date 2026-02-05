@@ -1,7 +1,6 @@
-'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SearchIcon from '../icons/SearchIcon';
+import useDebounce from '@/hooks/useDebounce';
 
 interface SearchInputProps {
     /** 플레이스홀더 텍스트 */
@@ -24,6 +23,16 @@ export default function SearchInput({
 }: SearchInputProps) {
     const [value, setValue] = useState('');
 
+    // 300ms 디바운싱 적용
+    const debouncedValue = useDebounce(value, 300);
+
+    // debouncedValue가 변경될 때만 검색 호출
+    useEffect(() => {
+        if (onSearch) {
+            onSearch(debouncedValue);
+        }
+    }, [debouncedValue, onSearch]);
+
     const handleSearch = () => {
         if (onSearch) {
             onSearch(value);
@@ -31,12 +40,8 @@ export default function SearchInput({
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = e.target.value;
-        setValue(newValue);
-        // 실시간 검색: 타이핑할 때마다 onSearch 호출
-        if (onSearch) {
-            onSearch(newValue);
-        }
+        setValue(e.target.value);
+        // 여기서 onSearch를 직접 호출하지 않음 (useEffect에서 처리)
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
