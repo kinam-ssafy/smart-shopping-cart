@@ -1,1 +1,38 @@
 /infra
+
+cyclonedds.log
+
+# ROS2 / colcon
+**/build/
+**/install/
+**/log/
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/.venv/
+**/venv/
+**/.env
+
+# CMake / build artifacts
+**/CMakeCache.txt
+**/CMakeFiles/
+**/cmake_install.cmake
+**/Makefile
+
+# Frontend
+**/node_modules/
+**/dist/
+
+# IDE / OS
+**/.vscode/
+**/.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs and models
+*.log
+*.onnx
+*.pt
+*.pth
