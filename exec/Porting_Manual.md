@@ -81,6 +81,63 @@
   - MQTT: `8883` (External/SSL) -> `1883` (Internal)
 
 ## 4. 데이터베이스 접속 정보 (DB Connection)
+
+## 5. 임베디드 포팅 가이드 (Embedded / STM32F103RB)
+
+본 섹션은 **S14P11A401 (Smart Shopping Cart)** 프로젝트의 카트 구동부(조향/구동) 제어를 담당하는 **STM32F103RB** 펌웨어 포팅(빌드/업로드/연결) 가이드입니다.
+
+---
+
+### 5.1 하드웨어 구성 (Hardware)
+
+- **MCU 보드**: STM32F103RB (예: Nucleo-F103RB)
+- **모터 드라이버**: L298N (현재 사용)
+- **구동 모터**: DC Motor (RC 카 구동)
+- **조향**: Servo Motor
+
+#### 5.1.1 기본 배선 (Wiring)
+> 아래 핀은 현재 펌웨어 기준 예시이며, `.ioc` 설정과 일치해야 합니다.
+
+- **모터 PWM**
+  - `PA6` : `TIM3_CH1` → L298N `ENA(PWM)`
+- **모터 방향**
+  - `PA10` → L298N `IN1`
+  - `PB4`  → L298N `IN2`
+- **서보 PWM**
+  - `PB6` : `TIM4_CH1` → Servo Signal
+- **UART 통신 (Jetson/RPi ↔ STM32)**
+  - `USART2` 사용 (보드 설정에 따라 ST-LINK VCP 또는 외부 USB-UART 사용)
+- **전원**
+  - 모터 전원(배터리팩 5V)은 **L298N에 공급**
+  - STM32 전원은 USB(ST-LINK) 또는 별도 5V/3.3V
+  - **GND는 반드시 공통**: STM32 GND = L298N GND = 배터리 GND
+
+---
+
+### 5.2 펌웨어 프로젝트 위치 (Repository Path)
+
+- 브랜치: `stm32`
+- 경로: `stm/a401_stm32_control/`
+  - `ppl.ioc` : STM32CubeMX 설정 파일
+  - `Core/Src/`, `Core/Inc/` : 애플리케이션 및 드라이버 코드
+
+---
+
+### 5.3 개발/빌드 환경 (Build Environment)
+
+- **IDE**: STM32CubeIDE (Windows 권장)
+- **Programmer/Debugger**: ST-LINK (Nucleo 내장 ST-LINK 사용 가능)
+- **툴체인**: arm-none-eabi-gcc (CubeIDE 내장)
+
+---
+
+### 5.4 빌드 및 업로드 절차 (Build & Flash)
+
+1) **레포 클론 및 브랜치 이동**
+```bash
+git clone [Repository URL] S14P11A401
+cd S14P11A401
+git switch stm32
 - **Host**: `localhost` (외부) 또는 `db` (도커 내부 네트워크 `cart-network`)
 - **Port**: `5432`
 - **Database**: `smart_cart`
