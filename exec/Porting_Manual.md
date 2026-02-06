@@ -82,6 +82,12 @@
 
 ## 4. 데이터베이스 접속 정보 (DB Connection)
 
+- **Host**: `localhost` (외부) 또는 `db` (도커 내부 네트워크 `cart-network`)
+- **Port**: `5432`
+- **Database**: `smart_cart`
+- **User**: `myuser`
+- **Password**: `my-secure-password-123`
+
 ## 5. 임베디드 포팅 가이드 (Embedded / STM32F103RB)
 
 본 섹션은 **S14P11A401 (Smart Shopping Cart)** 프로젝트의 카트 구동부(조향/구동) 제어를 담당하는 **STM32F103RB** 펌웨어 포팅(빌드/업로드/연결) 가이드입니다.
@@ -116,7 +122,6 @@
 
 ### 5.2 펌웨어 프로젝트 위치 (Repository Path)
 
-- 브랜치: `stm32`
 - 경로: `stm/a401_stm32_control/`
   - `ppl.ioc` : STM32CubeMX 설정 파일
   - `Core/Src/`, `Core/Inc/` : 애플리케이션 및 드라이버 코드
@@ -133,16 +138,20 @@
 
 ### 5.4 빌드 및 업로드 절차 (Build & Flash)
 
-1) **레포 클론 및 브랜치 이동**
+1) **레포 클론**
 ```bash
 git clone [Repository URL] S14P11A401
 cd S14P11A401
-git switch stm32
- - **Host**: `localhost` (외부) 또는 `db` (도커 내부 네트워크 `cart-network`)
- - **Port**: `5432`
- - **Database**: `smart_cart`
- - **User**: `myuser`
- - **Password**: `my-secure-password-123`
+```
+
+2) **STM32CubeIDE에서 프로젝트 열기**
+   - `stm/a401_stm32_control/` 폴더를 Import
+
+3) **빌드**
+   - CubeIDE에서 Build (hammer 아이콘)
+
+4) **업로드(Flash)**
+   - ST-LINK 연결 후 Debug/Run
 
 ## 6. ESP32 카트 바구니 (cart_basket) 포팅 가이드
 
@@ -226,3 +235,124 @@ git switch stm32
 - BLE 광고 `RC522-GATT` 확인
 - 중앙 장치가 연결되면 Notify 수신
 - 동일 UID는 `REPEAT_MS = 200ms` 주기로 반복 전송
+
+## 7. cart_broker (MQTT & BLE 브로커) 포팅 가이드
+
+본 섹션은 **ESP32 BLE RFID → MQTT 중계** 및 **HTTP ↔ MQTT 브릿지** 역할을 수행하는 `cart_broker`의 실행/설정 방법을 설명합니다.
+
+---
+
+### 7.1 프로젝트 위치 (Repository Path)
+
+- 경로: `cart_broker/`
+  - `app.py` : 메인 진입점
+  - `requirements.txt` : Python 의존성
+  - `core/` : BLE/MQTT/HTTP 로직
+
+---
+
+### 7.2 개발/실행 환경 (Runtime)
+
+- **Python**: 3.10 이상
+- **OS**: Linux / macOS / Windows
+- **BLE**: Bluetooth 지원 호스트 필요 (Linux는 BlueZ + D-Bus 필요)
+
+---
+
+### 7.3 환경 변수 설정 (`cart_broker/.env`)
+
+아래 값을 `.env`로 설정합니다.
+
+```env
+# MQTT 브로커 접속 정보
+MQTT_HOST=your-mqtt-broker-ip
+MQTT_PORT=1883
+MQTT_ID=your-mqtt-username
+MQTT_PW=your-mqtt-password
+MQTT_TOPIC=cart/1
+
+# (선택) BLE 디바이스 스캔 생략
+SKIP_ESP32_CHECK=0
+
+# (선택) 위치 HTTP → MQTT 발행
+POSITION_URL=http://<position-server>/api/position
+
+# (선택) MQTT SUB → navigate HTTP 전송
+MQTT_SUB_TOPIC=cart/1/navigate
+NAVIGATE_URL=http://<position-server>/api/goal
+NAVIGATE_MIN_INTERVAL_SEC=0.2
+```
+
+| 변수명 | 설명 | 기본값 |
+|--------|------|--------|
+| `MQTT_HOST` | MQTT 브로커 호스트 | (필수) |
+| `MQTT_PORT` | MQTT 포트 | `1883` |
+| `MQTT_ID` | MQTT 사용자명 | (필수) |
+| `MQTT_PW` | MQTT 비밀번호 | (필수) |
+| `MQTT_TOPIC` | UID 목록 발행 토픽 | (필수) |
+| `SKIP_ESP32_CHECK` | BLE 스캔 생략 여부 | `0` |
+| `POSITION_URL` | 위치 GET API URL | (선택) |
+| `MQTT_SUB_TOPIC` | navigate 구독 토픽 | `cart/1/navigate` |
+| `NAVIGATE_URL` | navigate POST API URL | (선택) |
+| `NAVIGATE_MIN_INTERVAL_SEC` | navigate 최소 전송 간격(초) | `0.2` |
+
+> 참고: 현재 코드 기준으로 **위치 MQTT 발행 토픽**은 `cart/1/position`으로 고정되어 있습니다 (`app.py`).
+
+---
+
+### 7.4 실행 방법
+
+1. **브랜치 이동**
+   ```bash
+   cd cart_broker
+   ```
+
+2. **가상환경 생성 및 의존성 설치**
+   ```bash
+   python -m venv .venv
+   # Linux/macOS
+   source .venv/bin/activate
+   # Windows
+   # .\.venv\Scripts\Activate.ps1
+   pip install -r requirements.txt
+   ```
+
+3. **실행**
+   ```bash
+   python app.py
+   ```
+
+---
+
+### 7.5 메시지 형식
+
+#### BLE → cart_broker (ESP32 Notify)
+```
+R{리더번호},{UID길이},{UID_HEX}
+```
+예: `R1,4,A1B2C3D4`
+
+#### cart_broker → MQTT (UID 목록)
+```json
+{
+  "uids": ["A1:B2:C3:D4", "E5:F6:G7:H8"],
+  "time": "YYYY-MM-DD HH:MM:SS"
+}
+```
+
+#### MQTT SUB → navigate HTTP
+- **구독 토픽**: `cart/1/navigate` (기본값)
+- **Payload**:
+```json
+{ "x": 1.23, "y": 4.56 }
+```
+
+---
+
+### 7.6 동작 확인 체크리스트
+
+- BLE 스캔 로그에서 ESP32 발견
+- UID 추가/만료 로그가 출력됨 (`[ADD]`, `[DEL]`)
+- MQTT 토픽에 UID 목록이 발행됨
+- (옵션) 위치 API가 정상이라면 `cart/1/position`으로 위치 발행됨
+- (옵션) `cart/1/navigate` 수신 시 목표 좌표가 HTTP로 전송됨
