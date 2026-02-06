@@ -1,7 +1,7 @@
 'use client';
 
 import { notFound } from 'next/navigation';
-import { use, useState, useEffect } from 'react';
+import { use, useState, useEffect, useRef } from 'react';
 import { SearchButton } from '@/components/ui/buttons/Button';
 import StoreMap from '@/components/map/StoreMap';
 import ExpandableProductCard from '@/components/ui/product/ExpandableProductCard';
@@ -16,6 +16,25 @@ export default function CartPage({ params }: { params: Promise<{ id: string }> }
     const [isConnected, setIsConnected] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [navigationPath, setNavigationPath] = useState<number[][] | null>(null);
+
+    // 이전 장바구니 수량 추적 및 초기 로딩 감지
+    const prevCartLength = useRef(0);
+    const isFirstLoad = useRef(true);
+
+    // 장바구니 수량 증가 시 효과음 재생
+    useEffect(() => {
+        if (isFirstLoad.current) {
+            isFirstLoad.current = false;
+            prevCartLength.current = cartItems.length;
+            return;
+        }
+
+        if (cartItems.length > prevCartLength.current) {
+            const audio = new Audio('/beep.mp3');
+            audio.play().catch(e => console.error('[Audio] 재생 실패 (사용자 인터랙션 필요):', e));
+        }
+        prevCartLength.current = cartItems.length;
+    }, [cartItems]);
 
     // params를 unwrap (Next.js 15 이상)
     const { id: cartId } = use(params);
