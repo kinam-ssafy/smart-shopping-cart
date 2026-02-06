@@ -1,0 +1,18 @@
+# Build outputs
+/build/
+/Debug/
+/Release/
+
+# Object files
+*.o
+*.d
+*.elf
+*.map
+
+# IDE
+.settings/
+.metadata/
+
+# OS
+.DS_Store
+Thumbs.db
