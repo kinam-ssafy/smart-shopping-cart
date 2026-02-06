@@ -138,8 +138,91 @@
 git clone [Repository URL] S14P11A401
 cd S14P11A401
 git switch stm32
-- **Host**: `localhost` (외부) 또는 `db` (도커 내부 네트워크 `cart-network`)
-- **Port**: `5432`
-- **Database**: `smart_cart`
-- **User**: `myuser`
-- **Password**: `my-secure-password-123`
+ - **Host**: `localhost` (외부) 또는 `db` (도커 내부 네트워크 `cart-network`)
+ - **Port**: `5432`
+ - **Database**: `smart_cart`
+ - **User**: `myuser`
+ - **Password**: `my-secure-password-123`
+
+## 6. ESP32 카트 바구니 (cart_basket) 포팅 가이드
+
+본 섹션은 **카트 바구니 RFID 인식(ESP32 + RC522)** 펌웨어의 빌드/업로드/연결 방법을 설명합니다.
+
+---
+
+### 6.1 펌웨어 위치 (Repository Path)
+
+- 경로: `cart_basket/`
+  - `platformio.ini`
+  - `src/main.cpp`
+
+---
+
+### 6.2 개발/빌드 환경 (Build Environment)
+
+- **보드**: ESP32 DevKit (board: `esp32dev`)
+- **프레임워크**: Arduino (Arduino IDE)
+- **시리얼 속도**: `115200`
+- **라이브러리**
+  - `miguelbalboa/MFRC522`
+  - `h2zero/NimBLE-Arduino`
+
+---
+
+### 6.3 하드웨어 구성 (Hardware)
+
+- **RFID 리더**: RC522 * 4개
+- **SPI 핀 (ESP32)**
+  - `SCK`: `GPIO18`
+  - `MISO`: `GPIO19`
+  - `MOSI`: `GPIO23`
+- **RC522 CS 핀 (SS)**
+  - Reader1: `GPIO5`
+  - Reader2: `GPIO17`
+  - Reader3: `GPIO16`
+  - Reader4: `GPIO27`
+- **RC522 RST (공용)**: `GPIO22`
+- **전원**
+  - RC522: 3.3V 사용 권장
+  - GND 공통
+
+---
+
+### 6.4 BLE 프로파일 (BLE GATT)
+
+- **Device Name**: `RC522-GATT`
+- **Service UUID**: `7b1c4b60-2c2d-4d7f-8f2d-9b0b2f2d0a01`
+- **Characteristic UUID**: `7b1c4b60-2c2d-4d7f-8f2d-9b0b2f2d0a02`
+- **전송 형식 (Notify Payload)**  
+  `R<readerId>,<uidLen>,<UID_HEX>`  
+  예: `R1,4,DEADBEEF`
+
+---
+
+### 6.5 빌드 및 업로드 절차 (Arduino IDE)
+
+1. **스케치 로드**
+   - `cart_basket/src/main.cpp`를 Arduino IDE로 엽니다.
+
+2. **보드/포트 설정**
+   - 보드: `ESP32 Dev Module` (또는 사용 보드에 맞게 선택)
+   - 포트: 연결된 ESP32 시리얼 포트 선택
+
+3. **라이브러리 설치**
+   - `MFRC522` (by miguelbalboa)
+   - `NimBLE-Arduino` (by h2zero)
+
+4. **빌드 및 업로드**
+   - Arduino IDE에서 업로드(Upload)
+
+5. **시리얼 모니터**
+   - 속도 `115200`으로 설정
+
+---
+
+### 6.6 동작 확인 체크리스트
+
+- ESP32 부팅 후 시리얼에 `scan start` 로그 출력
+- BLE 광고 `RC522-GATT` 확인
+- 중앙 장치가 연결되면 Notify 수신
+- 동일 UID는 `REPEAT_MS = 200ms` 주기로 반복 전송
