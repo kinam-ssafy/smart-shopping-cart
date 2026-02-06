@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(source:*)",
+      "Bash(ros2 pkg:*)",
+      "Bash(ros2 topic list:*)",
+      "Bash(export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp)",
+      "Bash(export CYCLONEDDS_URI=file://$HOME/cyclonedds/config.xml)",
+      "Bash(ros2 daemon:*)",
+      "Bash(ros2 daemon start:*)",
+      "Bash(timeout 3 ros2 topic hz:*)",
+      "Bash(ros2 lifecycle get:*)",
+      "Bash(ros2 lifecycle set:*)",
+      "Bash(timeout 5 ros2 topic hz:*)",
+      "Bash(ros2 lifecycle list:*)",
+      "Bash(ros2 node list:*)",
+      "Bash(ros2 action list:*)",
+      "Bash(ros2 service list:*)",
+      "Bash(journalctl:*)",
+      "Read(//home/ssafy/.ros/log/**)",
+      "Bash(ros2 param get:*)",
+      "Bash(timeout 2 ros2 topic hz:*)",
+      "Bash(ros2 service call:*)",
+      "Bash(dpkg -l:*)",
+      "Bash(apt-cache search:*)",
+      "Bash(timeout 10 ros2 run:*)",
+      "Bash(dmesg:*)",
+      "Bash(timeout 8 ros2 run:*)",
+      "Bash(export CYCLONEDDS_URI=\"file:///home/ssafy/Desktop/realfinalintegrated/S14P11A401/slam_mapping/config/cyclonedds.xml\")"
+    ]
+  }
+}
