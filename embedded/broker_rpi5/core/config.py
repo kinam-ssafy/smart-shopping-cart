@@ -44,11 +44,11 @@ class Settings:
     # ========================================
     # ESP32에서 광고(Advertise)하는 서비스 UUID
     # 이 UUID로 BLE 스캔 시 ESP32를 식별합니다
-    service_uuid: str = "7b1c4b60-2c2d-4d7f-8f2d-9b0b2f2d0a01"
+    service_uuid: str = os.getenv("SERVICE_UUID", "")
     
     # RFID 태그 데이터를 수신하는 특성(Characteristic) UUID
     # 이 특성에서 Notify를 구독하여 태그 데이터를 받습니다
-    char_uuid: str = "7b1c4b60-2c2d-4d7f-8f2d-9b0b2f2d0a02"
+    char_uuid: str = os.getenv("CHAR_UUID", "")
 
     # ESP32 연결/스캔을 생략할지 여부 (테스트 시 사용)
     skip_esp32_check: bool = _env_bool("SKIP_ESP32_CHECK", False)

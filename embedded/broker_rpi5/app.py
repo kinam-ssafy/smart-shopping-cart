@@ -40,21 +40,35 @@ async def main():
     )
     print("[MQTT] connected")
 
+    # 필수 설정 검증
+    required = {
+        "SERVICE_UUID": settings.service_uuid,
+        "CHAR_UUID": settings.char_uuid,
+        "POSITION_URL": settings.position_url,
+        "POSITION_TOPIC": settings.position_topic,
+        "MQTT_SUB_TOPIC": settings.mqtt_sub_topic,
+        "NAVIGATE_URL": settings.navigate_url,
+    }
+    missing = [k for k, v in required.items() if not v]
+    if missing:
+        print(f"[ERR] missing required settings: {', '.join(missing)}")
+        return
+
     # Data 추가
-    position_url = "http://70.12.246.46:8850/api/position"
-    position_topic = "cart/1/position"
+    position_url = settings.position_url
+    position_topic = settings.position_topic
 
     # MQTT SUB: navigate 명령 수신 (JSON)
     loop = asyncio.get_running_loop()
-    sub_topic = settings.mqtt_sub_topic or "cart/1/navigate"
-    navigate_url = settings.navigate_url or "http://70.12.246.46:8850/api/goal"
+    sub_topic = settings.mqtt_sub_topic
+    navigate_url = settings.navigate_url
     subscribe_topic(
         mqttc,
         sub_topic,
         make_navigate_handler(
             loop,
             navigate_url,
-            settings.position_url,
+            position_url,
             settings.navigate_min_interval_sec,
         ),
         qos=0,
@@ -62,7 +76,7 @@ async def main():
 
     pos_task = asyncio.create_task(
         poll_position_http(
-            url=settings.position_url,
+            url=position_url,
             interval_sec=0.1,
             on_position=lambda pos: publish_position(mqttc, position_topic, pos),
         )
