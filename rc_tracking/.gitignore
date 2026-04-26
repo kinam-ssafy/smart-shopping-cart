@@ -1,0 +1,81 @@
+# ==========================================
+# ROS2 프로젝트용 .gitignore
+# ==========================================
+
+# ROS2 빌드 결과물
+build/
+install/
+log/
+
+# Python 캐시
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# YOLO 모델 파일 (용량이 큰 파일들)
+*.pt
+*.pth
+*.onnx
+*.engine
+*.trt
+*.weights
+
+# 로그 파일
+*.log
+/tmp/
+
+# IDE 설정 파일
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+
+# VSCode
+.vscode/
+.history/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# 환경 설정 (민감한 정보 포함 가능)
+.env
+.env.local
+
+# OS 관련
+Thumbs.db
+.DS_Store
+*.swp
+*.swo
+
+# 테스트 커버리지
+.coverage
+htmlcov/
+.pytest_cache/
+
+# 임시 파일
+*.tmp
+*.bak
+*.backup
+
+# ROS bag 파일 (용량이 클 수 있음)
+*.bag
+*.db3
+
+# C++ 빌드 결과물
+*.o
+*.a
+*.exe
+*.out
+cmake-build-*/
+
+# 사용자 지정 로그 디렉토리
+logs/

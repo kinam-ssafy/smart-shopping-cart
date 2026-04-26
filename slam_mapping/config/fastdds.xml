@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+    <participant profile_name="participant_profile" is_default_profile="true">
+        <rtps>
+            <sendSocketBufferSize>1048576</sendSocketBufferSize>
+            <listenSocketBufferSize>4194304</listenSocketBufferSize>
+            <builtin>
+                <readerHistoryMemoryPolicy>PREALLOCATED_WITH_REALLOC</readerHistoryMemoryPolicy>
+                <writerHistoryMemoryPolicy>PREALLOCATED_WITH_REALLOC</writerHistoryMemoryPolicy>
+            </builtin>
+        </rtps>
+    </participant>
+    <data_writer profile_name="default_data_writer_profile" is_default_profile="true">
+        <historyMemoryPolicy>PREALLOCATED_WITH_REALLOC</historyMemoryPolicy>
+        <qos>
+            <publishMode>
+                <kind>ASYNCHRONOUS</kind>
+            </publishMode>
+        </qos>
+    </data_writer>
+    <data_reader profile_name="default_data_reader_profile" is_default_profile="true">
+        <historyMemoryPolicy>PREALLOCATED_WITH_REALLOC</historyMemoryPolicy>
+    </data_reader>
+</profiles>

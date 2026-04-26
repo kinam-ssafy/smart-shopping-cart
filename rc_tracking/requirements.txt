@@ -1,0 +1,25 @@
+# Python dependencies for RC car tracking system
+
+# Deep Learning
+ultralytics>=8.0.0        # YOLOv11
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Tracking
+deep-sort-realtime>=1.3.2
+
+# Computer Vision
+opencv-python>=4.8.0
+opencv-contrib-python>=4.8.0
+
+# ROS 2 (installed via apt, listed for reference)
+# ros-humble-rclpy
+# ros-humble-cv-bridge
+# ros-humble-sensor-msgs
+
+# Numerical computing
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Utilities
+pyyaml>=6.0
