@@ -1,18 +1,62 @@
 /infra
-
 cyclonedds.log
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+secrets/
+credentials/
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+*.dbmdl
+.vs/
+publish/
+TestResults/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+build/
+.turbo/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm/
+.yarn/cache/
+.yarn/install-state.gz
+
+# Python (Raspberry Pi broker, scripts)
+__pycache__/
+**/__pycache__/
+*.py[cod]
+**/*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+**/.venv/
+**/venv/
+env/
+*.egg-info/
+.pytest_cache/
 
 # ROS2 / colcon
 **/build/
 **/install/
 **/log/
-
-# Python
-**/__pycache__/
-**/*.py[cod]
-**/.venv/
-**/venv/
-**/.env
 
 # CMake / build artifacts
 **/CMakeCache.txt
@@ -20,19 +64,43 @@ cyclonedds.log
 **/cmake_install.cmake
 **/Makefile
 
-# Frontend
-**/node_modules/
-**/dist/
+# STM32CubeIDE
+Debug/
+Release/
+.metadata/
+.settings/
+.cproject
+.project
+RemoteSystemsTempFiles/
 
-# IDE / OS
-**/.vscode/
-**/.idea/
-*.swp
-.DS_Store
-Thumbs.db
+# PlatformIO / Arduino (ESP32)
+.pio/
+.pioenvs/
+.piolibdeps/
+.vscode/c_cpp_properties.json
 
-# Logs and models
-*.log
+# Models / large artifacts
 *.onnx
 *.pt
 *.pth
+
+# IDE
+.idea/
+.vscode/
+**/.vscode/
+**/.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+*.local.yml
+
+# Misc
+*.tmp
+*.bak
+coverage/
